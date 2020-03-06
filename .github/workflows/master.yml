@@ -39,6 +39,7 @@ jobs:
         CLUSTER: dev-fss
         RESOURCE: deploy/dev.yml
         WAIT: false
+        PRINT_PAYLOAD: true
     - name: deploy to prod
       uses: nais/deploy/actions/deploy@v1
       env:
@@ -46,3 +47,4 @@ jobs:
         CLUSTER: prod-fss
         RESOURCE: deploy/prod.yml
         WAIT: false
+        PRINT_PAYLOAD: true
