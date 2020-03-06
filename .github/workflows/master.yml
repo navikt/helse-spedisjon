@@ -6,7 +6,7 @@ on:
     - master
 env:
   APP: spedisjon
-  IMAGE: docker.pkg.github.com/${{ github.repository }}/${{ env.APP }}
+  IMAGE: docker.pkg.github.com/${{ github.repository }}/spedisjon
 
 jobs:
   build:
