@@ -6,6 +6,7 @@ on:
     - master
 env:
   APP: spedisjon
+  TEAM: tbd
   IMAGE: docker.pkg.github.com/${{ github.repository }}/spedisjon
 
 jobs:
@@ -24,11 +25,11 @@ jobs:
         ORG_GRADLE_PROJECT_githubUser: x-access-token
         ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
     - name: build docker image
-      run: docker build . --pull -t $(IMAGE):$(TAG)
+      run: docker build . --pull -t ${{ env.IMAGE }}:${{ env.TAG }}
     - name: push docker image
       run: |
         echo "$GITHUB_TOKEN" | docker login --username "$GITHUB_REPOSITORY" --password-stdin https://docker.pkg.github.com
-        docker push $(IMAGE):$(TAG)
+        docker push ${{ env.IMAGE }}:${{ env.TAG }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: deploy to dev
