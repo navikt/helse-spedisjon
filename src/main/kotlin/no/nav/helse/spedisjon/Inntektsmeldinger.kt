@@ -35,7 +35,7 @@ internal class Inntektsmeldinger(
         packet["@opprettet"] = mottattDato
 
         meldingDao.leggInn(packet.toJson(), mottattDato)
-        //context.send(packet["arbeidstakerFnr"].asText(), packet.toJson())
+        context.send(packet["arbeidstakerFnr"].asText(), packet.toJson())
     }
 
 }

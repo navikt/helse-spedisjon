@@ -30,6 +30,6 @@ internal class SendteSøknader(
         packet["@opprettet"] = sendtNav
 
         meldingDao.leggInn(packet.toJson(), sendtNav)
-        //context.send(packet["fnr"].asText(), packet.toJson())
+        context.send(packet["fnr"].asText(), packet.toJson())
     }
 }

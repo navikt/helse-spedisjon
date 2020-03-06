@@ -5,9 +5,7 @@ import no.nav.helse.rapids_rivers.RapidApplication
 
 @KtorExperimentalAPI
 fun main() {
-    val env = System.getenv().toMutableMap()
-    env["KAFKA_RESET_POLICY"] = "earliest"
-
+    val env = System.getenv()
     val dataSourceBuilder = DataSourceBuilder(env)
     dataSourceBuilder.migrate()
     val meldingDao = MeldingDao(dataSourceBuilder.getDataSource())
