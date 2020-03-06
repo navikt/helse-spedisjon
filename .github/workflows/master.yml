@@ -40,6 +40,7 @@ jobs:
         RESOURCE: deploy/dev.yml
         WAIT: false
         PRINT_PAYLOAD: true
+        VAR: "image=${{env.IMAGE}},tag=${{env.TAG}},team=${{env.TEAM}},app=${{env.APP}}"
     - name: deploy to prod
       uses: nais/deploy/actions/deploy@v1
       env:
@@ -48,3 +49,4 @@ jobs:
         RESOURCE: deploy/prod.yml
         WAIT: false
         PRINT_PAYLOAD: true
+        VAR: "image=${{env.IMAGE}},tag=${{env.TAG}},team=${{env.TEAM}},app=${{env.APP}}"
