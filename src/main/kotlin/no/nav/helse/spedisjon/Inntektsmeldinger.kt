@@ -4,7 +4,9 @@ import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
 import no.nav.helse.rapids_rivers.asLocalDateTime
+import no.nav.helse.spedisjon.MeldingDao.MeldingType.INNTEKTSMELDING
 import org.slf4j.LoggerFactory
+import java.util.*
 
 internal class Inntektsmeldinger(
     rapidsConnection: RapidsConnection,
@@ -32,10 +34,11 @@ internal class Inntektsmeldinger(
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
         val mottattDato = packet["mottattDato"].asLocalDateTime()
         packet["@event_name"] = "inntektsmelding"
+        packet["@id"] = UUID.randomUUID()
         packet["@opprettet"] = mottattDato
 
         val fødselsnummer = packet["arbeidstakerFnr"].asText()
-        meldingDao.leggInn(fødselsnummer, packet.toJson(), mottattDato)
+        meldingDao.leggInn(INNTEKTSMELDING, fødselsnummer, packet.toJson(), mottattDato)
         context.send(fødselsnummer, packet.toJson())
     }
 

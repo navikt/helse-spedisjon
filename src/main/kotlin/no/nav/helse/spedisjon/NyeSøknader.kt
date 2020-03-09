@@ -4,7 +4,9 @@ import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
 import no.nav.helse.rapids_rivers.asLocalDateTime
+import no.nav.helse.spedisjon.MeldingDao.MeldingType.NY_SØKNAD
 import org.slf4j.LoggerFactory
+import java.util.*
 
 internal class NyeSøknader(
     rapidsConnection: RapidsConnection,
@@ -27,10 +29,11 @@ internal class NyeSøknader(
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
         val opprettet = packet["opprettet"].asLocalDateTime()
         packet["@event_name"] = "ny_søknad"
+        packet["@id"] = UUID.randomUUID()
         packet["@opprettet"] = opprettet
 
         val fødselsnummer = packet["fnr"].asText()
-        meldingDao.leggInn(fødselsnummer, packet.toJson(), opprettet)
+        meldingDao.leggInn(NY_SØKNAD, fødselsnummer, packet.toJson(), opprettet)
         context.send(fødselsnummer, packet.toJson())
     }
 }
