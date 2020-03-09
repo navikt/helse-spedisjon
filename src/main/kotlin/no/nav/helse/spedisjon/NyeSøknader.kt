@@ -29,7 +29,8 @@ internal class NyeSøknader(
         packet["@event_name"] = "ny_søknad"
         packet["@opprettet"] = opprettet
 
-        meldingDao.leggInn(packet.toJson(), opprettet)
-        context.send(packet["fnr"].asText(), packet.toJson())
+        val fødselsnummer = packet["fnr"].asText()
+        meldingDao.leggInn(fødselsnummer, packet.toJson(), opprettet)
+        context.send(fødselsnummer, packet.toJson())
     }
 }

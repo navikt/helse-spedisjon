@@ -34,8 +34,9 @@ internal class Inntektsmeldinger(
         packet["@event_name"] = "inntektsmelding"
         packet["@opprettet"] = mottattDato
 
-        meldingDao.leggInn(packet.toJson(), mottattDato)
-        context.send(packet["arbeidstakerFnr"].asText(), packet.toJson())
+        val fødselsnummer = packet["arbeidstakerFnr"].asText()
+        meldingDao.leggInn(fødselsnummer, packet.toJson(), mottattDato)
+        context.send(fødselsnummer, packet.toJson())
     }
 
 }

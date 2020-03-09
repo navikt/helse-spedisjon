@@ -13,12 +13,13 @@ internal class MeldingDao(private val dataSource: DataSource) {
         private val log = LoggerFactory.getLogger("tjenestekall")
     }
 
-    fun leggInn(melding: String, dato: LocalDateTime) {
+    fun leggInn(fødselsnummer: String, melding: String, dato: LocalDateTime) {
         log.info("legger inn melding dato=$dato, melding=$melding")
         using(sessionOf(dataSource)) {
             it.run(
                 queryOf(
-                    "INSERT INTO melding (data, opprettet) VALUES (?::json, ?)",
+                    "INSERT INTO melding (fnr, data, opprettet) VALUES (?, ?::json, ?)",
+                    fødselsnummer,
                     melding,
                     dato
                 ).asExecute
