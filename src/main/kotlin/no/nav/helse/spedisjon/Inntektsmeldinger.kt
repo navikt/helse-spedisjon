@@ -39,7 +39,7 @@ internal class Inntektsmeldinger(
 
         val fødselsnummer = packet["arbeidstakerFnr"].asText()
         meldingDao.leggInn(INNTEKTSMELDING, fødselsnummer, packet.toJson(), mottattDato)
-        context.send(fødselsnummer, packet.toJson())
+        //context.send(fødselsnummer, packet.toJson())
     }
 
 }
