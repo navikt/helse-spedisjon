@@ -18,7 +18,7 @@ internal class MeldingDao(private val dataSource: DataSource) {
         using(sessionOf(dataSource)) {
             it.run(
                 queryOf(
-                    "INSERT INTO melding (type, fnr, data, opprettet) VALUES (?, ?::json, ?)",
+                    "INSERT INTO melding (type, fnr, data, opprettet) VALUES (?, ?, ?::json, ?)",
                     type.name,
                     fødselsnummer,
                     melding,
