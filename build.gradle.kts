@@ -21,7 +21,7 @@ val githubUser: String by project
 val githubPassword: String by project
 
 dependencies {
-    implementation("no.nav.helse:rapids-and-rivers:1.302b30e")
+    implementation("no.nav.helse:rapids-and-rivers:1.56d085f")
 
     implementation("org.flywaydb:flyway-core:$flywayVersion")
     implementation("com.zaxxer:HikariCP:$hikariVersion")

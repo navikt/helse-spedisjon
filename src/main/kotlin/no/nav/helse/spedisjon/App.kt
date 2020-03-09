@@ -1,18 +1,24 @@
 package no.nav.helse.spedisjon
 
-import io.ktor.util.KtorExperimentalAPI
 import no.nav.helse.rapids_rivers.RapidApplication
+import no.nav.helse.rapids_rivers.RapidsConnection
 
-@KtorExperimentalAPI
 fun main() {
     val env = System.getenv()
     val dataSourceBuilder = DataSourceBuilder(env)
-    dataSourceBuilder.migrate()
     val meldingDao = MeldingDao(dataSourceBuilder.getDataSource())
 
-    RapidApplication.create(env) { _, rapid -> rapid.seekToBeginning() }.apply {
+    RapidApplication.create(env).apply {
         NyeSøknader(this, meldingDao)
         SendteSøknader(this, meldingDao)
         Inntektsmeldinger(this, meldingDao)
+    }.apply {
+        register(object : RapidsConnection.StatusListener {
+            override fun onStartup(rapidsConnection: RapidsConnection) {
+                dataSourceBuilder.migrate()
+            }
+
+            override fun onShutdown(rapidsConnection: RapidsConnection) {}
+        })
     }.start()
 }
