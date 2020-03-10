@@ -34,6 +34,6 @@ internal class NyeSøknader(
 
         val fødselsnummer = packet["fnr"].asText()
         meldingDao.leggInn(NY_SØKNAD, fødselsnummer, packet.toJson(), opprettet)
-        //context.send(fødselsnummer, packet.toJson())
+        context.send(fødselsnummer, packet.toJson())
     }
 }
