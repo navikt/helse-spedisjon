@@ -4,33 +4,29 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
 import org.slf4j.LoggerFactory
-import java.time.LocalDateTime
 import javax.sql.DataSource
 
-internal class MeldingDao(private val dataSource: DataSource) {
+internal class MeldingDao(private val dataSource: DataSource){
 
     private companion object {
         private val log = LoggerFactory.getLogger("tjenestekall")
     }
 
-    fun leggInn(type: MeldingType, fødselsnummer: String, melding: String, dato: LocalDateTime) {
-        log.info("legger inn melding dato=$dato, melding=$melding")
-        using(sessionOf(dataSource)) {
+    fun leggInn(melding: Melding): Boolean {
+        log.info("legger inn melding dato=${melding.rapportertDato()}, melding=${melding.json()}")
+
+        return using(sessionOf(dataSource)) {
             it.run(
                 queryOf(
-                    "INSERT INTO melding (type, fnr, data, opprettet) VALUES (?, ?, ?::json, ?)",
-                    type.name,
-                    fødselsnummer,
-                    melding,
-                    dato
-                ).asExecute
+                    """INSERT INTO melding (type, fnr, data, opprettet, duplikatkontroll)
+                    VALUES (?, ?, ?::json, ?, ?) ON CONFLICT(duplikatkontroll) do nothing""",
+                    melding.type,
+                    melding.fødselsnummer(),
+                    melding.json(),
+                    melding.rapportertDato(),
+                    melding.duplikatkontroll()
+                ).asUpdate
             )
-        }
-    }
-
-    enum class MeldingType {
-        NY_SØKNAD,
-        SENDT_SØKNAD,
-        INNTEKTSMELDING
+        } == 1
     }
 }

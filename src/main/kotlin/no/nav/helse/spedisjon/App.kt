@@ -8,7 +8,7 @@ fun main() {
     val dataSourceBuilder = DataSourceBuilder(env)
     val meldingDao = MeldingDao(dataSourceBuilder.getDataSource())
 
-    RapidApplication.create(env).apply {
+    RapidApplication.create(env){ _, rapid -> rapid.seekToBeginning() }.apply {
         NyeSøknader(this, meldingDao)
         SendteSøknader(this, meldingDao)
         Inntektsmeldinger(this, meldingDao)

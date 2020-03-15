@@ -27,6 +27,7 @@ internal class NyeSøknaderTest {
         testRapid.sendTestMessage(
             """
 {
+    "id": "id",
     "fnr": "fnr",
     "aktorId": "aktorId",
     "arbeidsgiver": {

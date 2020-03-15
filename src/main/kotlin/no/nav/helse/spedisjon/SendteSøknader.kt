@@ -1,12 +1,10 @@
 package no.nav.helse.spedisjon
 
+import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
-import no.nav.helse.rapids_rivers.asLocalDateTime
-import no.nav.helse.spedisjon.MeldingDao.MeldingType.SENDT_SØKNAD
 import org.slf4j.LoggerFactory
-import java.util.*
 
 internal class SendteSøknader(
     rapidsConnection: RapidsConnection,
@@ -27,13 +25,12 @@ internal class SendteSøknader(
     }
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
-        val sendtNav = packet["sendtNav"].asLocalDateTime()
-        packet["@event_name"] = "sendt_søknad"
-        packet["@id"] = UUID.randomUUID()
-        packet["@opprettet"] = sendtNav
+        val sendtSøknad = Melding.SendtSøknad(packet)
+        if (!meldingDao.leggInn(sendtSøknad)) return log.error("Duplikat sendtSøknad: {} {} ",
+            keyValue("duplikatkontroll", sendtSøknad.duplikatkontroll()),
+            keyValue("melding", sendtSøknad.json()))
 
-        val fødselsnummer = packet["fnr"].asText()
-        meldingDao.leggInn(SENDT_SØKNAD, fødselsnummer, packet.toJson(), sendtNav)
-        //context.send(fødselsnummer, packet.toJson())
+//        context.send(sendtSøknad.fødselsnummer(), sendtSøknad.json())
+
     }
 }

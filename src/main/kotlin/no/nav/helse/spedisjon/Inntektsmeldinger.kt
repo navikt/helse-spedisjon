@@ -1,12 +1,11 @@
 package no.nav.helse.spedisjon
 
+import net.logstash.logback.argument.StructuredArguments
+import net.logstash.logback.argument.StructuredArguments.*
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
-import no.nav.helse.rapids_rivers.asLocalDateTime
-import no.nav.helse.spedisjon.MeldingDao.MeldingType.INNTEKTSMELDING
 import org.slf4j.LoggerFactory
-import java.util.*
 
 internal class Inntektsmeldinger(
     rapidsConnection: RapidsConnection,
@@ -32,14 +31,11 @@ internal class Inntektsmeldinger(
     }
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
-        val mottattDato = packet["mottattDato"].asLocalDateTime()
-        packet["@event_name"] = "inntektsmelding"
-        packet["@id"] = UUID.randomUUID()
-        packet["@opprettet"] = mottattDato
+        val inntektsmelding = Melding.Inntektsmelding(packet)
+        if (!meldingDao.leggInn(inntektsmelding)) return log.error("Duplikat inntektsmelding: {} {} ",
+            keyValue("duplikatkontroll", inntektsmelding.duplikatkontroll()),
+            keyValue("melding", inntektsmelding.json()))
 
-        val fødselsnummer = packet["arbeidstakerFnr"].asText()
-        meldingDao.leggInn(INNTEKTSMELDING, fødselsnummer, packet.toJson(), mottattDato)
-        //context.send(fødselsnummer, packet.toJson())
+        //context.send(inntektsmelding.fødselsnummer(), inntektsmelding.json())
     }
-
 }

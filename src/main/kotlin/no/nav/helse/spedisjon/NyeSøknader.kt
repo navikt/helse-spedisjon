@@ -1,12 +1,10 @@
 package no.nav.helse.spedisjon
 
+import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
-import no.nav.helse.rapids_rivers.asLocalDateTime
-import no.nav.helse.spedisjon.MeldingDao.MeldingType.NY_SØKNAD
 import org.slf4j.LoggerFactory
-import java.util.*
 
 internal class NyeSøknader(
     rapidsConnection: RapidsConnection,
@@ -22,18 +20,16 @@ internal class NyeSøknader(
             validate { it.forbid("@event_name") }
             validate { it.requireKey("fnr", "aktorId", "arbeidsgiver.orgnummer", "opprettet", "soknadsperioder") }
             validate { it.requireValue("status", "NY") }
-            validate { it.requireKey("sykmeldingId", "fom", "tom") }
+            validate { it.requireKey("id", "sykmeldingId", "fom", "tom") }
         }.register(this)
     }
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
-        val opprettet = packet["opprettet"].asLocalDateTime()
-        packet["@event_name"] = "ny_søknad"
-        packet["@id"] = UUID.randomUUID()
-        packet["@opprettet"] = opprettet
+        val nySøknad = Melding.NySøknad(packet)
+        if (!meldingDao.leggInn(nySøknad)) return log.error("Duplikat nySøknad: {} {} ",
+            keyValue("duplikatkontroll", nySøknad.duplikatkontroll()),
+            keyValue("melding", nySøknad.json()))
 
-        val fødselsnummer = packet["fnr"].asText()
-        meldingDao.leggInn(NY_SØKNAD, fødselsnummer, packet.toJson(), opprettet)
-        //context.send(fødselsnummer, packet.toJson())
+//            context.send(nySøknad.fødselsnummer(), nySøknad.json())
     }
 }
