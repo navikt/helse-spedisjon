@@ -31,9 +31,8 @@ internal class Inntektsmeldinger(
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
         val inntektsmelding = Melding.Inntektsmelding(packet)
-        if (!meldingDao.leggInn(inntektsmelding)) return log.error("Duplikat inntektsmelding: {} {} ",
-            keyValue("duplikatkontroll", inntektsmelding.duplikatkontroll()),
-            keyValue("melding", inntektsmelding.json()))
+        if (!meldingDao.leggInn(inntektsmelding)) return log.error("Duplikat inntektsmelding: {} melding={} ",
+            keyValue("duplikatkontroll", inntektsmelding.duplikatkontroll()), inntektsmelding.json())
 
         //context.send(inntektsmelding.fødselsnummer(), inntektsmelding.json())
     }

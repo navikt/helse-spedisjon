@@ -26,9 +26,8 @@ internal class SendteSøknader(
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
         val sendtSøknad = Melding.SendtSøknad(packet)
-        if (!meldingDao.leggInn(sendtSøknad)) return log.error("Duplikat sendtSøknad: {} {} ",
-            keyValue("duplikatkontroll", sendtSøknad.duplikatkontroll()),
-            keyValue("melding", sendtSøknad.json()))
+        if (!meldingDao.leggInn(sendtSøknad)) return log.error("Duplikat sendtSøknad: {} melding={} ",
+            keyValue("duplikatkontroll", sendtSøknad.duplikatkontroll()), sendtSøknad.json())
 
 //        context.send(sendtSøknad.fødselsnummer(), sendtSøknad.json())
 
