@@ -26,6 +26,6 @@ internal class Inntektsmeldinger(
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
         val inntektsmelding = Melding.Inntektsmelding(packet)
         if (!meldingDao.leggInn(inntektsmelding)) return
-        //context.send(inntektsmelding.fødselsnummer(), inntektsmelding.json())
+        context.send(inntektsmelding.fødselsnummer(), inntektsmelding.json())
     }
 }
