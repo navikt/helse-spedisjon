@@ -25,7 +25,7 @@ abstract class Melding {
 
     class NySøknad(private val packet: JsonMessage) : Melding() {
         override val type = "ny_søknad"
-        override fun fødselsnummer() = packet["fnr"].asText()
+        override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["opprettet"].asLocalDateTime()
         override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText() + packet["opprettet"].asText()
         override fun json(): String {
@@ -38,7 +38,7 @@ abstract class Melding {
 
     class SendtSøknad(private val packet: JsonMessage) : Melding() {
         override val type = "sendt_søknad"
-        override fun fødselsnummer() = packet["fnr"].asText()
+        override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["sendtNav"].asLocalDateTime()
         override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText() + packet["sendtNav"].asText()
         override fun json(): String {
@@ -51,9 +51,9 @@ abstract class Melding {
 
     class Inntektsmelding(private val packet: JsonMessage) : Melding() {
         override val type = "inntektsmelding"
-        override fun fødselsnummer() = packet["arbeidstakerFnr"].asText()
+        override fun fødselsnummer(): String = packet["arbeidstakerFnr"].asText().toString()
         override fun rapportertDato() = packet["mottattDato"].asLocalDateTime()
-        override fun duplikatnøkkel() = packet["arkivreferanse"].asText()
+        override fun duplikatnøkkel(): String = packet["arkivreferanse"].asText()
         override fun json(): String {
             packet["@event_name"] = type
             packet["@id"] = UUID.randomUUID()

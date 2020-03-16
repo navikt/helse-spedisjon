@@ -77,7 +77,7 @@ internal class NyeSøknaderTest {
         embeddedPostgres.close()
     }
 
-    private class TestRapid() : RapidsConnection() {
+    private class TestRapid : RapidsConnection() {
         private val context = TestContext()
         private val messages = mutableListOf<Pair<String?, String>>()
 
