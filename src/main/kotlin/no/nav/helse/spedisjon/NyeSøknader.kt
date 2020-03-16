@@ -12,7 +12,7 @@ internal class NyeSøknader(
 ) : River.PacketListener {
 
     private companion object {
-        private val log = LoggerFactory.getLogger(NyeSøknader::class.java)
+        private val log = LoggerFactory.getLogger("tjenestekall")
     }
 
     init {

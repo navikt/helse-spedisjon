@@ -1,7 +1,6 @@
 package no.nav.helse.spedisjon
 
-import net.logstash.logback.argument.StructuredArguments
-import net.logstash.logback.argument.StructuredArguments.*
+import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
@@ -13,7 +12,7 @@ internal class Inntektsmeldinger(
 ) : River.PacketListener {
 
     private companion object {
-        private val log = LoggerFactory.getLogger(Inntektsmeldinger::class.java)
+        private val log = LoggerFactory.getLogger("tjenestekall")
     }
 
     init {
