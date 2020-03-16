@@ -12,7 +12,7 @@ internal class NyeSøknader(
 ) : River.PacketListener {
 
     private companion object {
-        private val log = LoggerFactory.getLogger(NyeSøknader::class.java)
+        private val log = LoggerFactory.getLogger("tjenestekall")
     }
 
     init {
@@ -26,9 +26,8 @@ internal class NyeSøknader(
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
         val nySøknad = Melding.NySøknad(packet)
-        if (!meldingDao.leggInn(nySøknad)) return log.error("Duplikat nySøknad: {} {} ",
-            keyValue("duplikatkontroll", nySøknad.duplikatkontroll()),
-            keyValue("melding", nySøknad.json()))
+        if (!meldingDao.leggInn(nySøknad)) return log.error("Duplikat nySøknad: {} melding={} ",
+            keyValue("duplikatkontroll", nySøknad.duplikatkontroll()), nySøknad.json())
 
 //            context.send(nySøknad.fødselsnummer(), nySøknad.json())
     }
