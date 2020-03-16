@@ -3,6 +3,7 @@ package no.nav.helse.spedisjon
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
+import net.logstash.logback.argument.StructuredArguments.keyValue
 import org.slf4j.LoggerFactory
 import javax.sql.DataSource
 
@@ -14,8 +15,13 @@ internal class MeldingDao(private val dataSource: DataSource){
 
     fun leggInn(melding: Melding): Boolean {
         log.info("legger inn melding dato=${melding.rapportertDato()}, melding=${melding.json()}")
+        return leggInnUtenDuplikat(melding).also {
+            if (!it) log.error("Duplikat melding: {} melding={}", keyValue("duplikatkontroll", melding.duplikatkontroll()), melding.json())
+        }
+    }
 
-        return using(sessionOf(dataSource)) {
+    private fun leggInnUtenDuplikat(melding: Melding) =
+        using(sessionOf(dataSource)) {
             it.run(
                 queryOf(
                     """INSERT INTO melding (type, fnr, data, opprettet, duplikatkontroll)
@@ -28,5 +34,4 @@ internal class MeldingDao(private val dataSource: DataSource){
                 ).asUpdate
             )
         } == 1
-    }
 }

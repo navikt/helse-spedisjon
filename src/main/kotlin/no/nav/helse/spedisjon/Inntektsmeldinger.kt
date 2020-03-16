@@ -1,19 +1,13 @@
 package no.nav.helse.spedisjon
 
-import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
-import org.slf4j.LoggerFactory
 
 internal class Inntektsmeldinger(
     rapidsConnection: RapidsConnection,
     private val meldingDao: MeldingDao
 ) : River.PacketListener {
-
-    private companion object {
-        private val log = LoggerFactory.getLogger("tjenestekall")
-    }
 
     init {
         River(rapidsConnection).apply {
@@ -31,9 +25,7 @@ internal class Inntektsmeldinger(
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
         val inntektsmelding = Melding.Inntektsmelding(packet)
-        if (!meldingDao.leggInn(inntektsmelding)) return log.error("Duplikat inntektsmelding: {} melding={} ",
-            keyValue("duplikatkontroll", inntektsmelding.duplikatkontroll()), inntektsmelding.json())
-
+        if (!meldingDao.leggInn(inntektsmelding)) return
         //context.send(inntektsmelding.fødselsnummer(), inntektsmelding.json())
     }
 }
