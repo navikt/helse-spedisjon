@@ -17,8 +17,6 @@ fun main() {
             override fun onStartup(rapidsConnection: RapidsConnection) {
                 dataSourceBuilder.migrate()
             }
-
-            override fun onShutdown(rapidsConnection: RapidsConnection) {}
         })
     }.start()
 }
