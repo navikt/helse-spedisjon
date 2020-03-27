@@ -4,7 +4,7 @@ import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
 
-internal class SendteSøknader(
+internal class SendteSøknaderNav(
     rapidsConnection: RapidsConnection,
     private val meldingDao: MeldingDao
 ) : River.PacketListener {
@@ -19,7 +19,7 @@ internal class SendteSøknader(
     }
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
-        val sendtSøknad = Melding.SendtSøknad(packet)
+        val sendtSøknad = Melding.SendtSøknadNav(packet)
         if (!meldingDao.leggInn(sendtSøknad)) return
         context.send(sendtSøknad.fødselsnummer(), sendtSøknad.json())
     }

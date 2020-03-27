@@ -36,7 +36,20 @@ abstract class Melding {
         }
     }
 
-    class SendtSøknad(private val packet: JsonMessage) : Melding() {
+    class SendtSøknadArbeidsgiver(private val packet: JsonMessage) : Melding() {
+        override val type = "sendt_søknad"
+        override fun fødselsnummer(): String = packet["fnr"].asText()
+        override fun rapportertDato() = packet["sendtArbeidsgiver"].asLocalDateTime()
+        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText() + packet["sendtArbeidsgiver"].asText()
+        override fun json(): String {
+            packet["@event_name"] = type
+            packet["@id"] = UUID.randomUUID()
+            packet["@opprettet"] = rapportertDato()
+            return packet.toJson()
+        }
+    }
+
+    class SendtSøknadNav(private val packet: JsonMessage) : Melding() {
         override val type = "sendt_søknad"
         override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["sendtNav"].asLocalDateTime()

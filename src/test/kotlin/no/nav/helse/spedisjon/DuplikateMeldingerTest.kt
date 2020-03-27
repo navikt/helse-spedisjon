@@ -6,7 +6,8 @@ import com.zaxxer.hikari.HikariDataSource
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageProblems
 import org.flywaydb.core.Flyway
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -72,7 +73,7 @@ internal class DuplikateMeldingerTest {
     }
 
     @Test
-    fun `duplikat sendt søknad slipper ikke igjennom`() {
+    fun `duplikat sendt søknad til nav slipper ikke igjennom`() {
         val packet = JsonMessage(
             """
                 {
@@ -85,8 +86,45 @@ internal class DuplikateMeldingerTest {
             requireKey("id", "fnr", "sendtNav", "status")
         }
 
-        assertTrue(meldingDao.leggInn(Melding.SendtSøknad(packet)))
-        assertFalse(meldingDao.leggInn(Melding.SendtSøknad(packet)))
+        assertTrue(meldingDao.leggInn(Melding.SendtSøknadNav(packet)))
+        assertFalse(meldingDao.leggInn(Melding.SendtSøknadNav(packet)))
+    }
+
+    @Test
+    fun `duplikat sendt søknad til arbeidsgiver slipper ikke igjennom`() {
+        val packet = JsonMessage(
+            """
+                {
+                    "id": "1",
+                    "fnr": "123",
+                    "sendtArbeidsgiver": "${LocalDateTime.now()}",
+                    "status": "SENDT"
+                }
+            """, MessageProblems("")).apply {
+            requireKey("id", "fnr", "sendtArbeidsgiver", "status")
+        }
+
+        assertTrue(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(packet)))
+        assertFalse(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(packet)))
+    }
+
+    @Test
+    fun `duplikat sendt søknad til arbeidsgiver (ettersending) slipper ikke igjennom`() {
+        val packet = JsonMessage(
+            """
+                {
+                    "id": "1",
+                    "fnr": "123",
+                    "sendtArbeidsgiver": "${LocalDateTime.now()}",
+                    "sendtNav": "${LocalDateTime.now().minusDays(1)}",
+                    "status": "SENDT"
+                }
+            """, MessageProblems("")).apply {
+            requireKey("id", "fnr", "sendtArbeidsgiver", "status")
+        }
+
+        assertTrue(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(packet)))
+        assertFalse(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(packet)))
     }
 
     @Test

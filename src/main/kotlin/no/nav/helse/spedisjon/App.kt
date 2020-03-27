@@ -10,7 +10,8 @@ fun main() {
 
     RapidApplication.create(env).apply {
         NyeSøknader(this, meldingDao)
-        SendteSøknader(this, meldingDao)
+        SendteSøknaderArbeidsgiver(this, meldingDao)
+        SendteSøknaderNav(this, meldingDao)
         Inntektsmeldinger(this, meldingDao)
     }.apply {
         register(object : RapidsConnection.StatusListener {
