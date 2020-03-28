@@ -22,6 +22,6 @@ internal class SendteSøknaderArbeidsgiver(
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
         val sendtSøknad = Melding.SendtSøknadArbeidsgiver(packet)
         if (!meldingDao.leggInn(sendtSøknad)) return
-        //context.send(sendtSøknad.fødselsnummer(), sendtSøknad.json())
+        context.send(sendtSøknad.fødselsnummer(), sendtSøknad.json())
     }
 }

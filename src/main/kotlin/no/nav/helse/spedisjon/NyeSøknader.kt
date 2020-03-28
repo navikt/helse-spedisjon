@@ -21,6 +21,6 @@ internal class NyeSøknader(
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
         val nySøknad = Melding.NySøknad(packet)
         if (!meldingDao.leggInn(nySøknad)) return
-        //context.send(nySøknad.fødselsnummer(), nySøknad.json())
+        context.send(nySøknad.fødselsnummer(), nySøknad.json())
     }
 }
