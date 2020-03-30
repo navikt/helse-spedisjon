@@ -16,6 +16,7 @@ fun main() {
         SendteSøknaderArbeidsgiver(this, meldingDao, problemsCollector)
         SendteSøknaderNav(this, meldingDao, problemsCollector)
         Inntektsmeldinger(this, meldingDao, problemsCollector)
+        AndreHendelser(this, problemsCollector)
     }.apply {
         register(object : RapidsConnection.StatusListener {
             override fun onStartup(rapidsConnection: RapidsConnection) {
