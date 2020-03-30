@@ -20,7 +20,7 @@ fun main() {
         password = "/var/run/secrets/nais.io/service_user/password".readFile()
     )))
 
-    LogWrapper(RapidApplication.create(env), LoggerFactory.getLogger("tjenestekall")).apply {
+    LogWrapper(RapidApplication.create(env) { _, rapid -> rapid.seekToBeginning() }, LoggerFactory.getLogger("tjenestekall")).apply {
         NyeSøknader(this, meldingDao, problemsCollector, aktørregisteretClient)
         SendteSøknaderArbeidsgiver(this, meldingDao, problemsCollector, aktørregisteretClient)
         SendteSøknaderNav(this, meldingDao, problemsCollector, aktørregisteretClient)

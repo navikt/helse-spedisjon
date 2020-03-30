@@ -19,7 +19,7 @@ internal class SendteSøknaderArbeidsgiver(
             validate { it.requireValue("status", "SENDT") }
             validate { it.requireKey("id", "sendtArbeidsgiver", "fom", "tom", "egenmeldinger", "fravar") }
             validate { it.forbid("sendtNav") }
-            validate {it.interestedIn("fnr")}
+            validate { it.interestedIn("fnr") }
         }.register(this)
     }
 

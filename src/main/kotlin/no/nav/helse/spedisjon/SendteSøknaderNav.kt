@@ -18,7 +18,7 @@ internal class SendteSøknaderNav(
             validate { it.requireKey("aktorId", "arbeidsgiver.orgnummer", "opprettet", "soknadsperioder") }
             validate { it.requireValue("status", "SENDT") }
             validate { it.requireKey("id", "sendtNav", "fom", "tom", "egenmeldinger", "fravar") }
-            validate {it.interestedIn("fnr")}
+            validate { it.interestedIn("fnr") }
         }.register(this)
     }
 

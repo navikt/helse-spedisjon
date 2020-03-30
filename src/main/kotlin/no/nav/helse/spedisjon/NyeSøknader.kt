@@ -18,7 +18,7 @@ internal class NyeSøknader(
             validate { it.requireKey("aktorId", "arbeidsgiver.orgnummer", "opprettet", "soknadsperioder") }
             validate { it.requireValue("status", "NY") }
             validate { it.requireKey("id", "sykmeldingId", "fom", "tom") }
-            validate {it.interestedIn("fnr")}
+            validate { it.interestedIn("fnr") }
         }.register(this)
     }
 
