@@ -5,17 +5,24 @@ import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 
 fun main() {
     val env = System.getenv()
     val dataSourceBuilder = DataSourceBuilder(env)
     val meldingDao = MeldingDao(dataSourceBuilder.getDataSource())
 
+    val aktørregisteretClient = AktørregisteretClient(env.getValue("AKTORREGISTERET_URL"), StsRestClient(
+        baseUrl = "http://security-token-service.default.svc.nais.local",
+        username = "/var/run/secrets/nais.io/service_user/username".readFile(),
+        password = "/var/run/secrets/nais.io/service_user/password".readFile()
+    ))
+
     LogWrapper(RapidApplication.create(env), LoggerFactory.getLogger("tjenestekall")).apply {
-        NyeSøknader(this, meldingDao, problemsCollector)
-        SendteSøknaderArbeidsgiver(this, meldingDao, problemsCollector)
-        SendteSøknaderNav(this, meldingDao, problemsCollector)
-        Inntektsmeldinger(this, meldingDao, problemsCollector)
+        NyeSøknader(this, meldingDao, problemsCollector, aktørregisteretClient)
+        SendteSøknaderArbeidsgiver(this, meldingDao, problemsCollector, aktørregisteretClient)
+        SendteSøknaderNav(this, meldingDao, problemsCollector, aktørregisteretClient)
+        Inntektsmeldinger(this, meldingDao, problemsCollector, aktørregisteretClient)
         AndreHendelser(this, problemsCollector)
     }.apply {
         register(object : RapidsConnection.StatusListener {
@@ -80,3 +87,5 @@ internal class LogWrapper(
         }
     }
 }
+
+private fun String.readFile() = File(this).readText(Charsets.UTF_8)

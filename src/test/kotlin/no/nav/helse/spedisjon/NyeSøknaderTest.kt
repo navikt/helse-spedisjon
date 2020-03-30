@@ -25,7 +25,7 @@ internal class NyeSøknaderTest {
     internal fun `leser nye søknader`() {
         NyeSøknader(testRapid, MeldingDao(dataSource), object : ProblemsCollector {
             override fun add(type: String, problems: MessageProblems) {}
-        })
+        }, AktørregisteretClient("", StsRestClient("", "", "")))
         testRapid.sendTestMessage(
             """
 {
