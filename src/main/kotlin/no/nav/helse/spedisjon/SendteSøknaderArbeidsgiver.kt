@@ -27,7 +27,7 @@ internal class SendteSøknaderArbeidsgiver(
         packet.putIfAbsent("fnr") { aktørregisteretClient.hentFødselsnummer(packet["aktorId"].asText()) }
         val sendtSøknad = Melding.SendtSøknadArbeidsgiver(packet)
         if (!meldingDao.leggInn(sendtSøknad)) return
-        context.send(sendtSøknad.fødselsnummer(), sendtSøknad.json())
+        //context.send(sendtSøknad.fødselsnummer(), sendtSøknad.json())
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {

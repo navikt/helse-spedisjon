@@ -33,7 +33,7 @@ internal class Inntektsmeldinger(
         packet.putIfAbsent("arbeidstakerFnr") { aktørregisteretClient.hentFødselsnummer(packet["arbeidstakerAktorId"].asText()) }
         val inntektsmelding = Melding.Inntektsmelding(packet)
         if (!meldingDao.leggInn(inntektsmelding)) return
-        context.send(inntektsmelding.fødselsnummer(), inntektsmelding.json())
+        //context.send(inntektsmelding.fødselsnummer(), inntektsmelding.json())
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
