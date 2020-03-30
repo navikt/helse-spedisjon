@@ -3,6 +3,8 @@ package no.nav.helse.spedisjon
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
+import no.nav.helse.spedisjon.AktørregisteretClient.AktørregisteretRestClient
+import no.nav.helse.spedisjon.AktørregisteretClient.CachedAktørregisteretClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -12,11 +14,11 @@ fun main() {
     val dataSourceBuilder = DataSourceBuilder(env)
     val meldingDao = MeldingDao(dataSourceBuilder.getDataSource())
 
-    val aktørregisteretClient = AktørregisteretClient(env.getValue("AKTORREGISTERET_URL"), StsRestClient(
+    val aktørregisteretClient = CachedAktørregisteretClient(AktørregisteretRestClient(env.getValue("AKTORREGISTERET_URL"), StsRestClient(
         baseUrl = "http://security-token-service.default.svc.nais.local",
         username = "/var/run/secrets/nais.io/service_user/username".readFile(),
         password = "/var/run/secrets/nais.io/service_user/password".readFile()
-    ))
+    )))
 
     LogWrapper(RapidApplication.create(env), LoggerFactory.getLogger("tjenestekall")).apply {
         NyeSøknader(this, meldingDao, problemsCollector, aktørregisteretClient)
