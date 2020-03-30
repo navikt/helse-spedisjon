@@ -1,6 +1,9 @@
 package no.nav.helse.spedisjon
 
-import no.nav.helse.rapids_rivers.*
+import no.nav.helse.rapids_rivers.JsonMessage
+import no.nav.helse.rapids_rivers.MessageProblems
+import no.nav.helse.rapids_rivers.RapidsConnection
+import no.nav.helse.rapids_rivers.River
 
 internal class Inntektsmeldinger(
     rapidsConnection: RapidsConnection,
@@ -27,10 +30,7 @@ internal class Inntektsmeldinger(
     }
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
-        if (packet["arbeidstakerFnr"].isMissingOrNull())
-            aktørregisteretClient.hentFødselsnummer(packet["arbeidstakerAktorId"].asText())?.also {
-                packet["arbeidstakerFnr"] = it
-            }
+        packet.putIfAbsent("arbeidstakerFnr") { aktørregisteretClient.hentFødselsnummer(packet["arbeidstakerAktorId"].asText()) }
         val inntektsmelding = Melding.Inntektsmelding(packet)
         if (!meldingDao.leggInn(inntektsmelding)) return
         context.send(inntektsmelding.fødselsnummer(), inntektsmelding.json())

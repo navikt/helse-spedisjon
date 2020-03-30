@@ -1,6 +1,9 @@
 package no.nav.helse.spedisjon
 
-import no.nav.helse.rapids_rivers.*
+import no.nav.helse.rapids_rivers.JsonMessage
+import no.nav.helse.rapids_rivers.MessageProblems
+import no.nav.helse.rapids_rivers.RapidsConnection
+import no.nav.helse.rapids_rivers.River
 
 internal class NyeSøknader(
     rapidsConnection: RapidsConnection,
@@ -20,10 +23,9 @@ internal class NyeSøknader(
     }
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
-        if (packet["fnr"].isMissingOrNull())
-            aktørregisteretClient.hentFødselsnummer(packet["aktorId"].asText())?.also {
-                packet["fnr"] = it
-            }
+        packet.putIfAbsent("fnr") { aktørregisteretClient.hentFødselsnummer(packet["aktorId"].asText()).also {
+            println("henter fnr = $it")
+        } }
         val nySøknad = Melding.NySøknad(packet)
         if (!meldingDao.leggInn(nySøknad)) return
         context.send(nySøknad.fødselsnummer(), nySøknad.json())

@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
-internal class NyeSøknaderTest : AbstractRiverTest() {
+internal class SendteSøknaderNavTest : AbstractRiverTest() {
 
     private val aktørregisteretClient = mockk<AktørregisteretClient>()
 
     @Test
-    internal fun `leser nye søknader`() {
+    internal fun `leser sendte søknader`() {
         testRapid.sendTestMessage("""
 {
     "id": "id",
@@ -26,8 +26,11 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
         "orgnummer": "1234"
     },
     "opprettet": "${LocalDateTime.now()}",
+    "sendtNav": "${LocalDateTime.now()}",
     "soknadsperioder": [],
-    "status": "NY",
+    "egenmeldinger": [],
+    "fravar": [],
+    "status": "SENDT",
     "sykmeldingId": "id",
     "fom": "2020-01-01",
     "tom": "2020-01-01"
@@ -37,7 +40,7 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     }
 
     @Test
-    internal fun `leser nye søknader uten fnr`() {
+    internal fun `leser sendte søknader uten fnr`() {
         every {
             aktørregisteretClient.hentFødselsnummer(AKTØR)
         } returns FØDSELSNUMMER
@@ -50,8 +53,11 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
         "orgnummer": "1234"
     },
     "opprettet": "${LocalDateTime.now()}",
+    "sendtNav": "${LocalDateTime.now()}",
     "soknadsperioder": [],
-    "status": "NY",
+    "egenmeldinger": [],
+    "fravar": [],
+    "status": "SENDT",
     "sykmeldingId": "id",
     "fom": "2020-01-01",
     "tom": "2020-01-01"
@@ -62,7 +68,7 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        NyeSøknader(
+        SendteSøknaderNav(
             rapidsConnection = rapidsConnection,
             meldingDao = MeldingDao(dataSource),
             problemsCollector = object : ProblemsCollector {

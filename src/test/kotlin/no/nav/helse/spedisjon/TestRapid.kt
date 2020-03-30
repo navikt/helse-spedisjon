@@ -7,6 +7,7 @@ internal class TestRapid : RapidsConnection() {
     private val messages = mutableListOf<Pair<String?, String>>()
 
     internal fun reset() {
+        listeners.clear()
         messages.clear()
     }
 

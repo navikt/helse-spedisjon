@@ -11,50 +11,52 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
-internal class NyeSøknaderTest : AbstractRiverTest() {
+internal class InntektsmeldingerTest : AbstractRiverTest() {
 
     private val aktørregisteretClient = mockk<AktørregisteretClient>()
 
     @Test
-    internal fun `leser nye søknader`() {
+    internal fun `leser inntektsmeldinger`() {
         testRapid.sendTestMessage("""
 {
-    "id": "id",
-    "fnr": "$FØDSELSNUMMER",
-    "aktorId": "$AKTØR",
-    "arbeidsgiver": {
-        "orgnummer": "1234"
-    },
-    "opprettet": "${LocalDateTime.now()}",
-    "soknadsperioder": [],
-    "status": "NY",
-    "sykmeldingId": "id",
-    "fom": "2020-01-01",
-    "tom": "2020-01-01"
+    "inntektsmeldingId": "id",
+    "arbeidstakerFnr": "$FØDSELSNUMMER",
+    "arbeidstakerAktorId": "$AKTØR",
+    "virksomhetsnummer": "1234",
+    "arbeidsgivertype": "BEDRIFT",
+    "beregnetInntekt": "1000",
+    "mottattDato": "${LocalDateTime.now()}",
+    "endringIRefusjoner": [],
+    "arbeidsgiverperioder": [],
+    "ferieperioder": [],
+    "status": "GYLDIG",
+    "arkivreferanse": "arkivref",
+    "foersteFravaersdag": "2020-01-01"
 }""")
 
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
     }
 
     @Test
-    internal fun `leser nye søknader uten fnr`() {
+    internal fun `leser inntektsmeldinger uten fnr`() {
         every {
             aktørregisteretClient.hentFødselsnummer(AKTØR)
         } returns FØDSELSNUMMER
 
         testRapid.sendTestMessage("""
 {
-    "id": "id",
-    "aktorId": "$AKTØR",
-    "arbeidsgiver": {
-        "orgnummer": "1234"
-    },
-    "opprettet": "${LocalDateTime.now()}",
-    "soknadsperioder": [],
-    "status": "NY",
-    "sykmeldingId": "id",
-    "fom": "2020-01-01",
-    "tom": "2020-01-01"
+    "inntektsmeldingId": "id",
+    "arbeidstakerAktorId": "$AKTØR",
+    "virksomhetsnummer": "1234",
+    "arbeidsgivertype": "BEDRIFT",
+    "beregnetInntekt": "1000",
+    "mottattDato": "${LocalDateTime.now()}",
+    "endringIRefusjoner": [],
+    "arbeidsgiverperioder": [],
+    "ferieperioder": [],
+    "status": "GYLDIG",
+    "arkivreferanse": "arkivref",
+    "foersteFravaersdag": "2020-01-01"
 }"""
         )
 
@@ -62,7 +64,7 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        NyeSøknader(
+        Inntektsmeldinger(
             rapidsConnection = rapidsConnection,
             meldingDao = MeldingDao(dataSource),
             problemsCollector = object : ProblemsCollector {
