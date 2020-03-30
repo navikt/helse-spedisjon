@@ -23,9 +23,7 @@ internal class NyeSøknader(
     }
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
-        packet.putIfAbsent("fnr") { aktørregisteretClient.hentFødselsnummer(packet["aktorId"].asText()).also {
-            println("henter fnr = $it")
-        } }
+        packet.putIfAbsent("fnr") { aktørregisteretClient.hentFødselsnummer(packet["aktorId"].asText())}
         val nySøknad = Melding.NySøknad(packet)
         if (!meldingDao.leggInn(nySøknad)) return
         context.send(nySøknad.fødselsnummer(), nySøknad.json())
