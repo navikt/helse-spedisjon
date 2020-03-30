@@ -1,12 +1,14 @@
 package no.nav.helse.spedisjon
 
 import no.nav.helse.rapids_rivers.JsonMessage
+import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
 
 internal class Inntektsmeldinger(
     rapidsConnection: RapidsConnection,
-    private val meldingDao: MeldingDao
+    private val meldingDao: MeldingDao,
+    private val problemsCollector: ProblemsCollector
 ) : River.PacketListener {
 
     init {
@@ -27,5 +29,9 @@ internal class Inntektsmeldinger(
         val inntektsmelding = Melding.Inntektsmelding(packet)
         if (!meldingDao.leggInn(inntektsmelding)) return
         context.send(inntektsmelding.fødselsnummer(), inntektsmelding.json())
+    }
+
+    override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
+        problemsCollector.add("Inntektsmelding", problems)
     }
 }

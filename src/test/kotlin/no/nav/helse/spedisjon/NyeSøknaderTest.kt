@@ -6,7 +6,7 @@ import com.zaxxer.hikari.HikariDataSource
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
-import no.nav.helse.rapids_rivers.RapidsConnection
+import no.nav.helse.rapids_rivers.MessageProblems
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -23,7 +23,9 @@ internal class NyeSøknaderTest {
 
     @Test
     internal fun `leser nye søknader`() {
-        NyeSøknader(testRapid, MeldingDao(dataSource))
+        NyeSøknader(testRapid, MeldingDao(dataSource), object : ProblemsCollector {
+            override fun add(type: String, problems: MessageProblems) {}
+        })
         testRapid.sendTestMessage(
             """
 {
@@ -77,38 +79,4 @@ internal class NyeSøknaderTest {
         embeddedPostgres.close()
     }
 
-    private class TestRapid : RapidsConnection() {
-        private val context = TestContext()
-        private val messages = mutableListOf<Pair<String?, String>>()
-
-        internal fun reset() {
-            messages.clear()
-        }
-
-        fun sendTestMessage(message: String) {
-            listeners.forEach { it.onMessage(message, context) }
-        }
-
-        override fun publish(message: String) {
-            messages.add(null to message)
-        }
-
-        override fun publish(key: String, message: String) {
-            messages.add(key to message)
-        }
-
-        override fun start() {}
-
-        override fun stop() {}
-
-        private inner class TestContext : MessageContext {
-            override fun send(message: String) {
-                publish(message)
-            }
-
-            override fun send(key: String, message: String) {
-                publish(key, message)
-            }
-        }
-    }
 }
