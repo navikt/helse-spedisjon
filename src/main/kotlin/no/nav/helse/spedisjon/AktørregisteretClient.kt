@@ -2,6 +2,7 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.prometheus.client.Counter
 import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.net.HttpURLConnection
@@ -16,6 +17,10 @@ internal interface AktørregisteretClient {
         private val client: AktørregisteretClient,
         private val ttl: Duration = Duration.ofHours(12)
     ) : AktørregisteretClient {
+        private companion object {
+            private val cacheCounter = Counter.build("aktorregisteret_oppslag_cache_hits_totals", "Antall cache hits")
+                .register()
+        }
         private val cache = mutableMapOf<String, Pair<Long, String>>()
 
         override fun hentFødselsnummer(aktørId: String): String? {
@@ -24,7 +29,7 @@ internal interface AktørregisteretClient {
                 if (maxTime >= value.first) cache.remove(key)
             }
             return cache.compute(aktørId) { _, current ->
-                current ?: client.hentFødselsnummer(aktørId)?.let {
+                current?.also { cacheCounter.inc() } ?: client.hentFødselsnummer(aktørId)?.let {
                     System.currentTimeMillis() to it
                 }
             }?.second
@@ -39,6 +44,9 @@ internal interface AktørregisteretClient {
         companion object {
             private val objectMapper = jacksonObjectMapper()
             private val tjenestekallLog = LoggerFactory.getLogger("tjenestekall")
+            private val oppslagCounter = Counter.build("aktorregisteret_oppslag_totals", "Antall oppslag gjort mot aktørregisteret")
+                .labelNames("http_status")
+                .register()
         }
 
         override fun hentFødselsnummer(aktørId: String) =
@@ -58,6 +66,7 @@ internal interface AktørregisteretClient {
                     disconnect()
                 }
             }
+            oppslagCounter.labels("$responseCode").inc()
             tjenestekallLog.info("svar fra aktørregisteret: responseCode=$responseCode responseBody=$responseBody callId=$callId")
             if (responseCode >= 300 || responseBody == null) return emptyList()
             return try {
