@@ -26,7 +26,7 @@ internal class NyeSøknader(
         packet.putIfAbsent("fnr") { aktørregisteretClient.hentFødselsnummer(packet["aktorId"].asText())}
         val nySøknad = Melding.NySøknad(packet)
         if (!meldingDao.leggInn(nySøknad)) return
-        //context.send(nySøknad.fødselsnummer(), nySøknad.json())
+        context.send(nySøknad.fødselsnummer(), nySøknad.json())
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
