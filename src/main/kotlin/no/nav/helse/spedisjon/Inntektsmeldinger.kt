@@ -1,9 +1,7 @@
 package no.nav.helse.spedisjon
 
-import no.nav.helse.rapids_rivers.JsonMessage
-import no.nav.helse.rapids_rivers.MessageProblems
-import no.nav.helse.rapids_rivers.RapidsConnection
-import no.nav.helse.rapids_rivers.River
+import com.fasterxml.jackson.databind.JsonNode
+import no.nav.helse.rapids_rivers.*
 
 internal class Inntektsmeldinger(
     rapidsConnection: RapidsConnection,
@@ -21,10 +19,11 @@ internal class Inntektsmeldinger(
                     "arbeidstakerAktorId", "virksomhetsnummer",
                     "arbeidsgivertype", "beregnetInntekt",
                     "endringIRefusjoner", "arbeidsgiverperioder",
-                    "status", "arkivreferanse", "ferieperioder",
-                    "foersteFravaersdag", "mottattDato"
+                    "status", "arkivreferanse", "ferieperioder"
                 )
             }
+            validate { it.require("foersteFravaersdag", JsonNode::asLocalDate) }
+            validate { it.require("mottattDato", JsonNode::asLocalDateTime) }
             validate { it.interestedIn("arbeidstakerFnr") }
         }.register(this)
     }

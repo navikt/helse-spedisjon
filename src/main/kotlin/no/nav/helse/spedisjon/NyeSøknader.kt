@@ -1,9 +1,7 @@
 package no.nav.helse.spedisjon
 
-import no.nav.helse.rapids_rivers.JsonMessage
-import no.nav.helse.rapids_rivers.MessageProblems
-import no.nav.helse.rapids_rivers.RapidsConnection
-import no.nav.helse.rapids_rivers.River
+import com.fasterxml.jackson.databind.JsonNode
+import no.nav.helse.rapids_rivers.*
 
 internal class NyeSøknader(
     rapidsConnection: RapidsConnection,
@@ -15,7 +13,8 @@ internal class NyeSøknader(
     init {
         River(rapidsConnection).apply {
             validate { it.forbid("@event_name") }
-            validate { it.requireKey("aktorId", "arbeidsgiver.orgnummer", "opprettet", "soknadsperioder") }
+            validate { it.requireKey("aktorId", "arbeidsgiver.orgnummer", "soknadsperioder") }
+            validate { it.require("opprettet", JsonNode::asLocalDateTime) }
             validate { it.requireValue("status", "NY") }
             validate { it.requireKey("id", "sykmeldingId", "fom", "tom") }
             validate { it.interestedIn("fnr") }
