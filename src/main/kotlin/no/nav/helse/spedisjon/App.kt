@@ -20,11 +20,13 @@ fun main() {
         password = "/var/run/secrets/nais.io/service_user/password".readFile()
     )))
 
+    val meldingMediator = MeldingMediator(meldingDao, aktørregisteretClient, env["STREAM_TO_RAPID"]?.let { "false" != it.toLowerCase() } ?: true)
+
     LogWrapper(RapidApplication.create(env), LoggerFactory.getLogger("tjenestekall")).apply {
-        NyeSøknader(this, meldingDao, problemsCollector, aktørregisteretClient)
-        SendteSøknaderArbeidsgiver(this, meldingDao, problemsCollector, aktørregisteretClient)
-        SendteSøknaderNav(this, meldingDao, problemsCollector, aktørregisteretClient)
-        Inntektsmeldinger(this, meldingDao, problemsCollector, aktørregisteretClient)
+        NyeSøknader(this, meldingMediator, problemsCollector)
+        SendteSøknaderArbeidsgiver(this, meldingMediator, problemsCollector)
+        SendteSøknaderNav(this, meldingMediator, problemsCollector)
+        Inntektsmeldinger(this, meldingMediator, problemsCollector)
         AndreHendelser(this, problemsCollector)
     }.apply {
         register(object : RapidsConnection.StatusListener {

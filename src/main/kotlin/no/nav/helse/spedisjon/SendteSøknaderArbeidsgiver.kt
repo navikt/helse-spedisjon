@@ -5,9 +5,8 @@ import no.nav.helse.rapids_rivers.*
 
 internal class SendteSøknaderArbeidsgiver(
     rapidsConnection: RapidsConnection,
-    private val meldingDao: MeldingDao,
-    private val problemsCollector: ProblemsCollector,
-    private val aktørregisteretClient: AktørregisteretClient
+    private val meldingMediator: MeldingMediator,
+    private val problemsCollector: ProblemsCollector
 ) : River.PacketListener {
 
     init {
@@ -24,10 +23,8 @@ internal class SendteSøknaderArbeidsgiver(
     }
 
     override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
-        packet.putIfAbsent("fnr") { aktørregisteretClient.hentFødselsnummer(packet["aktorId"].asText()) }
-        val sendtSøknad = Melding.SendtSøknadArbeidsgiver(packet)
-        if (!meldingDao.leggInn(sendtSøknad)) return
-        context.send(sendtSøknad.fødselsnummer(), sendtSøknad.json())
+        meldingMediator.onPacket(packet, "aktorId", "fnr")
+        meldingMediator.onMelding(Melding.SendtSøknadArbeidsgiver(packet), context)
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {

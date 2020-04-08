@@ -64,11 +64,10 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         NyeSøknader(
             rapidsConnection = rapidsConnection,
-            meldingDao = MeldingDao(dataSource),
+            meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient, true),
             problemsCollector = object : ProblemsCollector {
                 override fun add(type: String, problems: MessageProblems) {}
-            },
-            aktørregisteretClient = aktørregisteretClient
+            }
         )
     }
 
