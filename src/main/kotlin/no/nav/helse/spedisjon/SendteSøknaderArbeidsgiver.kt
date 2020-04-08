@@ -5,8 +5,7 @@ import no.nav.helse.rapids_rivers.*
 
 internal class SendteSøknaderArbeidsgiver(
     rapidsConnection: RapidsConnection,
-    private val meldingMediator: MeldingMediator,
-    private val problemsCollector: ProblemsCollector
+    private val meldingMediator: MeldingMediator
 ) : River.PacketListener {
 
     init {
@@ -28,6 +27,6 @@ internal class SendteSøknaderArbeidsgiver(
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
-        problemsCollector.add("Sendt søknad arbeidsgiver", problems)
+        meldingMediator.onRiverError("Sendt søknad arbeidsgiver", problems)
     }
 }

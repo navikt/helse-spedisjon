@@ -5,8 +5,7 @@ import no.nav.helse.rapids_rivers.*
 
 internal class NyeSøknader(
     rapidsConnection: RapidsConnection,
-    private val meldingMediator: MeldingMediator,
-    private val problemsCollector: ProblemsCollector
+    private val meldingMediator: MeldingMediator
 ) : River.PacketListener {
 
     init {
@@ -26,6 +25,6 @@ internal class NyeSøknader(
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
-        problemsCollector.add("Ny søknad", problems)
+        meldingMediator.onRiverError("Ny søknad", problems)
     }
 }

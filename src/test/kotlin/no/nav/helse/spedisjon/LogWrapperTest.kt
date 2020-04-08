@@ -2,6 +2,7 @@ package no.nav.helse.spedisjon
 
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import io.mockk.mockk
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
@@ -16,9 +17,11 @@ internal class LogWrapperTest {
 
     private val appender = ListAppender<ILoggingEvent>().apply { start() }
 
-    private val log = (LoggerFactory.getLogger(this::class.java) as ch.qos.logback.classic.Logger).apply {
+    private val log = (LoggerFactory.getLogger("tjenestekall") as ch.qos.logback.classic.Logger).apply {
         addAppender(appender)
     }
+
+    private val mediator = MeldingMediator(mockk(), mockk(), true)
 
     @BeforeEach
     fun setup() {
@@ -28,9 +31,9 @@ internal class LogWrapperTest {
 
     @Test
     fun `logger ingenting når melding er gjenkjent`() {
-        LogWrapper(rapid, log).apply {
-            TestRiver(this, problemsCollector)
-            TestRiver(this, problemsCollector) { validate { it.requireKey("a_key_not_set") } }
+        LogWrapper(rapid, mediator).apply {
+            TestRiver(this, mediator)
+            TestRiver(this, mediator) { validate { it.requireKey("a_key_not_set") } }
         }
         rapid.sendTestMessage("{}")
         assertTrue(appender.list.isEmpty())
@@ -38,9 +41,9 @@ internal class LogWrapperTest {
 
     @Test
     fun `logger når melding ikke er gjenkjent`() {
-        LogWrapper(rapid, log).apply {
-            TestRiver(this, problemsCollector) { validate { it.requireKey("a_key_not_set_1") } }
-            TestRiver(this, problemsCollector) { validate { it.requireKey("a_key_not_set_2") } }
+        LogWrapper(rapid, mediator).apply {
+            TestRiver(this, mediator) { validate { it.requireKey("a_key_not_set_1") } }
+            TestRiver(this, mediator) { validate { it.requireKey("a_key_not_set_2") } }
         }
         rapid.sendTestMessage("{}")
         assertTrue(appender.list.filter { it.formattedMessage.contains("Kunne ikke forstå melding") }.size == 1)
@@ -50,7 +53,7 @@ internal class LogWrapperTest {
 
     private class TestRiver(
         rapidsConnection: RapidsConnection,
-        private val problemsCollector: ProblemsCollector,
+        private val mediator: MeldingMediator,
         validation: River.() -> Unit = {}
     ) :
         River.PacketListener {
@@ -60,7 +63,7 @@ internal class LogWrapperTest {
 
         override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {}
         override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
-            problemsCollector.add("Test river", problems)
+            mediator.onRiverError("Test river", problems)
         }
     }
 

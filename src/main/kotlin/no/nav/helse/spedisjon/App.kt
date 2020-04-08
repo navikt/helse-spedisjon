@@ -5,8 +5,6 @@ import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.spedisjon.AktørregisteretClient.AktørregisteretRestClient
 import no.nav.helse.spedisjon.AktørregisteretClient.CachedAktørregisteretClient
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 
 fun main() {
@@ -22,12 +20,11 @@ fun main() {
 
     val meldingMediator = MeldingMediator(meldingDao, aktørregisteretClient, env["STREAM_TO_RAPID"]?.let { "false" != it.toLowerCase() } ?: true)
 
-    LogWrapper(RapidApplication.create(env), LoggerFactory.getLogger("tjenestekall")).apply {
-        NyeSøknader(this, meldingMediator, problemsCollector)
-        SendteSøknaderArbeidsgiver(this, meldingMediator, problemsCollector)
-        SendteSøknaderNav(this, meldingMediator, problemsCollector)
-        Inntektsmeldinger(this, meldingMediator, problemsCollector)
-        AndreHendelser(this, problemsCollector)
+    LogWrapper(RapidApplication.create(env), meldingMediator).apply {
+        NyeSøknader(this, meldingMediator)
+        SendteSøknaderArbeidsgiver(this, meldingMediator)
+        SendteSøknaderNav(this, meldingMediator)
+        Inntektsmeldinger(this, meldingMediator)
     }.apply {
         register(object : RapidsConnection.StatusListener {
             override fun onStartup(rapidsConnection: RapidsConnection) {
@@ -43,28 +40,17 @@ internal interface ProblemsCollector {
 
 internal class LogWrapper(
     private val rapidsConnection: RapidsConnection,
-    private val logger: Logger
+    private val meldingMediator: MeldingMediator
 ) : RapidsConnection(), RapidsConnection.MessageListener {
-    internal val problemsCollector = Collector
 
     init {
         rapidsConnection.register(this)
     }
 
     override fun onMessage(message: String, context: MessageContext) {
+        meldingMediator.beforeMessage(message, listeners.size)
         listeners.forEach { it.onMessage(message, context) }
-        logProblems(message)
-        problemsCollector.messageProblems.clear()
-    }
-
-    private fun logProblems(message: String) {
-        if (problemsCollector.messageProblems.size != listeners.size) return
-        logger.info(
-            "Kunne ikke forstå melding:\n{}\n\nProblemer:\n{}",
-            message,
-            problemsCollector.messageProblems.joinToString(separator = "\n\n") {
-                "${it.first}:\n${it.second}"
-            })
+        meldingMediator.afterMessage(message, listeners.size)
     }
 
     override fun publish(message: String) {
@@ -81,14 +67,6 @@ internal class LogWrapper(
 
     override fun stop() {
         rapidsConnection.stop()
-    }
-
-    internal companion object Collector : ProblemsCollector {
-        private val messageProblems = mutableListOf<Pair<String, MessageProblems>>()
-
-        override fun add(type: String, problems: MessageProblems) {
-            messageProblems.add(type to problems)
-        }
     }
 }
 

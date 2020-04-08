@@ -5,8 +5,7 @@ import no.nav.helse.rapids_rivers.*
 
 internal class Inntektsmeldinger(
     rapidsConnection: RapidsConnection,
-    private val meldingMediator: MeldingMediator,
-    private val problemsCollector: ProblemsCollector
+    private val meldingMediator: MeldingMediator
 ) : River.PacketListener {
 
     init {
@@ -33,6 +32,6 @@ internal class Inntektsmeldinger(
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
-        problemsCollector.add("Inntektsmelding", problems)
+        meldingMediator.onRiverError("Inntektsmelding", problems)
     }
 }
