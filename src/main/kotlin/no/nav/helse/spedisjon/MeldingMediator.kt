@@ -21,6 +21,9 @@ internal class MeldingMediator(
         private val unikteller = Counter.build("melding_unik_totals", "Antall unike meldinger mottatt")
             .labelNames("type")
             .register()
+        private val sendtteller = Counter.build("melding_sendt_totals", "Antall meldinger sendt")
+            .labelNames("type")
+            .register()
     }
 
     private val messageProblems = mutableListOf<Pair<String, MessageProblems>>()
@@ -44,6 +47,7 @@ internal class MeldingMediator(
         if (!meldingDao.leggInn(melding)) return
         unikteller.labels(melding.type).inc()
         if (!streamToRapid) return
+        sendtteller.labels(melding.type).inc()
         context.send(melding.fødselsnummer(), melding.json())
     }
 
