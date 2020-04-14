@@ -62,6 +62,29 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
     }
 
+    @Test
+    internal fun `leser inntektsmeldinger uten første fraværsdag`() {
+        testRapid.sendTestMessage("""
+{
+    "inntektsmeldingId": "id",
+    "arbeidstakerFnr": "$FØDSELSNUMMER",
+    "arbeidstakerAktorId": "$AKTØR",
+    "virksomhetsnummer": "1234",
+    "arbeidsgivertype": "BEDRIFT",
+    "beregnetInntekt": "1000",
+    "mottattDato": "${LocalDateTime.now()}",
+    "endringIRefusjoner": [],
+    "arbeidsgiverperioder": [],
+    "ferieperioder": [],
+    "status": "GYLDIG",
+    "arkivreferanse": "arkivref",
+    "foersteFravaersdag": null
+}"""
+        )
+
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+    }
+
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         Inntektsmeldinger(
             rapidsConnection = rapidsConnection,

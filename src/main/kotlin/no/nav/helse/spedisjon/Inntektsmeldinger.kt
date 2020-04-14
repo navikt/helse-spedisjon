@@ -13,16 +13,32 @@ internal class Inntektsmeldinger(
             validate { it.forbid("@event_name") }
             validate {
                 it.requireKey(
-                    "inntektsmeldingId",
-                    "arbeidstakerAktorId", "virksomhetsnummer",
+                    "inntektsmeldingId", "arbeidstakerAktorId", "virksomhetsnummer",
                     "arbeidsgivertype", "beregnetInntekt",
-                    "endringIRefusjoner", "arbeidsgiverperioder",
-                    "status", "arkivreferanse", "ferieperioder"
+                    "status", "arkivreferanse"
                 )
             }
-            validate { it.require("foersteFravaersdag", JsonNode::asLocalDate) }
+            validate {
+                it.requireArray("arbeidsgiverperioder") {
+                    require("fom", JsonNode::asLocalDate)
+                    require("tom", JsonNode::asLocalDate)
+                }
+            }
+            validate {
+                it.requireArray("ferieperioder") {
+                    require("fom", JsonNode::asLocalDate)
+                    require("tom", JsonNode::asLocalDate)
+                }
+            }
+            validate {
+                it.requireArray("endringIRefusjoner") {
+                    require("endringsdato", JsonNode::asLocalDate)
+                }
+            }
+            validate { it.interestedIn("foersteFravaersdag", JsonNode::asLocalDate) }
+            validate { it.interestedIn("refusjon.opphoersdato", JsonNode::asLocalDate) }
             validate { it.require("mottattDato", JsonNode::asLocalDateTime) }
-            validate { it.interestedIn("arbeidstakerFnr") }
+            validate { it.interestedIn("arbeidstakerFnr", "refusjon.beloepPrMnd") }
         }.register(this)
     }
 
