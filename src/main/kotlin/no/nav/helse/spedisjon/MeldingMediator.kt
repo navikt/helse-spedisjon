@@ -24,18 +24,27 @@ internal class MeldingMediator(
         private val sendtteller = Counter.build("melding_sendt_totals", "Antall meldinger sendt")
             .labelNames("type")
             .register()
+        private val fnrteller = Counter.build("melding_oppslag_fnr_totals", "Antall ganger fnr er slått opp")
+            .labelNames("type")
+            .register()
     }
 
     private val messageProblems = mutableListOf<Pair<String, MessageProblems>>()
+    private var fnroppslag = false
 
     init {
         if (!streamToRapid) log.warn("Sender ikke meldinger videre til rapid")
     }
 
-    fun beforeMessage(message: String, numberOfRivers: Int) {}
+    fun beforeMessage(message: String, numberOfRivers: Int) {
+        fnroppslag = false
+    }
 
     fun onPacket(packet: JsonMessage, aktørIdfelt: String, fødselsnummerfelt: String) {
-        packet.putIfAbsent(fødselsnummerfelt) { aktørregisteretClient.hentFødselsnummer(packet[aktørIdfelt].asText())}
+        packet.putIfAbsent(fødselsnummerfelt) {
+            fnroppslag = true;
+            sikkerLogg.info("gjør oppslag på fnr for melding:\n${packet.toJson()}")
+            aktørregisteretClient.hentFødselsnummer(packet[aktørIdfelt].asText())}
     }
 
     fun onRiverError(river: String, problems: MessageProblems) {
@@ -44,6 +53,7 @@ internal class MeldingMediator(
 
     fun onMelding(melding: Melding, context: RapidsConnection.MessageContext) {
         meldingsteller.labels(melding.type).inc()
+        if (fnroppslag) fnrteller.labels(melding.type).inc()
         if (!meldingDao.leggInn(melding)) return
         unikteller.labels(melding.type).inc()
         if (!streamToRapid) return
