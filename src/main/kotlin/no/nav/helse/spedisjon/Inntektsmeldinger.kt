@@ -10,35 +10,30 @@ internal class Inntektsmeldinger(
 
     init {
         River(rapidsConnection).apply {
-            validate { it.forbid("@event_name") }
             validate {
+                it.rejectKey("@event_name")
+                it.demandKey("inntektsmeldingId")
                 it.requireKey(
                     "inntektsmeldingId", "arbeidstakerAktorId", "virksomhetsnummer",
                     "arbeidsgivertype", "beregnetInntekt",
                     "status", "arkivreferanse"
                 )
-            }
-            validate {
                 it.requireArray("arbeidsgiverperioder") {
                     require("fom", JsonNode::asLocalDate)
                     require("tom", JsonNode::asLocalDate)
                 }
-            }
-            validate {
                 it.requireArray("ferieperioder") {
                     require("fom", JsonNode::asLocalDate)
                     require("tom", JsonNode::asLocalDate)
                 }
-            }
-            validate {
                 it.requireArray("endringIRefusjoner") {
                     require("endringsdato", JsonNode::asLocalDate)
                 }
+                it.interestedIn("foersteFravaersdag", JsonNode::asLocalDate)
+                it.interestedIn("refusjon.opphoersdato", JsonNode::asLocalDate)
+                it.require("mottattDato", JsonNode::asLocalDateTime)
+                it.interestedIn("arbeidstakerFnr", "refusjon.beloepPrMnd")
             }
-            validate { it.interestedIn("foersteFravaersdag", JsonNode::asLocalDate) }
-            validate { it.interestedIn("refusjon.opphoersdato", JsonNode::asLocalDate) }
-            validate { it.require("mottattDato", JsonNode::asLocalDateTime) }
-            validate { it.interestedIn("arbeidstakerFnr", "refusjon.beloepPrMnd") }
         }.register(this)
     }
 
@@ -49,5 +44,9 @@ internal class Inntektsmeldinger(
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
         meldingMediator.onRiverError("Inntektsmelding", problems)
+    }
+
+    override fun onSevere(error: MessageProblems.MessageException, context: RapidsConnection.MessageContext) {
+        meldingMediator.onRiverSevere("Inntektsmelding", error)
     }
 }

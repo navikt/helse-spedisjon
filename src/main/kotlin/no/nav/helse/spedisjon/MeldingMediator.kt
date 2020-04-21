@@ -29,26 +29,36 @@ internal class MeldingMediator(
             .register()
     }
 
-    private val messageProblems = mutableListOf<Pair<String, MessageProblems>>()
     private var fnroppslag = false
+    private var messageRecognized = false
+    private val riverSevereErrors = mutableListOf<Pair<String, MessageProblems>>()
+    private val riverErrors = mutableListOf<Pair<String, MessageProblems>>()
 
     init {
         if (!streamToRapid) log.warn("Sender ikke meldinger videre til rapid")
     }
 
-    fun beforeMessage(message: String, numberOfRivers: Int) {
+    fun beforeMessage(message: String) {
         fnroppslag = false
+        messageRecognized = false
+        riverSevereErrors.clear()
+        riverErrors.clear()
     }
 
     fun onPacket(packet: JsonMessage, aktørIdfelt: String, fødselsnummerfelt: String) {
+        messageRecognized = true
         packet.putIfAbsent(fødselsnummerfelt) {
             fnroppslag = true;
             sikkerLogg.info("gjør oppslag på fnr for melding:\n${packet.toJson()}")
             aktørregisteretClient.hentFødselsnummer(packet[aktørIdfelt].asText())}
     }
 
-    fun onRiverError(river: String, problems: MessageProblems) {
-        messageProblems.add(river to problems)
+    fun onRiverError(riverName: String, problems: MessageProblems) {
+        riverErrors.add(riverName to problems)
+    }
+
+    fun onRiverSevere(riverName: String, error: MessageProblems.MessageException) {
+        riverSevereErrors.add(riverName to error.problems)
     }
 
     fun onMelding(melding: Melding, context: RapidsConnection.MessageContext) {
@@ -61,28 +71,10 @@ internal class MeldingMediator(
         context.send(melding.fødselsnummer(), melding.json())
     }
 
-    fun afterMessage(message: String, numberOfRivers: Int) {
-        logProblems(message, numberOfRivers)
-        messageProblems.clear()
-    }
-
-    private fun logProblems(message: String, numberOfRivers: Int) {
-        if (isRapidEvent(message)) return
-        if (messageProblems.size != numberOfRivers) return
-        sikkerLogg.info(
-            "Kunne ikke forstå melding:\n{}\n\nProblemer:\n{}",
-            message,
-            messageProblems.joinToString(separator = "\n\n") {
-                "${it.first}:\n${it.second}"
-            })
-    }
-
-    private fun isRapidEvent(message: String): Boolean {
-        return try {
-            MessageProblems(message).also {
-                JsonMessage(message, it).apply { forbid("@event_name") }
-            }.hasErrors()
-        } catch (err: MessageProblems.MessageException) { false }
+    fun afterMessage(message: String) {
+        if (messageRecognized) return
+        if (riverErrors.isNotEmpty()) return sikkerLogg.warn("kunne ikke gjenkjenne melding:\n\t$message\n\nProblemer:\n${riverErrors.joinToString(separator = "\n") { "${it.first}:\n${it.second}" }}")
+        sikkerLogg.debug("ukjent melding:\n\t$message\n\nProblemer:\n${riverSevereErrors.joinToString(separator = "\n") { "${it.first}:\n${it.second}" }}")
     }
 
     private fun JsonMessage.putIfAbsent(key: String, block: () -> String?) {

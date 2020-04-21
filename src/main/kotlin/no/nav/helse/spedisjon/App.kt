@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon
 
-import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.spedisjon.AktørregisteretClient.AktørregisteretRestClient
@@ -34,10 +33,6 @@ fun main() {
     }.start()
 }
 
-internal interface ProblemsCollector {
-    fun add(type: String, problems: MessageProblems)
-}
-
 internal class LogWrapper(
     private val rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator
@@ -48,9 +43,9 @@ internal class LogWrapper(
     }
 
     override fun onMessage(message: String, context: MessageContext) {
-        meldingMediator.beforeMessage(message, listeners.size)
+        meldingMediator.beforeMessage(message)
         listeners.forEach { it.onMessage(message, context) }
-        meldingMediator.afterMessage(message, listeners.size)
+        meldingMediator.afterMessage(message)
     }
 
     override fun publish(message: String) {

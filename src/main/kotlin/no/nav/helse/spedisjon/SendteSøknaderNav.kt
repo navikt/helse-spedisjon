@@ -10,13 +10,15 @@ internal class SendteSøknaderNav(
 
     init {
         River(rapidsConnection).apply {
-            validate { it.forbid("@event_name") }
-            validate { it.requireKey("aktorId", "arbeidsgiver.orgnummer", "soknadsperioder") }
-            validate { it.require("opprettet", JsonNode::asLocalDateTime) }
-            validate { it.requireValue("status", "SENDT") }
-            validate { it.requireKey("id", "fom", "tom", "egenmeldinger", "fravar") }
-            validate { it.require("sendtNav", JsonNode::asLocalDateTime) }
-            validate { it.interestedIn("fnr") }
+            validate {
+                it.rejectKey("@event_name")
+                it.demandValue("status", "SENDT")
+                it.requireKey("aktorId", "arbeidsgiver.orgnummer", "soknadsperioder")
+                it.require("opprettet", JsonNode::asLocalDateTime)
+                it.requireKey("id", "fom", "tom", "egenmeldinger", "fravar")
+                it.require("sendtNav", JsonNode::asLocalDateTime)
+                it.interestedIn("fnr")
+            }
         }.register(this)
     }
 
@@ -27,5 +29,9 @@ internal class SendteSøknaderNav(
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
         meldingMediator.onRiverError("Sendt søknad Nav", problems)
+    }
+
+    override fun onSevere(error: MessageProblems.MessageException, context: RapidsConnection.MessageContext) {
+        meldingMediator.onRiverSevere("Sendt søknad Nav", error)
     }
 }

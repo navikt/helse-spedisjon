@@ -32,10 +32,10 @@ internal class LogWrapperTest {
     @Test
     fun `logger ingenting når melding er gjenkjent`() {
         LogWrapper(rapid, mediator).apply {
-            TestRiver(this, mediator)
+            TestRiver(this, mediator) { validate { it.requireKey("a_key") } }
             TestRiver(this, mediator) { validate { it.requireKey("a_key_not_set") } }
         }
-        rapid.sendTestMessage("{}")
+        rapid.sendTestMessage("{\"a_key\": \"foo\"}")
         assertTrue(appender.list.isEmpty())
     }
 
@@ -46,7 +46,7 @@ internal class LogWrapperTest {
             TestRiver(this, mediator) { validate { it.requireKey("a_key_not_set_2") } }
         }
         rapid.sendTestMessage("{}")
-        assertTrue(appender.list.filter { it.formattedMessage.contains("Kunne ikke forstå melding") }.size == 1)
+        assertTrue(appender.list.filter { it.formattedMessage.contains("kunne ikke gjenkjenne melding") }.size == 1)
         assertTrue(appender.list.filter { it.formattedMessage.contains("a_key_not_set_1") }.size == 1)
         assertTrue(appender.list.filter { it.formattedMessage.contains("a_key_not_set_2") }.size == 1)
     }
@@ -61,9 +61,14 @@ internal class LogWrapperTest {
             River(rapidsConnection).apply(validation).register(this)
         }
 
-        override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {}
+        override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
+            mediator.onPacket(packet, "", "a_key")
+        }
         override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
             mediator.onRiverError("Test river", problems)
+        }
+        override fun onSevere(error: MessageProblems.MessageException, context: RapidsConnection.MessageContext) {
+            mediator.onRiverSevere("Test river", error)
         }
     }
 

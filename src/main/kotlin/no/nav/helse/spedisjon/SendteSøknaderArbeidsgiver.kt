@@ -10,14 +10,16 @@ internal class SendteSøknaderArbeidsgiver(
 
     init {
         River(rapidsConnection).apply {
-            validate { it.forbid("@event_name") }
-            validate { it.requireKey("aktorId", "arbeidsgiver.orgnummer", "soknadsperioder") }
-            validate { it.require("opprettet", JsonNode::asLocalDateTime) }
-            validate { it.requireValue("status", "SENDT") }
-            validate { it.requireKey("id", "fom", "tom", "egenmeldinger", "fravar") }
-            validate { it.require("sendtArbeidsgiver", JsonNode::asLocalDateTime) }
-            validate { it.forbid("sendtNav") }
-            validate { it.interestedIn("fnr") }
+            validate {
+                it.rejectKey("@event_name")
+                it.demandValue("status", "SENDT")
+                it.requireKey("aktorId", "arbeidsgiver.orgnummer", "soknadsperioder")
+                it.require("opprettet", JsonNode::asLocalDateTime)
+                it.requireKey("id", "fom", "tom", "egenmeldinger", "fravar")
+                it.require("sendtArbeidsgiver", JsonNode::asLocalDateTime)
+                it.forbid("sendtNav")
+                it.interestedIn("fnr")
+            }
         }.register(this)
     }
 
@@ -28,5 +30,9 @@ internal class SendteSøknaderArbeidsgiver(
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
         meldingMediator.onRiverError("Sendt søknad arbeidsgiver", problems)
+    }
+
+    override fun onSevere(error: MessageProblems.MessageException, context: RapidsConnection.MessageContext) {
+        meldingMediator.onRiverSevere("Sendt søknad arbeidsgiver", error)
     }
 }

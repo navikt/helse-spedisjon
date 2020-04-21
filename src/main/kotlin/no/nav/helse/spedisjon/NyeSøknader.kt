@@ -10,12 +10,14 @@ internal class NyeSøknader(
 
     init {
         River(rapidsConnection).apply {
-            validate { it.forbid("@event_name") }
-            validate { it.requireKey("aktorId", "arbeidsgiver.orgnummer", "soknadsperioder") }
-            validate { it.require("opprettet", JsonNode::asLocalDateTime) }
-            validate { it.requireValue("status", "NY") }
-            validate { it.requireKey("id", "sykmeldingId", "fom", "tom") }
-            validate { it.interestedIn("fnr") }
+            validate {
+                it.rejectKey("@event_name")
+                it.demandValue("status", "NY")
+                it.requireKey("aktorId", "arbeidsgiver.orgnummer", "soknadsperioder")
+                it.require("opprettet", JsonNode::asLocalDateTime)
+                it.requireKey("id", "sykmeldingId", "fom", "tom")
+                it.interestedIn("fnr")
+            }
         }.register(this)
     }
 
@@ -26,5 +28,9 @@ internal class NyeSøknader(
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
         meldingMediator.onRiverError("Ny søknad", problems)
+    }
+
+    override fun onSevere(error: MessageProblems.MessageException, context: RapidsConnection.MessageContext) {
+        meldingMediator.onRiverSevere("Ny søknad", error)
     }
 }
