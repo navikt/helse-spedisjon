@@ -1,14 +1,10 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val junitJupiterVersion = "5.6.0"
-val flywayVersion = "6.3.1"
-val hikariVersion = "3.4.2"
-val vaultJdbcVersion = "1.3.1"
-val kotliqueryVersion = "1.3.1"
 val mainClass = "no.nav.helse.spedisjon.AppKt"
 
 plugins {
-    kotlin("jvm") version "1.3.70"
+    kotlin("jvm") version "1.3.72"
 }
 
 buildscript {
@@ -21,12 +17,12 @@ val githubUser: String by project
 val githubPassword: String by project
 
 dependencies {
-    implementation("com.github.navikt:rapids-and-rivers:1.b83e8b9")
+    implementation("com.github.navikt:rapids-and-rivers:1.c9819fc")
 
-    implementation("org.flywaydb:flyway-core:$flywayVersion")
-    implementation("com.zaxxer:HikariCP:$hikariVersion")
-    implementation("no.nav:vault-jdbc:$vaultJdbcVersion")
-    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+    implementation("org.flywaydb:flyway-core:6.3.1")
+    implementation("com.zaxxer:HikariCP:3.4.2")
+    implementation("no.nav:vault-jdbc:1.3.1")
+    implementation("com.github.seratch:kotliquery:1.3.1")
 
     testImplementation("com.opentable.components:otj-pg-embedded:0.13.3")
     testImplementation("io.mockk:mockk:1.9.3")
