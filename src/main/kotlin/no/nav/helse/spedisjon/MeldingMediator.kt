@@ -2,7 +2,6 @@ package no.nav.helse.spedisjon
 
 import io.prometheus.client.Counter
 import no.nav.helse.rapids_rivers.JsonMessage
-import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.isMissingOrNull
 import org.slf4j.LoggerFactory
@@ -31,8 +30,7 @@ internal class MeldingMediator(
 
     private var fnroppslag = false
     private var messageRecognized = false
-    private val riverSevereErrors = mutableListOf<Pair<String, MessageProblems>>()
-    private val riverErrors = mutableListOf<Pair<String, MessageProblems>>()
+    private val riverErrors = mutableListOf<String>()
 
     init {
         if (!streamToRapid) log.warn("Sender ikke meldinger videre til rapid")
@@ -41,7 +39,6 @@ internal class MeldingMediator(
     fun beforeMessage(message: String) {
         fnroppslag = false
         messageRecognized = false
-        riverSevereErrors.clear()
         riverErrors.clear()
     }
 
@@ -53,12 +50,8 @@ internal class MeldingMediator(
             aktørregisteretClient.hentFødselsnummer(packet[aktørIdfelt].asText())}
     }
 
-    fun onRiverError(riverName: String, problems: MessageProblems) {
-        riverErrors.add(riverName to problems)
-    }
-
-    fun onRiverSevere(riverName: String, error: MessageProblems.MessageException) {
-        riverSevereErrors.add(riverName to error.problems)
+    fun onRiverError(error: String) {
+        riverErrors.add(error)
     }
 
     fun onMelding(melding: Melding, context: RapidsConnection.MessageContext) {
@@ -72,9 +65,8 @@ internal class MeldingMediator(
     }
 
     fun afterMessage(message: String) {
-        if (messageRecognized) return
-        if (riverErrors.isNotEmpty()) return sikkerLogg.warn("kunne ikke gjenkjenne melding:\n\t$message\n\nProblemer:\n${riverErrors.joinToString(separator = "\n") { "${it.first}:\n${it.second}" }}")
-        sikkerLogg.debug("ukjent melding:\n\t$message\n\nProblemer:\n${riverSevereErrors.joinToString(separator = "\n") { "${it.first}:\n${it.second}" }}")
+        if (messageRecognized || riverErrors.isEmpty()) return
+        sikkerLogg.warn("kunne ikke gjenkjenne melding:\n\t$message\n\nProblemer:\n${riverErrors.joinToString(separator = "\n")}")
     }
 
     private fun JsonMessage.putIfAbsent(key: String, block: () -> String?) {

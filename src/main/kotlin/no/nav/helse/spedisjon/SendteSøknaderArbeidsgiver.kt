@@ -12,12 +12,13 @@ internal class SendteSøknaderArbeidsgiver(
         River(rapidsConnection).apply {
             validate {
                 it.rejectKey("@event_name")
+                it.rejectKey("sendtNav")
+                it.demandKey("sendtArbeidsgiver")
                 it.demandValue("status", "SENDT")
                 it.requireKey("aktorId", "arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fom", "tom", "egenmeldinger", "fravar")
                 it.require("sendtArbeidsgiver", JsonNode::asLocalDateTime)
-                it.forbid("sendtNav")
                 it.interestedIn("fnr")
             }
         }.register(this)
@@ -29,10 +30,6 @@ internal class SendteSøknaderArbeidsgiver(
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
-        meldingMediator.onRiverError("Sendt søknad arbeidsgiver", problems)
-    }
-
-    override fun onSevere(error: MessageProblems.MessageException, context: RapidsConnection.MessageContext) {
-        meldingMediator.onRiverSevere("Sendt søknad arbeidsgiver", error)
+        meldingMediator.onRiverError("kunne ikke gjenkjenne Sendt søknad arbeidsgiver:\n$problems")
     }
 }

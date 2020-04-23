@@ -7,7 +7,6 @@ internal class Inntektsmeldinger(
     rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator
 ) : River.PacketListener {
-
     init {
         River(rapidsConnection).apply {
             validate {
@@ -43,10 +42,6 @@ internal class Inntektsmeldinger(
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
-        meldingMediator.onRiverError("Inntektsmelding", problems)
-    }
-
-    override fun onSevere(error: MessageProblems.MessageException, context: RapidsConnection.MessageContext) {
-        meldingMediator.onRiverSevere("Inntektsmelding", error)
+        meldingMediator.onRiverError("kunne ikke gjenkjenne Inntektsmelding:\n$problems")
     }
 }

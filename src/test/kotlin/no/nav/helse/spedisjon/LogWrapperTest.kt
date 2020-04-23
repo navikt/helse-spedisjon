@@ -65,10 +65,7 @@ internal class LogWrapperTest {
             mediator.onPacket(packet, "", "a_key")
         }
         override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
-            mediator.onRiverError("Test river", problems)
-        }
-        override fun onSevere(error: MessageProblems.MessageException, context: RapidsConnection.MessageContext) {
-            mediator.onRiverSevere("Test river", error)
+            mediator.onRiverError("Ukjent melding:\n$problems")
         }
     }
 

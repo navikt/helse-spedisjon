@@ -27,10 +27,6 @@ internal class NyeSøknader(
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
-        meldingMediator.onRiverError("Ny søknad", problems)
-    }
-
-    override fun onSevere(error: MessageProblems.MessageException, context: RapidsConnection.MessageContext) {
-        meldingMediator.onRiverSevere("Ny søknad", error)
+        meldingMediator.onRiverError("kunne ikke gjenkjenne Ny søknad:\n$problems")
     }
 }

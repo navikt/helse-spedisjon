@@ -13,6 +13,7 @@ internal class SendteSøknaderNav(
             validate {
                 it.rejectKey("@event_name")
                 it.demandValue("status", "SENDT")
+                it.demandKey("sendtNav")
                 it.requireKey("aktorId", "arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fom", "tom", "egenmeldinger", "fravar")
@@ -28,10 +29,6 @@ internal class SendteSøknaderNav(
     }
 
     override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
-        meldingMediator.onRiverError("Sendt søknad Nav", problems)
-    }
-
-    override fun onSevere(error: MessageProblems.MessageException, context: RapidsConnection.MessageContext) {
-        meldingMediator.onRiverSevere("Sendt søknad Nav", error)
+        meldingMediator.onRiverError("kunne ikke gjenkjenne Sendt søknad Nav:\n$problems")
     }
 }
