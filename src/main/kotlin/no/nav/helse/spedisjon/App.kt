@@ -3,7 +3,6 @@ package no.nav.helse.spedisjon
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.spedisjon.AktørregisteretClient.AktørregisteretRestClient
-import no.nav.helse.spedisjon.AktørregisteretClient.CachedAktørregisteretClient
 import java.io.File
 
 fun main() {
@@ -11,11 +10,11 @@ fun main() {
     val dataSourceBuilder = DataSourceBuilder(env)
     val meldingDao = MeldingDao(dataSourceBuilder.getDataSource())
 
-    val aktørregisteretClient = CachedAktørregisteretClient(AktørregisteretRestClient(env.getValue("AKTORREGISTERET_URL"), StsRestClient(
+    val aktørregisteretClient = AktørregisteretRestClient(env.getValue("AKTORREGISTERET_URL"), StsRestClient(
         baseUrl = "http://security-token-service.default.svc.nais.local",
         username = "/var/run/secrets/nais.io/service_user/username".readFile(),
         password = "/var/run/secrets/nais.io/service_user/password".readFile()
-    )))
+    ))
 
     val meldingMediator = MeldingMediator(meldingDao, aktørregisteretClient, env["STREAM_TO_RAPID"]?.let { "false" != it.toLowerCase() } ?: true)
 

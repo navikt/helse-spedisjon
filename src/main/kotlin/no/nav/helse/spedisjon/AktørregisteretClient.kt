@@ -7,36 +7,12 @@ import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import java.time.Duration
 import java.util.*
 
 internal interface AktørregisteretClient {
     fun hentFødselsnummer(aktørId: String): String?
 
-    class CachedAktørregisteretClient(
-        private val client: AktørregisteretClient,
-        private val ttl: Duration = Duration.ofHours(12)
-    ) : AktørregisteretClient {
-        private companion object {
-            private val cacheCounter = Counter.build("aktorregisteret_oppslag_cache_hits_totals", "Antall cache hits")
-                .register()
-        }
-        private val cache = mutableMapOf<String, Pair<Long, String>>()
-
-        override fun hentFødselsnummer(aktørId: String): String? {
-            val maxTime = System.currentTimeMillis() - ttl.toMillis()
-            cache.forEach { (key, value) ->
-                if (maxTime >= value.first) cache.remove(key)
-            }
-            return cache.compute(aktørId) { _, current ->
-                current?.also { cacheCounter.inc() } ?: client.hentFødselsnummer(aktørId)?.let {
-                    System.currentTimeMillis() to it
-                }
-            }?.second
-        }
-    }
-
-    class AktørregisteretRestClient(
+   class AktørregisteretRestClient(
         private val baseUrl: String,
         private val stsRestClient: StsRestClient
     ) : AktørregisteretClient {
