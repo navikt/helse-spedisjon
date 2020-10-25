@@ -1,7 +1,7 @@
 val junitJupiterVersion = "5.6.2"
 
 plugins {
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.4.0"
 }
 
 buildscript {
@@ -12,7 +12,6 @@ buildscript {
 
 repositories {
     mavenCentral()
-    maven("https://kotlin.bintray.com/ktor")
     maven("https://jitpack.io")
 }
 
@@ -36,10 +35,10 @@ dependencies {
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "12"
+        kotlinOptions.jvmTarget = "14"
     }
     compileTestKotlin {
-        kotlinOptions.jvmTarget = "12"
+        kotlinOptions.jvmTarget = "14"
     }
 
     named<Jar>("jar") {
@@ -69,6 +68,6 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "6.5.1"
+        gradleVersion = "6.7"
     }
 }
