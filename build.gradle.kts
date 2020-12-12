@@ -1,7 +1,7 @@
-val junitJupiterVersion = "5.6.2"
+val junitJupiterVersion = "5.7.0"
 
 plugins {
-    kotlin("jvm") version "1.4.0"
+    kotlin("jvm") version "1.4.20"
 }
 
 buildscript {
@@ -16,8 +16,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.navikt:rapids-and-rivers:1.61eb329")
-
+    implementation("com.github.navikt:rapids-and-rivers:1.a5cb15b")
     implementation("org.flywaydb:flyway-core:6.5.0")
     implementation("com.zaxxer:HikariCP:3.4.5")
     implementation("no.nav:vault-jdbc:1.3.7")
