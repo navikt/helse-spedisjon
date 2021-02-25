@@ -1,13 +1,7 @@
 val junitJupiterVersion = "5.7.0"
 
 plugins {
-    kotlin("jvm") version "1.4.20"
-}
-
-buildscript {
-    dependencies {
-        classpath("org.junit.platform:junit-platform-gradle-plugin:1.2.0")
-    }
+    kotlin("jvm") version "1.4.30"
 }
 
 repositories {
@@ -16,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.navikt:rapids-and-rivers:1.a5cb15b")
+    implementation("com.github.navikt:rapids-and-rivers:1.a77261b")
     implementation("org.flywaydb:flyway-core:6.5.0")
     implementation("com.zaxxer:HikariCP:3.4.5")
     implementation("no.nav:vault-jdbc:1.3.7")
@@ -67,6 +61,6 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "6.7"
+        gradleVersion = "6.8.3"
     }
 }

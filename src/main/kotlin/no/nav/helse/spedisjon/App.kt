@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.spedisjon.AktørregisteretClient.AktørregisteretRestClient

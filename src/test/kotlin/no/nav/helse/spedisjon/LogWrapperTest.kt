@@ -3,10 +3,7 @@ package no.nav.helse.spedisjon
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.mockk.mockk
-import no.nav.helse.rapids_rivers.JsonMessage
-import no.nav.helse.rapids_rivers.MessageProblems
-import no.nav.helse.rapids_rivers.RapidsConnection
-import no.nav.helse.rapids_rivers.River
+import no.nav.helse.rapids_rivers.*
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -62,10 +59,10 @@ internal class LogWrapperTest {
             River(rapidsConnection).apply(validation).register(this)
         }
 
-        override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
+        override fun onPacket(packet: JsonMessage, context: MessageContext) {
             mediator.onPacket(packet, "", "a_key")
         }
-        override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
+        override fun onError(problems: MessageProblems, context: MessageContext) {
             mediator.onRiverError("Ukjent melding:\n$problems")
         }
     }

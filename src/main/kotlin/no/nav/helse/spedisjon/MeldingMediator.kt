@@ -2,6 +2,7 @@ package no.nav.helse.spedisjon
 
 import io.prometheus.client.Counter
 import no.nav.helse.rapids_rivers.JsonMessage
+import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.isMissingOrNull
 import org.slf4j.LoggerFactory
@@ -54,14 +55,14 @@ internal class MeldingMediator(
         riverErrors.add(error)
     }
 
-    fun onMelding(melding: Melding, context: RapidsConnection.MessageContext) {
+    fun onMelding(melding: Melding, context: MessageContext) {
         meldingsteller.labels(melding.type).inc()
         if (fnroppslag) fnrteller.labels(melding.type).inc()
         if (!meldingDao.leggInn(melding)) return
         unikteller.labels(melding.type).inc()
         if (!streamToRapid) return
         sendtteller.labels(melding.type).inc()
-        context.send(melding.fødselsnummer(), melding.json())
+        context.publish(melding.fødselsnummer(), melding.json())
     }
 
     fun afterMessage(message: String) {

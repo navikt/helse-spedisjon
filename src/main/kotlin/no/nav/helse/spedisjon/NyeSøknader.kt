@@ -21,12 +21,12 @@ internal class NyeSøknader(
         }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: RapidsConnection.MessageContext) {
+    override fun onPacket(packet: JsonMessage, context: MessageContext) {
         meldingMediator.onPacket(packet, "aktorId", "fnr")
         meldingMediator.onMelding(Melding.NySøknad(packet), context)
     }
 
-    override fun onError(problems: MessageProblems, context: RapidsConnection.MessageContext) {
+    override fun onError(problems: MessageProblems, context: MessageContext) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne Ny søknad:\n$problems")
     }
 }
