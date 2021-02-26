@@ -50,7 +50,7 @@ private fun createAivenProducer(env: Map<String, String>): KafkaProducer<String,
         put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, env.getValue("KAFKA_BROKERS"))
         put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.SSL.name)
         put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "")
-        put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, env.getValue("KAFKA_KEYSTORE_PATH"))
+        put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, "jks")
         put(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG, "PKCS12")
         put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, env.getValue("KAFKA_TRUSTSTORE_PATH"))
         put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, env.getValue("KAFKA_CREDSTORE_PASSWORD"))
