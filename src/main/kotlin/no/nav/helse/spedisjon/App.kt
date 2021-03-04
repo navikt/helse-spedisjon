@@ -81,12 +81,12 @@ internal class LogWrapper(
 
     override fun onMessage(message: String, context: MessageContext) {
         meldingMediator.beforeMessage(message)
-        listeners.forEach { it.onMessage(message, context) }
+        listeners.forEach { it.onMessage(message, this) }
         meldingMediator.afterMessage(message)
     }
 
     override fun publish(message: String) {
-        aivenProducer?.send(ProducerRecord(aivenTopic, message))?.also { log.info("producing message (without key) to aiven") } ?: rapidsConnection.publish(message)
+        throw IllegalStateException("Krever key for å sikre at vi publiserer meldinger med fnr som key")
     }
 
     override fun publish(key: String, message: String) {
