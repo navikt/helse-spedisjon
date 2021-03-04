@@ -12,8 +12,11 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.apache.kafka.common.serialization.StringSerializer
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.*
+
+private val log = LoggerFactory.getLogger("no.nav.helse.spedisjon.App")
 
 fun main() {
     val env = System.getenv()
@@ -45,7 +48,8 @@ fun main() {
 }
 
 private fun createAivenProducer(env: Map<String, String>): KafkaProducer<String, String>? {
-    if (!env.containsKey("KAFKA_RAPID_TOPIC_AIVEN")) return null
+    if (!env.containsKey("KAFKA_RAPID_TOPIC_AIVEN")) return null.also { log.info("Not creating aiven producer") }
+    log.info("Creating aiven producer")
     val properties = Properties().apply {
         put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, env.getValue("KAFKA_BROKERS"))
         put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.SSL.name)
@@ -82,11 +86,11 @@ internal class LogWrapper(
     }
 
     override fun publish(message: String) {
-        aivenProducer?.send(ProducerRecord(aivenTopic, message)) ?: rapidsConnection.publish(message)
+        aivenProducer?.send(ProducerRecord(aivenTopic, message))?.also { log.info("producing message (without key) to aiven") } ?: rapidsConnection.publish(message)
     }
 
     override fun publish(key: String, message: String) {
-        aivenProducer?.send(ProducerRecord(aivenTopic, key, message)) ?: rapidsConnection.publish(key, message)
+        aivenProducer?.send(ProducerRecord(aivenTopic, key, message))?.also { log.info("producing message (with key) to aiven") } ?: rapidsConnection.publish(key, message)
     }
 
     override fun start() {
