@@ -5,11 +5,9 @@ import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.spedisjon.AktørregisteretClient.AktørregisteretRestClient
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.Producer
-import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.*
 import org.apache.kafka.common.config.SslConfigs
+import org.apache.kafka.common.errors.AuthorizationException
 import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.LoggerFactory
@@ -90,7 +88,15 @@ internal class LogWrapper(
     }
 
     override fun publish(key: String, message: String) {
-        aivenProducer?.send(ProducerRecord(aivenTopic, key, message))?.also { log.info("producing message (with key) to aiven") } ?: rapidsConnection.publish(key, message)
+        aivenProducer?.send(ProducerRecord(aivenTopic, key, message), ::checkFatalError)?.also {
+            log.info("producing message (with key) to aiven")
+        } ?: rapidsConnection.publish(key, message)
+    }
+
+    private fun checkFatalError(metadata: RecordMetadata?, err: Exception?) {
+        if (err == null || err !is AuthorizationException) return
+        log.error("Stopping rapid due to fatal error: ${err.message}", err)
+        stop()
     }
 
     override fun start() {
