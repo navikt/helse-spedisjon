@@ -6,13 +6,20 @@ import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.util.*
 
-abstract class Melding {
+abstract class Melding(protected val packet: JsonMessage) {
+    private val id = UUID.randomUUID()
+
     abstract val type: String
     abstract fun fødselsnummer(): String
     abstract fun rapportertDato(): LocalDateTime
     protected abstract fun duplikatnøkkel(): String
     fun duplikatkontroll() = duplikatnøkkel().sha512()
-    abstract fun json(): String
+    fun json(): String {
+        packet["@event_name"] = type
+        packet["@id"] = id
+        packet["@opprettet"] = rapportertDato()
+        return packet.toJson()
+    }
 
     private companion object {
         private fun String.sha512(): String {
@@ -23,55 +30,31 @@ abstract class Melding {
         }
     }
 
-    class NySøknad(private val packet: JsonMessage) : Melding() {
+    class NySøknad(packet: JsonMessage) : Melding(packet) {
         override val type = "ny_søknad"
         override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["opprettet"].asLocalDateTime()
         override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText() + packet["opprettet"].asText()
-        override fun json(): String {
-            packet["@event_name"] = type
-            packet["@id"] = UUID.randomUUID()
-            packet["@opprettet"] = rapportertDato()
-            return packet.toJson()
-        }
     }
 
-    class SendtSøknadArbeidsgiver(private val packet: JsonMessage) : Melding() {
+    class SendtSøknadArbeidsgiver(packet: JsonMessage) : Melding(packet) {
         override val type = "sendt_søknad_arbeidsgiver"
         override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["sendtArbeidsgiver"].asLocalDateTime()
         override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText() + packet["sendtArbeidsgiver"].asText()
-        override fun json(): String {
-            packet["@event_name"] = type
-            packet["@id"] = UUID.randomUUID()
-            packet["@opprettet"] = rapportertDato()
-            return packet.toJson()
-        }
     }
 
-    class SendtSøknadNav(private val packet: JsonMessage) : Melding() {
+    class SendtSøknadNav(packet: JsonMessage) : Melding(packet) {
         override val type = "sendt_søknad_nav"
         override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["sendtNav"].asLocalDateTime()
         override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText() + packet["sendtNav"].asText()
-        override fun json(): String {
-            packet["@event_name"] = type
-            packet["@id"] = UUID.randomUUID()
-            packet["@opprettet"] = rapportertDato()
-            return packet.toJson()
-        }
     }
 
-    class Inntektsmelding(private val packet: JsonMessage) : Melding() {
+    class Inntektsmelding(packet: JsonMessage) : Melding(packet) {
         override val type = "inntektsmelding"
         override fun fødselsnummer(): String = packet["arbeidstakerFnr"].asText().toString()
         override fun rapportertDato() = packet["mottattDato"].asLocalDateTime()
         override fun duplikatnøkkel(): String = packet["arkivreferanse"].asText()
-        override fun json(): String {
-            packet["@event_name"] = type
-            packet["@id"] = UUID.randomUUID()
-            packet["@opprettet"] = rapportertDato()
-            return packet.toJson()
-        }
     }
 }
