@@ -11,6 +11,7 @@ import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.*
 import java.sql.Connection
+import java.time.LocalDateTime
 import javax.sql.DataSource
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -23,6 +24,7 @@ internal abstract class AbstractRiverTest {
     protected companion object {
         const val FØDSELSNUMMER = "fnr"
         const val AKTØR = "aktørId"
+        val OPPRETTET_DATO: LocalDateTime = LocalDateTime.now()
     }
 
     protected abstract fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource)

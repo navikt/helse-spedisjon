@@ -58,7 +58,7 @@ internal class MeldingMediator(
     fun onMelding(melding: Melding, context: MessageContext) {
         meldingsteller.labels(melding.type).inc()
         if (fnroppslag) fnrteller.labels(melding.type).inc()
-        if (!meldingDao.leggInn(melding)) return
+        if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
         unikteller.labels(melding.type).inc()
         if (!streamToRapid) return
         sendtteller.labels(melding.type).inc()
