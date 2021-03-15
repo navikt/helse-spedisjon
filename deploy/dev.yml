@@ -63,5 +63,5 @@ spec:
     value: postgresql/preprod-fss/
   - name: AKTORREGISTERET_URL
     value: https://app-q1.adeo.no/aktoerregister
-  - name: FREMTIDIG_SØKNAD_TOGGLE
+  - name: FREMTIDIG_SOKNAD_TOGGLE
     value: "true"
