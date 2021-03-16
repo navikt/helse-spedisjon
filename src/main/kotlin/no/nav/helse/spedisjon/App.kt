@@ -33,9 +33,7 @@ fun main() {
 
     LogWrapper(RapidApplication.create(env), meldingMediator, env["KAFKA_RAPID_TOPIC_AIVEN"], aivenProducer).apply {
         NyeSøknader(this, meldingMediator)
-        if (env.getOrDefault("FREMTIDIG_SOKNAD_TOGGLE", "false").toBoolean()) {
-            FremtidigSøknaderRiver(this, meldingMediator)
-        }
+        FremtidigSøknaderRiver(this, meldingMediator)
         SendteSøknaderArbeidsgiver(this, meldingMediator)
         SendteSøknaderNav(this, meldingMediator)
         Inntektsmeldinger(this, meldingMediator)
