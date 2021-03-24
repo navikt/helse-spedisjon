@@ -83,7 +83,7 @@ internal class LogWrapper(
 
     override fun onMessage(message: String, context: MessageContext) {
         meldingMediator.beforeMessage(message)
-        notifyMessage(message, context)
+        notifyMessage(message, this)
         meldingMediator.afterMessage(message)
     }
 
