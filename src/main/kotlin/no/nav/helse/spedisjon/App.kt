@@ -5,7 +5,10 @@ import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.spedisjon.AktørregisteretClient.AktørregisteretRestClient
 import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.producer.*
+import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.kafka.clients.producer.ProducerConfig
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.errors.AuthorizationException
 import org.apache.kafka.common.security.auth.SecurityProtocol
@@ -80,7 +83,7 @@ internal class LogWrapper(
 
     override fun onMessage(message: String, context: MessageContext) {
         meldingMediator.beforeMessage(message)
-        listeners.forEach { it.onMessage(message, this) }
+        notifyMessage(message, context)
         meldingMediator.afterMessage(message)
     }
 
