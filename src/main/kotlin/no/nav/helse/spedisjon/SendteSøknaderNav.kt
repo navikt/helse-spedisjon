@@ -13,18 +13,18 @@ internal class SendteSøknaderNav(
             validate {
                 it.rejectKey("@event_name")
                 it.demandValue("status", "SENDT")
+                it.demandValue("type", "ARBEIDSTAKERE")
                 it.demandKey("sendtNav")
                 it.requireKey("arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
-                it.requireKey("id", "fom", "tom", "egenmeldinger", "fravar")
+                it.requireKey("id", "fnr", "fom", "tom", "egenmeldinger", "fravar")
                 it.require("sendtNav", JsonNode::asLocalDateTime)
-                it.interestedIn("aktorId", "fnr", "type")
+                it.interestedIn("aktorId")
             }
         }.register(this)
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        if (!meldingMediator.søknadErRelevant(packet)) return
         meldingMediator.onPacket(packet, "aktorId", "fnr")
         meldingMediator.onMelding(Melding.SendtSøknadNav(packet), context)
     }

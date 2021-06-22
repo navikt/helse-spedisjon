@@ -30,38 +30,11 @@ internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
     "egenmeldinger": [],
     "fravar": [],
     "status": "SENDT",
+    "type": "ARBEIDSTAKERE",
     "sykmeldingId": "id",
     "fom": "2020-01-01",
     "tom": "2020-01-01"
 }""")
-
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-    }
-
-    @Test
-    internal fun `leser sendte søknader uten fnr`() {
-        every {
-            aktørregisteretClient.hentFødselsnummer(AKTØR)
-        } returns FØDSELSNUMMER
-
-        testRapid.sendTestMessage("""
-{
-    "id": "id",
-    "aktorId": "$AKTØR",
-    "arbeidsgiver": {
-        "orgnummer": "1234"
-    },
-    "opprettet": "${LocalDateTime.now()}",
-    "sendtArbeidsgiver": "${LocalDateTime.now()}",
-    "soknadsperioder": [],
-    "egenmeldinger": [],
-    "fravar": [],
-    "status": "SENDT",
-    "sykmeldingId": "id",
-    "fom": "2020-01-01",
-    "tom": "2020-01-01"
-}"""
-        )
 
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
     }

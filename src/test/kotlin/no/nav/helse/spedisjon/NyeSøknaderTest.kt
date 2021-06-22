@@ -27,35 +27,11 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     "opprettet": "${LocalDateTime.now()}",
     "soknadsperioder": [],
     "status": "NY",
+    "type": "ARBEIDSTAKERE",
     "sykmeldingId": "id",
     "fom": "2020-01-01",
     "tom": "2020-01-01"
 }""")
-
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-    }
-
-    @Test
-    internal fun `leser nye søknader uten fnr`() {
-        every {
-            aktørregisteretClient.hentFødselsnummer(AKTØR)
-        } returns FØDSELSNUMMER
-
-        testRapid.sendTestMessage("""
-{
-    "id": "id",
-    "aktorId": "$AKTØR",
-    "arbeidsgiver": {
-        "orgnummer": "1234"
-    },
-    "opprettet": "${LocalDateTime.now()}",
-    "soknadsperioder": [],
-    "status": "NY",
-    "sykmeldingId": "id",
-    "fom": "2020-01-01",
-    "tom": "2020-01-01"
-}"""
-        )
 
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
     }

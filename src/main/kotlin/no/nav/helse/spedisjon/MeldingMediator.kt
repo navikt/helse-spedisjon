@@ -79,15 +79,4 @@ internal class MeldingMediator(
         if (!this[key].isMissingOrNull()) return
         block()?.also { this[key] = it }
     }
-
-    // Midlertidig kode mens vi tester i dev for å ikke behandle søknader med type != ARBEIDSTAKERE på det nye topicet
-    // Når vi er 100% over på aiven kan denne filtreringen skje i valideringen i riveren
-    fun søknadErRelevant(packet: JsonMessage): Boolean {
-        val type: String? = packet["type"].takeUnless(JsonNode::isMissingOrNull)?.asText()
-        if (type != null && type != "ARBEIDSTAKERE") {
-            sikkerLogg.info("Søknad hadde ikke type ARBEIDSTAKERE: ${packet.toJson()}")
-            return false
-        }
-        return true
-    }
 }

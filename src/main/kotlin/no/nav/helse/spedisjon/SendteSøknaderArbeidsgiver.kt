@@ -15,17 +15,17 @@ internal class SendteSøknaderArbeidsgiver(
                 it.rejectKey("sendtNav")
                 it.demandKey("sendtArbeidsgiver")
                 it.demandValue("status", "SENDT")
-                it.requireKey("arbeidsgiver.orgnummer", "soknadsperioder")
+                it.demandValue("type", "ARBEIDSTAKERE")
+                it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fom", "tom", "egenmeldinger", "fravar")
                 it.require("sendtArbeidsgiver", JsonNode::asLocalDateTime)
-                it.interestedIn("aktorId", "fnr", "type")
+                it.interestedIn("aktorId")
             }
         }.register(this)
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        if (!meldingMediator.søknadErRelevant(packet)) return
         meldingMediator.onPacket(packet, "aktorId", "fnr")
         meldingMediator.onMelding(Melding.SendtSøknadArbeidsgiver(packet), context)
     }

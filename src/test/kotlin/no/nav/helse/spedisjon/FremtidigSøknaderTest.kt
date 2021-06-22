@@ -38,7 +38,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         )
     }
 
-    private fun søknad(status: String = "FREMTIDIG") = """
+    private fun søknad(status: String = "FREMTIDIG", type: String = "ARBEIDSTAKERE") = """
         {
             "id": "id",
             "fnr": "$FØDSELSNUMMER",
@@ -47,6 +47,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
                 "orgnummer": "1234"
             },
             "opprettet": "$OPPRETTET_DATO",
+            "type": "$type",
             "soknadsperioder": [],
             "status": "$status",
             "sykmeldingId": "id",

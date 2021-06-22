@@ -13,16 +13,16 @@ internal class NyeSøknader(
             validate {
                 it.rejectKey("@event_name")
                 it.demandValue("status", "NY")
-                it.requireKey("arbeidsgiver.orgnummer", "soknadsperioder")
+                it.demandValue("type", "ARBEIDSTAKERE")
+                it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "sykmeldingId", "fom", "tom")
-                it.interestedIn("aktorId", "fnr", "type")
+                it.interestedIn("aktorId")
             }
         }.register(this)
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        if (!meldingMediator.søknadErRelevant(packet)) return
         meldingMediator.onPacket(packet, "aktorId", "fnr")
         meldingMediator.onMelding(Melding.NySøknad(packet), context)
     }
