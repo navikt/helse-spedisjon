@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.databind.JsonNode
 import io.prometheus.client.Counter
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
@@ -49,6 +50,10 @@ internal class MeldingMediator(
             fnroppslag = true;
             sikkerLogg.info("gjør oppslag på fnr for melding:\n${packet.toJson()}")
             aktørregisteretClient.hentFødselsnummer(packet[aktørIdfelt].asText())}
+
+        packet.putIfAbsent(aktørIdfelt) {
+            sikkerLogg.info("gjør oppslag på aktørId for melding:\n${packet.toJson()}")
+            aktørregisteretClient.hentAktørId(packet[fødselsnummerfelt].asText())}
     }
 
     fun onRiverError(error: String) {
@@ -73,5 +78,16 @@ internal class MeldingMediator(
     private fun JsonMessage.putIfAbsent(key: String, block: () -> String?) {
         if (!this[key].isMissingOrNull()) return
         block()?.also { this[key] = it }
+    }
+
+    // Midlertidig kode mens vi tester i dev for å ikke behandle søknader med type != ARBEIDSTAKERE på det nye topicet
+    // Når vi er 100% over på aiven kan denne filtreringen skje i valideringen i riveren
+    fun søknadErRelevant(packet: JsonMessage): Boolean {
+        val type: String? = packet["type"].takeUnless(JsonNode::isMissingOrNull)?.asText()
+        if (type != null && type != "ARBEIDSTAKERE") {
+            sikkerLogg.info("Søknad hadde ikke type ARBEIDSTAKERE: ${packet.toJson()}")
+            return false
+        }
+        return true
     }
 }

@@ -57,6 +57,12 @@ internal class AktørregisteretRestClientTest {
     }
 
     @Test
+    fun `henter aktørId`() {
+        stub(FØDSELSNUMMER, okResponse(FØDSELSNUMMER))
+        assertEquals(AKTØR, aktørregisterClient.hentAktørId(FØDSELSNUMMER))
+    }
+
+    @Test
     fun `gir null ved tomt resultat`() {
         stub(AKTØR, emptyResponse(AKTØR))
         assertNull(aktørregisterClient.hentFødselsnummer(AKTØR))

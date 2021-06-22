@@ -11,6 +11,7 @@ import java.util.*
 
 internal interface AktørregisteretClient {
     fun hentFødselsnummer(aktørId: String): String?
+    fun hentAktørId(fnr: String): String?
 
    class AktørregisteretRestClient(
         private val baseUrl: String,
@@ -28,7 +29,10 @@ internal interface AktørregisteretClient {
         override fun hentFødselsnummer(aktørId: String) =
             hentIdenter(aktørId).firstOrNull { it.first == IdentType.NorskIdent }?.second
 
-        private fun hentIdenter(personident: String): List<Pair<IdentType, String>> {
+       override fun hentAktørId(fnr: String): String? =
+            hentIdenter(fnr).firstOrNull {it.first == IdentType.AktoerId}?.second
+
+       private fun hentIdenter(personident: String): List<Pair<IdentType, String>> {
             val callId = UUID.randomUUID().toString()
             val (responseCode, responseBody) = with(URL("$baseUrl/api/v1/identer?gjeldende=true").openConnection() as HttpURLConnection) {
                 requestMethod = "GET"

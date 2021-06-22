@@ -30,10 +30,10 @@ internal class LogWrapperTest {
     @Test
     fun `logger ingenting når melding er gjenkjent`() {
         LogWrapper(rapid, mediator).apply {
-            TestRiver(this, mediator) { validate { it.requireKey("a_key") } }
-            TestRiver(this, mediator) { validate { it.requireKey("a_key_not_set") } }
+            TestRiver(this, mediator) { validate { it.requireKey("a_key", "b_key") } }
+            TestRiver(this, mediator) { validate { it.requireKey("a_key_not_set", "b_key_not_set") } }
         }
-        rapid.sendTestMessage("{\"a_key\": \"foo\"}")
+        rapid.sendTestMessage("{\"a_key\": \"foo\", \"b_key\": \"bar\"}")
         assertTrue(appender.list.isEmpty())
     }
 
@@ -60,7 +60,7 @@ internal class LogWrapperTest {
         }
 
         override fun onPacket(packet: JsonMessage, context: MessageContext) {
-            mediator.onPacket(packet, "", "a_key")
+            mediator.onPacket(packet, "b_key", "a_key")
         }
         override fun onError(problems: MessageProblems, context: MessageContext) {
             mediator.onRiverError("Ukjent melding:\n$problems")

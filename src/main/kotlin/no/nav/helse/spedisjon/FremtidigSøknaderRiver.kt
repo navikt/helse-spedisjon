@@ -18,10 +18,10 @@ class FremtidigSøknaderRiver internal constructor(
             validate {
                 it.rejectKey("@event_name")
                 it.demandValue("status", "FREMTIDIG")
-                it.requireKey("aktorId", "arbeidsgiver.orgnummer", "soknadsperioder")
+                it.requireKey("arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "sykmeldingId", "fom", "tom")
-                it.interestedIn("fnr")
+                it.interestedIn("aktorId", "fnr", "type")
             }
         }.register(this)
     }
@@ -32,6 +32,8 @@ class FremtidigSøknaderRiver internal constructor(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         tjenestekallLog.info("Behandler fremtidig søknad: ${packet.toJson()}")
+        if (!meldingMediator.søknadErRelevant(packet)) return
+
         meldingMediator.onPacket(packet, "aktorId", "fnr")
 
         // Innad i domenet vårt skiller vi ikke mellom fremtidige og nye søknader,

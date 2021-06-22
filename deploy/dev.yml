@@ -41,18 +41,14 @@ spec:
       - mountPath: /var/run/secrets/nais.io/service_user
         kvPath: /serviceuser/data/dev/srvspedisjon
   env:
-  - name: KAFKA_PREFER_ON_PREM
-    value: "true"
-  - name: KAFKA_BOOTSTRAP_SERVERS
-    value: b27apvl00045.preprod.local:8443,b27apvl00046.preprod.local:8443,b27apvl00047.preprod.local:8443
   - name: KAFKA_CONSUMER_GROUP_ID
     value: spedisjon-v1
-  - name: KAFKA_RAPID_TOPIC_AIVEN
-    value: tbd.rapid.v1
   - name: KAFKA_RAPID_TOPIC
-    value: helse-rapid-v1
+    value: tbd.rapid.v1
   - name: KAFKA_EXTRA_TOPIC
-    value: privat-sykepenger-inntektsmelding,syfo-soknad-v2
+    value: flex.sykepengesoknad,helsearbeidsgiver.privat-sykepenger-inntektsmelding
+  - name: KAFKA_RESET_POLICY
+    value: "earliest"
   - name: DATABASE_HOST
     value: b27dbvl009.preprod.local
   - name: DATABASE_PORT
