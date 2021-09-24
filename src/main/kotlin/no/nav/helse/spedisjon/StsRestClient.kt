@@ -33,7 +33,6 @@ internal class StsRestClient(private val baseUrl: String, username: String, pass
                 disconnect()
             }
         }
-        tjenestekallLog.info("svar fra aktørregisteret: responseCode=$responseCode responseBody=$responseBody")
         if (responseCode >= 300 || responseBody == null) throw RuntimeException("failed to fetch token from sts")
         return objectMapper.readTree(responseBody).let {
             Token(
