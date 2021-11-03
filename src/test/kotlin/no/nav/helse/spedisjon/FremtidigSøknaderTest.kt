@@ -3,9 +3,7 @@ package no.nav.helse.spedisjon
 import io.mockk.mockk
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 import javax.sql.DataSource
 
 internal class FremtidigSøknaderTest: AbstractRiverTest() {

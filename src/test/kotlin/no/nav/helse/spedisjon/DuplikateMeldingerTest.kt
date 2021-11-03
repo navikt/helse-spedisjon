@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgres
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import no.nav.helse.rapids_rivers.JsonMessage
@@ -11,14 +10,13 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import java.sql.Connection
+import org.testcontainers.containers.PostgreSQLContainer
 import java.time.LocalDateTime
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class DuplikateMeldingerTest {
 
-    private lateinit var embeddedPostgres: EmbeddedPostgres
-    private lateinit var postgresConnection: Connection
+    private val postgres = PostgreSQLContainer<Nothing>("postgres:13")
 
     private lateinit var hikariConfig: HikariConfig
     private lateinit var dataSource: HikariDataSource
@@ -26,28 +24,24 @@ internal class DuplikateMeldingerTest {
 
     @BeforeAll
     fun `start postgres`() {
-        embeddedPostgres = EmbeddedPostgres.builder()
-            .start()
+        postgres.start()
 
-        postgresConnection = embeddedPostgres.postgresDatabase.connection
-
-        hikariConfig = createHikariConfig(embeddedPostgres.getJdbcUrl("postgres", "postgres"))
-
-        dataSource = HikariDataSource(hikariConfig)
-        runMigration(dataSource)
-
-        meldingDao = MeldingDao(dataSource)
-    }
-
-    private fun createHikariConfig(jdbcUrl: String) =
-        HikariConfig().apply {
-            this.jdbcUrl = jdbcUrl
+        hikariConfig = HikariConfig().apply {
+            jdbcUrl = postgres.jdbcUrl
+            username = postgres.username
+            password = postgres.password
             maximumPoolSize = 3
             minimumIdle = 1
             idleTimeout = 10001
             connectionTimeout = 1000
             maxLifetime = 30001
         }
+
+        dataSource = HikariDataSource(hikariConfig)
+        runMigration(dataSource)
+
+        meldingDao = MeldingDao(dataSource)
+    }
 
     private fun runMigration(dataSource: HikariDataSource) =
         Flyway.configure()

@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgres
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotliquery.queryOf
@@ -10,14 +9,13 @@ import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.*
-import java.sql.Connection
+import org.testcontainers.containers.PostgreSQLContainer
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal abstract class AbstractRiverTest {
-    private lateinit var embeddedPostgres: EmbeddedPostgres
-    private lateinit var postgresConnection: Connection
+    private val postgres = PostgreSQLContainer<Nothing>("postgres:13")
     private lateinit var dataSource: DataSource
     protected val testRapid = TestRapid()
 
@@ -47,15 +45,22 @@ internal abstract class AbstractRiverTest {
 
     @BeforeAll
     fun `start postgres`() {
-        embeddedPostgres = EmbeddedPostgres.builder().start()
-        postgresConnection = embeddedPostgres.postgresDatabase.connection
-        dataSource = HikariDataSource(createHikariConfig(embeddedPostgres.getJdbcUrl("postgres", "postgres")))
+        postgres.start()
+        dataSource = HikariDataSource(HikariConfig().apply {
+            jdbcUrl = postgres.jdbcUrl
+            username = postgres.username
+            password = postgres.password
+            maximumPoolSize = 3
+            minimumIdle = 1
+            idleTimeout = 10001
+            connectionTimeout = 1000
+            maxLifetime = 30001
+        })
     }
 
     @AfterAll
     fun `stop postgres`() {
-        postgresConnection.close()
-        embeddedPostgres.close()
+        postgres.stop()
     }
 
     protected fun antallMeldinger(fnr: String) =
