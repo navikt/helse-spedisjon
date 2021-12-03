@@ -4,20 +4,7 @@ import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.spedisjon.AktørregisteretClient.AktørregisteretRestClient
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.clients.producer.ProducerConfig
-import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.clients.producer.RecordMetadata
-import org.apache.kafka.common.config.SslConfigs
-import org.apache.kafka.common.errors.AuthorizationException
-import org.apache.kafka.common.security.auth.SecurityProtocol
-import org.apache.kafka.common.serialization.StringSerializer
-import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.*
-
-private val log = LoggerFactory.getLogger("no.nav.helse.spedisjon.App")
 
 fun main() {
     val env = System.getenv()
@@ -30,7 +17,7 @@ fun main() {
         password = "/var/run/secrets/nais.io/service_user/password".readFile()
     ))
 
-    val meldingMediator = MeldingMediator(meldingDao, aktørregisteretClient, env["STREAM_TO_RAPID"]?.let { "false" != it.lowercase() } ?: true)
+    val meldingMediator = MeldingMediator(meldingDao, aktørregisteretClient)
 
     LogWrapper(RapidApplication.create(env), meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
@@ -58,7 +45,7 @@ internal class LogWrapper(
     }
 
     override fun onMessage(message: String, context: MessageContext) {
-        meldingMediator.beforeMessage(message)
+        meldingMediator.beforeMessage()
         notifyMessage(message, this)
         meldingMediator.afterMessage(message)
     }
@@ -85,12 +72,6 @@ internal class LogWrapper(
 
     override fun onStartup(rapidsConnection: RapidsConnection) {
         notifyStartup()
-    }
-
-    private fun checkFatalError(metadata: RecordMetadata?, err: Exception?) {
-        if (err == null || err !is AuthorizationException) return
-        log.error("Stopping rapid due to fatal error: ${err.message}", err)
-        stop()
     }
 
     override fun start() {

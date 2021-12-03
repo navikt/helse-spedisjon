@@ -28,12 +28,12 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         FremtidigSøknaderRiver(
             rapidsConnection = rapidsConnection,
-            meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient, true)
+            meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient)
         )
 
         NyeSøknader(
             rapidsConnection = rapidsConnection,
-            meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient, true)
+            meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient)
         )
     }
 

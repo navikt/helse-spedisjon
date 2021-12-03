@@ -88,7 +88,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         Inntektsmeldinger(
             rapidsConnection = rapidsConnection,
-            meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient, true)
+            meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient)
         )
     }
 

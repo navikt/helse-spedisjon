@@ -25,8 +25,8 @@ abstract class Melding(protected val packet: JsonMessage) {
         internal fun String.sha512(): String {
             return MessageDigest
                 .getInstance("SHA-512")
-                .digest((this).toByteArray())
-                .fold("") { str, it -> str + "%02x".format(it) }
+                .digest(this.toByteArray())
+                .joinToString("") { "%02x".format(it) }
         }
     }
 

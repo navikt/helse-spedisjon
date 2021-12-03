@@ -19,7 +19,7 @@ internal class LogWrapperTest {
         addAppender(appender)
     }
 
-    private val mediator = MeldingMediator(mockk(), mockk(), true)
+    private val mediator = MeldingMediator(mockk(), mockk())
 
     @BeforeEach
     fun setup() {

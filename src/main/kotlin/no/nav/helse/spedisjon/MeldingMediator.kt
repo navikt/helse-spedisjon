@@ -1,17 +1,14 @@
 package no.nav.helse.spedisjon
 
-import com.fasterxml.jackson.databind.JsonNode
 import io.prometheus.client.Counter
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
-import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.isMissingOrNull
 import org.slf4j.LoggerFactory
 
 internal class MeldingMediator(
     private val meldingDao: MeldingDao,
     private val aktørregisteretClient: AktørregisteretClient,
-    private val streamToRapid: Boolean
 ) {
     private companion object {
         private val sikkerLogg = LoggerFactory.getLogger("tjenestekall")
@@ -34,11 +31,7 @@ internal class MeldingMediator(
     private var messageRecognized = false
     private val riverErrors = mutableListOf<String>()
 
-    init {
-        if (!streamToRapid) log.warn("Sender ikke meldinger videre til rapid")
-    }
-
-    fun beforeMessage(message: String) {
+    fun beforeMessage() {
         fnroppslag = false
         messageRecognized = false
         riverErrors.clear()
@@ -65,7 +58,6 @@ internal class MeldingMediator(
         if (fnroppslag) fnrteller.labels(melding.type).inc()
         if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
         unikteller.labels(melding.type).inc()
-        if (!streamToRapid) return
         sendtteller.labels(melding.type).inc()
         context.publish(melding.fødselsnummer(), melding.json())
     }
