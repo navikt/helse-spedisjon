@@ -52,6 +52,7 @@ internal abstract class AbstractRiverTest {
             password = postgres.password
             maximumPoolSize = 3
             minimumIdle = 1
+            initializationFailTimeout = 5000
             idleTimeout = 10001
             connectionTimeout = 1000
             maxLifetime = 30001

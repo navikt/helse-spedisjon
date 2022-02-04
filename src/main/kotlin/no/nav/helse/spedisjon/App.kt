@@ -30,7 +30,7 @@ fun main() {
         password = "/var/run/secrets/nais.io/service_user/password".readFile()
     ))
 
-    val meldingMediator = MeldingMediator(meldingDao, aktørregisteretClient, env["STREAM_TO_RAPID"]?.let { "false" != it.toLowerCase() } ?: true)
+    val meldingMediator = MeldingMediator(meldingDao, aktørregisteretClient, env["STREAM_TO_RAPID"]?.let { "false" != it.lowercase() } ?: true)
 
     LogWrapper(RapidApplication.create(env), meldingMediator).apply {
         NyeSøknader(this, meldingMediator)

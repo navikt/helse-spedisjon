@@ -22,6 +22,7 @@ internal class MigrationTest {
             username = postgres.username
             password = postgres.password
             maximumPoolSize = 3
+            initializationFailTimeout = 5000
             minimumIdle = 1
             idleTimeout = 10001
             connectionTimeout = 1000
@@ -43,6 +44,6 @@ internal class MigrationTest {
     @Test
     fun `migreringer skal kjøre`() {
         val migrations = runMigration()
-        assertTrue(migrations > 0, "Ingen migreringer ble kjørt")
+        assertTrue(migrations.success, "Ingen migreringer ble kjørt")
     }
 }
