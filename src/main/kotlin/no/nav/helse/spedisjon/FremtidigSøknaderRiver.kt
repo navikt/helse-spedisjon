@@ -38,6 +38,7 @@ class FremtidigSøknaderRiver internal constructor(
         // Innad i domenet vårt skiller vi ikke mellom fremtidige og nye søknader,
         // derfor gir det mening å maskere fremtidig søknad som ny, for å unngå to identiske håndteringer nedover i løpya
         packet["status"] = "NY"
+        packet["fremtidig_søknad"] = true
 
         meldingMediator.onMelding(Melding.NySøknad(packet), context)
     }

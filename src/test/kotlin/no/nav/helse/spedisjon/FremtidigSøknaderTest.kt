@@ -15,6 +15,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         testRapid.sendTestMessage(søknad())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertEquals("NY", testRapid.inspektør.message(0)["status"].textValue())
+        assertEquals(true, testRapid.inspektør.message(0)["fremtidig_søknad"].booleanValue())
     }
 
     @Test
