@@ -18,15 +18,8 @@ class V5__paginert_test_migrering_av_duplikatkontroll() : BaseJavaMigration() {
         context.connection.prepareStatement(UPDATE).use { updateStatement ->
             context.connection.createStatement().use { selectStatement ->
                 var pageNummer = 1
-                var offset = 0
-                var forrigeOffset = -1
-
-                while (offset != forrigeOffset) {
-                    forrigeOffset = offset
-                    selectStatement.executeQuery(SELECT(offset)).use { resultSet ->
-                        offset += migrerPage(pageNummer, resultSet, updateStatement)
-                        pageNummer += 1
-                    }
+                while (migrerPage(pageNummer, selectStatement.executeQuery(SELECT), updateStatement) != 0) {
+                    pageNummer += 1
                 }
             }
         }
@@ -34,7 +27,7 @@ class V5__paginert_test_migrering_av_duplikatkontroll() : BaseJavaMigration() {
         log.info("Migreringen tok $diff sekunder")
     }
 
-    private fun migrerPage(pageNummer: Int, resultSet: ResultSet, updateStatement: PreparedStatement): Int {
+    private fun migrerPage(pageNummer: Int, resultSet: ResultSet, updateStatement: PreparedStatement): Int = resultSet.use {
         var affectedRows = 0
         var batchNummer = 1
         var antall = 0
@@ -76,8 +69,8 @@ class V5__paginert_test_migrering_av_duplikatkontroll() : BaseJavaMigration() {
         private val log = LoggerFactory.getLogger(V5__paginert_test_migrering_av_duplikatkontroll::class.java)
 
         @Language("PostgreSQL")
-        private fun SELECT(offset: Int) =
-            "SELECT id, data FROM melding WHERE type IN('ny_søknad','sendt_søknad_arbeidsgiver','sendt_søknad_nav') ORDER BY id LIMIT $pageSize OFFSET $offset"
+        private const val SELECT =
+            "SELECT id, data FROM melding WHERE type IN('ny_søknad','sendt_søknad_arbeidsgiver','sendt_søknad_nav') AND tmp_duplikatkontroll IS NULL ORDER BY id LIMIT $pageSize"
 
         @Language("PostgreSQL")
         private const val UPDATE =

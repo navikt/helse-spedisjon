@@ -80,7 +80,7 @@ internal class NyDuplikatkontrollTest {
             insertStatement.executeBatch()
         }
 
-        flyway.target(MigrationVersion.NEXT).load().migrate()
+        flyway.target(MigrationVersion.LATEST).load().migrate()
 
         hikariDataSource.connection.createStatement().executeQuery("SELECT tmp_duplikatkontroll FROM melding WHERE tmp_slett=false").use { resultSet ->
             while (resultSet.next()) {
