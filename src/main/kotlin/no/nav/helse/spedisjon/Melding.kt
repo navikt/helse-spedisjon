@@ -21,12 +21,12 @@ abstract class Melding(protected val packet: JsonMessage) {
         return packet.toJson()
     }
 
-    private companion object {
-        private fun String.sha512(): String {
+    internal companion object {
+        internal fun String.sha512(): String {
             return MessageDigest
                 .getInstance("SHA-512")
                 .digest((this).toByteArray())
-                .fold("", { str, it -> str + "%02x".format(it) })
+                .fold("") { str, it -> str + "%02x".format(it) }
         }
     }
 
