@@ -50,10 +50,11 @@ fun main() {
 internal class LogWrapper(
     private val rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator,
-) : RapidsConnection(), RapidsConnection.MessageListener {
+) : RapidsConnection(), RapidsConnection.MessageListener, RapidsConnection.StatusListener {
 
     init {
-        rapidsConnection.register(this)
+        rapidsConnection.register(this as MessageListener)
+        rapidsConnection.register(this as StatusListener)
     }
 
     override fun onMessage(message: String, context: MessageContext) {
@@ -68,6 +69,22 @@ internal class LogWrapper(
 
     override fun publish(key: String, message: String) {
         rapidsConnection.publish(key, message)
+    }
+
+    override fun onNotReady(rapidsConnection: RapidsConnection) {
+        notifyNotReady()
+    }
+
+    override fun onReady(rapidsConnection: RapidsConnection) {
+        notifyReady()
+    }
+
+    override fun onShutdown(rapidsConnection: RapidsConnection) {
+        notifyShutdown()
+    }
+
+    override fun onStartup(rapidsConnection: RapidsConnection) {
+        notifyStartup()
     }
 
     private fun checkFatalError(metadata: RecordMetadata?, err: Exception?) {
