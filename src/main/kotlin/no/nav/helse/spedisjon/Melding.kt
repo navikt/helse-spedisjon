@@ -34,21 +34,21 @@ abstract class Melding(protected val packet: JsonMessage) {
         override val type = "ny_søknad"
         override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["opprettet"].asLocalDateTime()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText() + packet["opprettet"].asText()
+        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
     }
 
     class SendtSøknadArbeidsgiver(packet: JsonMessage) : Melding(packet) {
         override val type = "sendt_søknad_arbeidsgiver"
         override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["sendtArbeidsgiver"].asLocalDateTime()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText() + packet["sendtArbeidsgiver"].asText()
+        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
     }
 
     class SendtSøknadNav(packet: JsonMessage) : Melding(packet) {
         override val type = "sendt_søknad_nav"
         override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["sendtNav"].asLocalDateTime()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText() + packet["sendtNav"].asText()
+        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
     }
 
     class Inntektsmelding(packet: JsonMessage) : Melding(packet) {

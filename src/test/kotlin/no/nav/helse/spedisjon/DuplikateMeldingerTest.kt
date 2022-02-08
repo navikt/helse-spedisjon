@@ -5,13 +5,12 @@ import com.zaxxer.hikari.HikariDataSource
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageProblems
 import org.flywaydb.core.Flyway
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.LocalDateTime
+import java.util.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class DuplikateMeldingerTest {
@@ -34,13 +33,12 @@ internal class DuplikateMeldingerTest {
             minimumIdle = 1
             initializationFailTimeout = 5000
             idleTimeout = 10001
-            connectionTimeout = 1000
+            connectionTimeout = 5000
             maxLifetime = 30001
         }
 
         dataSource = HikariDataSource(hikariConfig)
         runMigration(dataSource)
-
         meldingDao = MeldingDao(dataSource)
     }
 
@@ -72,7 +70,7 @@ internal class DuplikateMeldingerTest {
         val packet = JsonMessage(
             """
                 {
-                    "id": "1",
+                    "id": "${UUID.randomUUID()}",
                     "fnr": "123",
                     "sendtNav": "${LocalDateTime.now()}",
                     "status": "SENDT"
@@ -90,7 +88,7 @@ internal class DuplikateMeldingerTest {
         val packet = JsonMessage(
             """
                 {
-                    "id": "1",
+                    "id": "${UUID.randomUUID()}",
                     "fnr": "123",
                     "sendtArbeidsgiver": "${LocalDateTime.now()}",
                     "status": "SENDT"
@@ -105,21 +103,34 @@ internal class DuplikateMeldingerTest {
 
     @Test
     fun `duplikat sendt søknad til arbeidsgiver (ettersending) slipper ikke igjennom`() {
-        val packet = JsonMessage(
+        val id = UUID.randomUUID()
+        val førsteInnsending = JsonMessage(
             """
                 {
-                    "id": "1",
+                    "id": "$id",
+                    "fnr": "123",
+                    "sendtArbeidsgiver": "${LocalDateTime.now()}",
+                    "sendtNav": null,
+                    "status": "SENDT"
+                }
+            """, MessageProblems("")).apply {
+            requireKey("id", "fnr", "sendtArbeidsgiver", "status")
+        }
+        val andreInnsending = JsonMessage(
+            """
+                {
+                    "id": "$id",
                     "fnr": "123",
                     "sendtArbeidsgiver": "${LocalDateTime.now()}",
                     "sendtNav": "${LocalDateTime.now().minusDays(1)}",
                     "status": "SENDT"
                 }
             """, MessageProblems("")).apply {
-            requireKey("id", "fnr", "sendtArbeidsgiver", "status")
+            requireKey("id", "fnr", "sendtArbeidsgiver", "sendtNav", "status")
         }
 
-        assertTrue(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(packet)))
-        assertFalse(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(packet)))
+        assertTrue(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(førsteInnsending)))
+        assertFalse(meldingDao.leggInn(Melding.SendtSøknadNav(andreInnsending)))
     }
 
     @Test
@@ -127,7 +138,7 @@ internal class DuplikateMeldingerTest {
         val packet = JsonMessage(
             """
                 {
-                    "id": "1",
+                    "id": "${UUID.randomUUID()}",
                     "fnr": "123",
                     "opprettet": "${LocalDateTime.now()}",
                     "status": "NY"
