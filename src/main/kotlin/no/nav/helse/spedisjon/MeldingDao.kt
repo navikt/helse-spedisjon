@@ -14,7 +14,7 @@ internal class MeldingDao(private val dataSource: DataSource){
     }
 
     fun leggInn(melding: Melding): Boolean {
-        log.info("legger inn melding dato=${melding.rapportertDato()}, melding=${melding.json()}")
+        log.info("legger inn melding, rapportertDato=${melding.rapportertDato()}\n${melding.json()}")
         return leggInnUtenDuplikat(melding).also {
             if (!it) log.info("Duplikat melding: {} melding={}", keyValue("duplikatkontroll", melding.duplikatkontroll()), melding.json())
         }

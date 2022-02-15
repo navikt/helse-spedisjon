@@ -64,8 +64,8 @@ class V6__paginert_migrering_av_resterende_duplikatkontroll() : BaseJavaMigratio
     }
 
     private companion object {
-        private const val pageSize = 100000
-        private const val batchSize = 10000
+        private const val pageSize = 100_000
+        private const val batchSize = 10_000
         private val log = LoggerFactory.getLogger(V6__paginert_migrering_av_resterende_duplikatkontroll::class.java)
 
         @Language("PostgreSQL")

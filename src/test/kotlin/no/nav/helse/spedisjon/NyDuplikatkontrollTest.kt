@@ -66,7 +66,7 @@ internal class NyDuplikatkontrollTest {
 
         hikariDataSource.connection.prepareStatement("INSERT INTO melding(data, fnr, opprettet, type, duplikatkontroll) VALUES(cast(? as JSONB),?,?,?,?)").use { insertStatement ->
             lateinit var forrige : UUID
-            repeat(100000 - antallDuplikater) {
+            repeat(100_000 - antallDuplikater) {
                 forrige = UUID.randomUUID()
                 forventedeDuplikatkontroller.add(forrige.duplikatkontroll())
                 insertStatement.leggTilMelding(forrige)
