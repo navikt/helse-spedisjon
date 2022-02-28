@@ -20,6 +20,7 @@ internal class SendteSøknaderNav(
                 it.requireKey("id", "fnr", "fom", "tom", "egenmeldinger", "fravar")
                 it.require("sendtNav", JsonNode::asLocalDateTime)
                 it.interestedIn("aktorId")
+                it.rejectValue("sendTilGosys", true)
             }
         }.register(this)
     }

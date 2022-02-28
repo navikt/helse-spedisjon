@@ -58,6 +58,8 @@ internal class LogWrapper(
         rapidsConnection.publish(key, message)
     }
 
+    override fun rapidName() = "LogWrapper"
+
     override fun onNotReady(rapidsConnection: RapidsConnection) {
         notifyNotReady()
     }
