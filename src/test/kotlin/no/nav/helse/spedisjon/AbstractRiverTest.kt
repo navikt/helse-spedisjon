@@ -1,5 +1,7 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotliquery.queryOf
@@ -20,6 +22,7 @@ internal abstract class AbstractRiverTest {
     protected val testRapid = TestRapid()
 
     protected companion object {
+        private val objectMapper = jacksonObjectMapper()
         const val FØDSELSNUMMER = "fnr"
         const val AKTØR = "aktørId"
         val OPPRETTET_DATO: LocalDateTime = LocalDateTime.now()
@@ -64,21 +67,16 @@ internal abstract class AbstractRiverTest {
         postgres.stop()
     }
 
-    protected fun antallMeldinger(fnr: String) =
+    protected fun antallMeldinger(fnr: String = FØDSELSNUMMER) =
         using(sessionOf(dataSource)) {
-            it.run(queryOf("SELECT COUNT(1) FROM melding WHERE fnr = ?", fnr).map {
-                it.long(1)
+            it.run(queryOf("SELECT COUNT(1) FROM melding WHERE fnr = ?", fnr).map { row ->
+                row.long(1)
             }.asSingle)
         }
 
-    private fun createHikariConfig(jdbcUrl: String) =
-        HikariConfig().apply {
-            this.jdbcUrl = jdbcUrl
-            maximumPoolSize = 3
-            minimumIdle = 1
-            idleTimeout = 10001
-            connectionTimeout = 1000
-            maxLifetime = 30001
-        }
-
+    protected fun String.json(block: (node: ObjectNode) -> Unit) : String {
+        val node = objectMapper.readTree(this) as ObjectNode
+        block(node)
+        return node.toString()
+    }
 }

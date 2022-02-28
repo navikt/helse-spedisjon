@@ -15,7 +15,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     private val aktørregisteretClient = mockk<AktørregisteretClient>()
 
     @Test
-    internal fun `leser inntektsmeldinger`() {
+    fun `leser inntektsmeldinger`() {
         testRapid.sendTestMessage("""
 {
     "inntektsmeldingId": "id",
@@ -37,7 +37,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     }
 
     @Test
-    internal fun `leser inntektsmeldinger uten fnr`() {
+    fun `leser inntektsmeldinger uten fnr`() {
         every {
             aktørregisteretClient.hentFødselsnummer(AKTØR)
         } returns FØDSELSNUMMER
@@ -63,7 +63,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     }
 
     @Test
-    internal fun `leser inntektsmeldinger uten første fraværsdag`() {
+    fun `leser inntektsmeldinger uten første fraværsdag`() {
         testRapid.sendTestMessage("""
 {
     "inntektsmeldingId": "id",

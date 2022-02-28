@@ -14,7 +14,7 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     private val aktørregisteretClient = mockk<AktørregisteretClient>()
 
     @Test
-    internal fun `leser nye søknader`() {
+    fun `leser nye søknader`() {
         testRapid.sendTestMessage("""
 {
     "id": "id",

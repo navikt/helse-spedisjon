@@ -21,6 +21,7 @@ internal class SendteSøknaderArbeidsgiver(
                 it.requireKey("id", "fom", "tom", "egenmeldinger", "fravar")
                 it.require("sendtArbeidsgiver", JsonNode::asLocalDateTime)
                 it.interestedIn("aktorId")
+                it.rejectValue("sendTilGosys", true)
             }
         }.register(this)
     }
