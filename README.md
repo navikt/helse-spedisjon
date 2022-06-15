@@ -2,10 +2,11 @@
 ![Bygg og deploy](https://github.com/navikt/helse-spedisjon/workflows/Bygg%20og%20deploy/badge.svg)
 
 ## Beskrivelse
-> spedisjon m1 (fra italiensk, av latin; se ekspedere; av foreldet spedere) det å motta og sende varer, sørge for
- omlasting, tollklarering og lignende for andres regning
+Leser inn fra sykepengesøknader og inntektsmeldinger og ekspederer disse for videre behandling
 
-Spedisjon leser sykepengesøknader (nye og sendte) samt inntektsmeldinger, lagrer dem i database (for senere å kunne replaye) og streamer de videre til rapid-topic.
+Sykepengesøknader kan være nye, fremtidige, eller sendte, men spedisjon maskerer fremtidige som nye.
+
+Søknader og inntektsmeldinger lagres lokalt for eventuell replay senere.
 
 ## Henvendelser
 Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på GitHub.
@@ -13,3 +14,5 @@ Spørsmål knyttet til koden eller prosjektet kan stilles som issues her på Git
 ### For NAV-ansatte
 Interne henvendelser kan sendes via Slack i kanalen #område-helse.
 
+> spedisjon m1 (fra italiensk, av latin; se ekspedere; av foreldet spedere) det å motta og sende varer, sørge for
+omlasting, tollklarering og lignende for andres regning
