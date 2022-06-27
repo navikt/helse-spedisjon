@@ -12,7 +12,6 @@ internal class MeldingMediator(
 ) {
     private companion object {
         private val sikkerLogg = LoggerFactory.getLogger("tjenestekall")
-        private val log = LoggerFactory.getLogger(MeldingMediator::class.java)
         private val meldingsteller = Counter.build("melding_totals", "Antall meldinger mottatt")
             .labelNames("type")
             .register()
@@ -40,13 +39,15 @@ internal class MeldingMediator(
     fun onPacket(packet: JsonMessage, aktørIdfelt: String, fødselsnummerfelt: String) {
         messageRecognized = true
         packet.putIfAbsent(fødselsnummerfelt) {
-            fnroppslag = true;
+            fnroppslag = true
             sikkerLogg.info("gjør oppslag på fnr for melding:\n${packet.toJson()}")
-            aktørregisteretClient.hentFødselsnummer(packet[aktørIdfelt].asText())}
+            aktørregisteretClient.hentFødselsnummer(packet[aktørIdfelt].asText())
+        }
 
         packet.putIfAbsent(aktørIdfelt) {
             sikkerLogg.info("gjør oppslag på aktørId for melding:\n${packet.toJson()}")
-            aktørregisteretClient.hentAktørId(packet[fødselsnummerfelt].asText())}
+            aktørregisteretClient.hentAktørId(packet[fødselsnummerfelt].asText())
+        }
     }
 
     fun onRiverError(error: String) {
@@ -70,5 +71,14 @@ internal class MeldingMediator(
     private fun JsonMessage.putIfAbsent(key: String, block: () -> String?) {
         if (!this[key].isMissingOrNull()) return
         block()?.also { this[key] = it }
+    }
+
+    fun sendBehov(fødselsnummer: String, behovsliste: List<String>, behovskilde: String, context: MessageContext) {
+        context.publish(fødselsnummer,
+            JsonMessage.newNeed(behov = listOf("HentPersoninfoV3"),
+                map = mapOf("HentPersoninfoV3" to mapOf(
+                    "ident" to fødselsnummer,
+                    "attributter" to behovsliste,
+                ), "Spedisjonkontekst" to mapOf("behovskilde" to behovskilde))).toJson())
     }
 }
