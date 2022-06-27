@@ -79,6 +79,6 @@ internal class MeldingMediator(
                 map = mapOf("HentPersoninfoV3" to mapOf(
                     "ident" to fødselsnummer,
                     "attributter" to behovsliste,
-                ), "Spedisjonkontekst" to mapOf("behovskilde" to behovskilde))).toJson())
+                ), "spedisjonMeldingId" to behovskilde)).toJson())
     }
 }
