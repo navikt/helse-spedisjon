@@ -37,7 +37,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     }
 
     @Test
-    fun `leser inntektsmeldinger uten fnr`() {
+    fun `ignorerer inntektsmeldinger uten fnr`() {
         every {
             aktørregisteretClient.hentFødselsnummer(AKTØR)
         } returns FØDSELSNUMMER
@@ -58,8 +58,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     "foersteFravaersdag": "2020-01-01"
 }"""
         )
-
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(0, antallMeldinger(FØDSELSNUMMER))
     }
 
     @Test
@@ -86,10 +85,13 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        Inntektsmeldinger(
-            rapidsConnection = rapidsConnection,
-            meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient)
-        )
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient)
+        LogWrapper(testRapid, meldingMediator = meldingMediator).apply {
+            Inntektsmeldinger(
+                rapidsConnection = this,
+                meldingMediator = meldingMediator
+            )
+        }
     }
 
     @BeforeEach

@@ -15,7 +15,7 @@ internal class Inntektsmeldinger(
                 it.requireKey(
                     "inntektsmeldingId", "arbeidstakerAktorId", "virksomhetsnummer",
                     "arbeidsgivertype", "beregnetInntekt",
-                    "status", "arkivreferanse"
+                    "status", "arkivreferanse", "arbeidstakerFnr"
                 )
                 it.requireArray("arbeidsgiverperioder") {
                     require("fom", JsonNode::asLocalDate)
@@ -31,7 +31,7 @@ internal class Inntektsmeldinger(
                 it.interestedIn("foersteFravaersdag", JsonNode::asLocalDate)
                 it.interestedIn("refusjon.opphoersdato", JsonNode::asLocalDate)
                 it.require("mottattDato", JsonNode::asLocalDateTime)
-                it.interestedIn("arbeidstakerFnr", "refusjon.beloepPrMnd")
+                it.interestedIn("refusjon.beloepPrMnd")
             }
         }.register(this)
     }
