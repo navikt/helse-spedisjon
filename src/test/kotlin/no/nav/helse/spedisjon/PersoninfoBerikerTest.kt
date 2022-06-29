@@ -17,6 +17,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         val duplikatkontroll = hentDuplikatkontroll(FØDSELSNUMMER)
         testRapid.sendTestMessage(personinfoV3Løsning(duplikatkontroll))
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
 
         assertEquals(3, testRapid.inspektør.size)
         val beriketSøknad = testRapid.inspektør.message(2)
@@ -27,7 +28,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
 
     @Test
     fun `Beriker ikke inntektsmelding`() {
-        testRapid.sendTestMessage(inntektmelding())
+        testRapid.sendTestMessage(inntektmelding(FØDSELSNUMMER))
         val duplikatkontroll = hentDuplikatkontroll(FØDSELSNUMMER)
         testRapid.sendTestMessage(personinfoV3Løsning(duplikatkontroll))
         assertEquals(1, testRapid.inspektør.size)
@@ -55,11 +56,11 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         }
         """
 
-    private fun inntektmelding() =
+    private fun inntektmelding(fnr: String = FØDSELSNUMMER) =
         """
         {
             "inntektsmeldingId": "id",
-            "arbeidstakerFnr": "$FØDSELSNUMMER",
+            "arbeidstakerFnr": "$fnr",
             "arbeidstakerAktorId": "$AKTØR",
             "virksomhetsnummer": "1234",
             "arbeidsgivertype": "BEDRIFT",
@@ -95,23 +96,17 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient)
-        LogWrapper(testRapid, meldingMediator = meldingMediator).apply {
-            PersoninfoBeriker(
-                rapidsConnection = this,
-                meldingMediator = meldingMediator
-            )
-        }
-        LogWrapper(testRapid, meldingMediator = meldingMediator).apply {
-            FremtidigSøknaderRiver(
-                rapidsConnection = this,
-                meldingMediator = meldingMediator
-            )
-        }
-        LogWrapper(testRapid, meldingMediator = meldingMediator).apply {
-            Inntektsmeldinger(
-                rapidsConnection = this,
-                meldingMediator = meldingMediator
-            )
-        }
+        PersoninfoBeriker(
+            rapidsConnection = testRapid,
+            meldingMediator = meldingMediator
+        )
+        FremtidigSøknaderRiver(
+            rapidsConnection = testRapid,
+            meldingMediator = meldingMediator
+        )
+        Inntektsmeldinger(
+            rapidsConnection = testRapid,
+            meldingMediator = meldingMediator
+        )
     }
 }
