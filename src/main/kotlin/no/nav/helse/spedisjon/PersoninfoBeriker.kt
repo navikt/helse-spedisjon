@@ -16,6 +16,7 @@ class PersoninfoBeriker(rapidsConnection: RapidsConnection): River.PacketListene
             validate {
                 it.demandKey("@løsning")
                 it.demandAll("@behov", listOf("HentPersoninfoV3"))
+                it.demandValue("@final", true)
                 it.requireKey("spedisjonMeldingId", "HentPersoninfoV3.ident")
                 it.requireKey("@løsning.HentPersoninfoV3.aktørId")
                 it.require("@løsning.HentPersoninfoV3.fødselsdato") { JsonNode::asLocalDate }
@@ -28,7 +29,7 @@ class PersoninfoBeriker(rapidsConnection: RapidsConnection): River.PacketListene
         val fødselsdato = packet["@løsning.HentPersoninfoV3.fødselsdato"].asLocalDate()
         val ident = packet["HentPersoninfoV3.ident"].asText()
         val spedisjonMeldingId = packet["spedisjonMeldingId"].asText()
-        tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og meldingId=$spedisjonMeldingId")
+        tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og spedisjonMeldingId=$spedisjonMeldingId")
         lestMelding = true
     }
 }

@@ -18,6 +18,7 @@ internal class PersoninfoBerikerTest {
 	"@id": "514ae64c-a692-4d83-9a9a-7308a5453986",
 	"@behovId": "9a06d800-f6dd-423f-99bc-6dde4f017931",
 	"@behov": ["HentPersoninfoV3"],
+    "@final": true,
 	"HentPersoninfoV3": {
 		"ident": "27105027856",
 		"attributter": ["fødselsdato", "aktørId"]
