@@ -1,10 +1,13 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import io.prometheus.client.Counter
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.isMissingOrNull
 import org.slf4j.LoggerFactory
+import java.time.LocalDate
 
 internal class MeldingMediator(
     private val meldingDao: MeldingDao,
@@ -80,5 +83,26 @@ internal class MeldingMediator(
                     "ident" to fødselsnummer,
                     "attributter" to behovsliste,
                 ), "spedisjonMeldingId" to behovskilde)).toJson())
+    }
+
+    fun onPersoninfoBerikelse(duplikatkontroll: String, fødselsdato: LocalDate, context: MessageContext) {
+        val melding = meldingDao.hent(duplikatkontroll)
+        if (melding == null) {
+            sikkerLogg.warn("Mottok personinfoberikelse med duplikatkontroll=$duplikatkontroll som vi ikke fant i databasen")
+            return
+        }
+        val fnr = melding.first
+        val json = melding.second
+
+        json as ObjectNode
+        json.put("fødselsdato", fødselsdato.toString())
+        val beriketEvent = json["@event_name"].asText() + "_beriket"
+        if (beriketEvent != "ny_søknad_beriket") {
+            sikkerLogg.warn("Prøvde å berike $beriketEvent, men vi forventer bare ny_søknad_beriket enn så lenge",)
+            return
+        }
+        json.replace("@event_name", TextNode(beriketEvent))
+        context.publish(fnr, json.toString())
+        sikkerLogg.info("publiserte $beriketEvent for $fnr: \n$json")
     }
 }

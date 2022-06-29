@@ -42,7 +42,12 @@ class FremtidigSøknaderRiver internal constructor(
 
         val nySøknadMelding = Melding.NySøknad(packet)
         meldingMediator.onMelding(nySøknadMelding, context)
-        meldingMediator.sendBehov(nySøknadMelding.fødselsnummer(), listOf("aktørId", "fødselsdato"), nySøknadMelding.duplikatkontroll(), context)
+        meldingMediator.sendBehov(
+            nySøknadMelding.fødselsnummer(),
+            listOf("aktørId", "fødselsdato"),
+            nySøknadMelding.duplikatkontroll(),
+            context
+        )
     }
 
 }

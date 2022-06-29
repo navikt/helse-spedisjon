@@ -4,13 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode
 import no.nav.helse.rapids_rivers.*
 import org.slf4j.LoggerFactory
 
-class PersoninfoBeriker(rapidsConnection: RapidsConnection): River.PacketListener {
+internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val meldingMediator: MeldingMediator): River.PacketListener {
 
     companion object {
         private val tjenestekallLog = LoggerFactory.getLogger("tjenestekall")
     }
-    internal var lestMelding = false
-
     init {
         River(rapidsConnection).apply {
             validate {
@@ -30,6 +28,7 @@ class PersoninfoBeriker(rapidsConnection: RapidsConnection): River.PacketListene
         val ident = packet["HentPersoninfoV3.ident"].asText()
         val spedisjonMeldingId = packet["spedisjonMeldingId"].asText()
         tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og spedisjonMeldingId=$spedisjonMeldingId")
-        lestMelding = true
+
+        meldingMediator.onPersoninfoBerikelse(spedisjonMeldingId, fødselsdato, context)
     }
 }

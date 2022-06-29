@@ -25,7 +25,7 @@ fun main() {
         SendteSøknaderArbeidsgiver(this, meldingMediator)
         SendteSøknaderNav(this, meldingMediator)
         Inntektsmeldinger(this, meldingMediator)
-        PersoninfoBeriker(this)
+        PersoninfoBeriker(this, meldingMediator)
     }.apply {
         register(object : RapidsConnection.StatusListener {
             override fun onStartup(rapidsConnection: RapidsConnection) {

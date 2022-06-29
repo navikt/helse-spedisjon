@@ -74,6 +74,19 @@ internal abstract class AbstractRiverTest {
             }.asSingle)
         }
 
+    protected fun hentDuplikatkontroll(fnr: String = FØDSELSNUMMER): String? {
+        return sessionOf(dataSource).use {
+            it.run(
+                queryOf(
+                    """SELECT duplikatkontroll FROM melding WHERE fnr = ?""",
+                    fnr
+                ).map { row ->
+                    row.string("duplikatkontroll")
+                }.asSingle
+            )
+        }
+    }
+
     protected fun String.json(block: (node: ObjectNode) -> Unit) : String {
         val node = objectMapper.readTree(this) as ObjectNode
         block(node)
