@@ -37,8 +37,6 @@ internal abstract class AbstractRiverTest {
             .load()
             .also { it.clean() }
             .migrate()
-
-        createRiver(testRapid, dataSource)
     }
 
     @AfterEach
@@ -60,6 +58,7 @@ internal abstract class AbstractRiverTest {
             connectionTimeout = 1000
             maxLifetime = 30001
         })
+        createRiver(testRapid, dataSource)
     }
 
     @AfterAll
