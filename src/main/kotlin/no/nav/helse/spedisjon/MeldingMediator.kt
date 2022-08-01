@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import io.prometheus.client.Counter
 import no.nav.helse.rapids_rivers.JsonMessage
@@ -12,7 +13,7 @@ internal class MeldingMediator(
     private val meldingDao: MeldingDao,
     private val aktørregisteretClient: AktørregisteretClient,
 ) {
-    private companion object {
+    internal companion object {
         private val sikkerLogg = LoggerFactory.getLogger("tjenestekall")
         private val meldingsteller = Counter.build("melding_totals", "Antall meldinger mottatt")
             .labelNames("type")
@@ -26,6 +27,18 @@ internal class MeldingMediator(
         private val fnrteller = Counter.build("melding_oppslag_fnr_totals", "Antall ganger fnr er slått opp")
             .labelNames("type")
             .register()
+        internal fun berik(melding: Pair<String, JsonNode>, fødselsdato: LocalDate, aktørId: String): JsonNode {
+            val json = melding.second
+            json as ObjectNode
+            val eventName = json["@event_name"].asText()
+            val beriketEvent = eventName + "_beriket"
+            json.put("fødselsdato", fødselsdato.toString())
+            json.put(aktørIdFeltnavn(eventName), aktørId)
+            json.put("@event_name", beriketEvent)
+            sikkerLogg.info("publiserer $beriketEvent for ${melding.first}: \n$json")
+            return json
+        }
+        private fun aktørIdFeltnavn(eventName: String) = if (eventName == "inntektsmelding") "arbeidstakerAktorId" else "aktorId"
     }
 
     private var fnroppslag = false
@@ -84,21 +97,18 @@ internal class MeldingMediator(
                 ), "spedisjonMeldingId" to behovskilde)).toJson())
     }
 
-    fun onPersoninfoBerikelse(duplikatkontroll: String, fødselsdato: LocalDate, context: MessageContext) {
+    fun onPersoninfoBerikelse(
+        duplikatkontroll: String,
+        fødselsdato: LocalDate,
+        aktørId: String,
+        context: MessageContext
+    ) {
         val melding = meldingDao.hent(duplikatkontroll)
         if (melding == null) {
             sikkerLogg.warn("Mottok personinfoberikelse med duplikatkontroll=$duplikatkontroll som vi ikke fant i databasen")
             return
         }
-        val fnr = melding.first
-        val json = melding.second
-
-        json as ObjectNode
-        json.put("fødselsdato", fødselsdato.toString())
-
-        val beriketEvent = json["@event_name"].asText() + "_beriket"
-        json.put("@event_name", beriketEvent)
-        context.publish(fnr, json.toString())
-        sikkerLogg.info("publiserte $beriketEvent for $fnr: \n$json")
+        context.publish(melding.first, berik(melding, fødselsdato, aktørId).toString())
     }
+
 }

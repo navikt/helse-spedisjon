@@ -28,7 +28,6 @@ internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val
         val ident = packet["HentPersoninfoV3.ident"].asText()
         val spedisjonMeldingId = packet["spedisjonMeldingId"].asText()
         tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og spedisjonMeldingId=$spedisjonMeldingId")
-
-        meldingMediator.onPersoninfoBerikelse(spedisjonMeldingId, fødselsdato, context)
+        meldingMediator.onPersoninfoBerikelse(spedisjonMeldingId, fødselsdato, aktørId, context)
     }
 }
