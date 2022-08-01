@@ -23,7 +23,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         val beriketSøknad = testRapid.inspektør.message(2)
         assertEquals("NY", beriketSøknad["status"].textValue())
         assertEquals("ny_søknad_beriket", beriketSøknad["@event_name"].textValue())
-        assertEquals("1950-10-27", beriketSøknad["fødselsdato"].asText())
+        assertEquals("1950-10-27", beriketSøknad.path("supplement").path("fødselsdato").asText())
     }
 
     @Test

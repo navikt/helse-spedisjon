@@ -95,7 +95,10 @@ internal class MeldingMediator(
         val json = melding.second
 
         json as ObjectNode
-        json.put("fødselsdato", fødselsdato.toString())
+        json.putObject("supplement").also {
+            it.put("fødselsdato", fødselsdato.toString())
+        }
+
         val beriketEvent = json["@event_name"].asText() + "_beriket"
         if (beriketEvent != "ny_søknad_beriket") {
             sikkerLogg.warn("Prøvde å berike $beriketEvent, men vi forventer bare ny_søknad_beriket enn så lenge",)
