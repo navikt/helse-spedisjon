@@ -100,10 +100,6 @@ internal class MeldingMediator(
         }
 
         val beriketEvent = json["@event_name"].asText() + "_beriket"
-        if (beriketEvent != "ny_søknad_beriket") {
-            sikkerLogg.warn("Prøvde å berike $beriketEvent, men vi forventer bare ny_søknad_beriket enn så lenge",)
-            return
-        }
         json.replace("@event_name", TextNode(beriketEvent))
         context.publish(fnr, json.toString())
         sikkerLogg.info("publiserte $beriketEvent for $fnr: \n$json")

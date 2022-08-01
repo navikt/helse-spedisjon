@@ -1,8 +1,9 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.databind.JsonNode
 import io.mockk.mockk
 import no.nav.helse.rapids_rivers.RapidsConnection
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import javax.sql.DataSource
@@ -12,26 +13,52 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
     private val aktørregisteretClient = mockk<AktørregisteretClient>()
 
     @Test
-    fun `Beriker fremtidig søknad med fødselsdato som et eget event`() {
+    fun `Beriker fremtidig søknad`() {
         testRapid.sendTestMessage(søknad("FREMTIDIG"))
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        val duplikatkontroll = hentDuplikatkontroll(FØDSELSNUMMER)
-        testRapid.sendTestMessage(personinfoV3Løsning(duplikatkontroll))
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-
-        assertEquals(3, testRapid.inspektør.size)
-        val beriketSøknad = testRapid.inspektør.message(2)
-        assertEquals("NY", beriketSøknad["status"].textValue())
-        assertEquals("ny_søknad_beriket", beriketSøknad["@event_name"].textValue())
-        assertEquals("1950-10-27", beriketSøknad.path("supplement").path("fødselsdato").asText())
+        assertBeriket("ny_søknad_beriket") {
+            assertEquals("NY", it["status"].textValue())
+            assertTrue(it["fremtidig_søknad"].asBoolean())
+        }
     }
 
     @Test
-    fun `Beriker ikke inntektsmelding`() {
+    fun `Beriker inntektsmelding`() {
         testRapid.sendTestMessage(inntektmelding(FØDSELSNUMMER))
+        assertBeriket("inntektsmelding_beriket")
+    }
+
+    @Test
+    fun `Beriker ny søknad`() {
+        testRapid.sendTestMessage(søknad("NY"))
+        assertBeriket("ny_søknad_beriket") {
+            assertEquals("NY", it["status"].textValue())
+            assertNull(it["fremtidig_søknad"])
+        }
+    }
+
+    @Test
+    fun `Beriker sendt søknad arbeidsgiver`() {
+        testRapid.sendTestMessage(sendtSøknadArbeidsgiver)
+        assertBeriket("sendt_søknad_arbeidsgiver_beriket")
+    }
+
+    @Test
+    fun `Beriker sendt søknad nav`() {
+        testRapid.sendTestMessage(sendtSøknadNav)
+        assertBeriket("sendt_søknad_nav_beriket")
+    }
+
+    private fun assertBeriket(forventetEventName: String, assertions: (jsonNode: JsonNode) -> Unit = {}) {
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         val duplikatkontroll = hentDuplikatkontroll(FØDSELSNUMMER)
         testRapid.sendTestMessage(personinfoV3Løsning(duplikatkontroll))
-        assertEquals(1, testRapid.inspektør.size)
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(3, testRapid.inspektør.size)
+        assertEquals("behov", testRapid.inspektør.message(1).path("@event_name").asText())
+        val beriket = testRapid.inspektør.message(2)
+        assertEquals(forventetEventName, beriket["@event_name"].textValue())
+        assertEquals("1950-10-27", beriket.path("supplement").path("fødselsdato").asText())
+        assertions(beriket)
     }
 
     private fun personinfoV3Løsning(duplikatkontroll: String?) =
@@ -75,7 +102,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         }
         """
 
-    private fun søknad(status: String = "FREMTIDIG", type: String = "ARBEIDSTAKERE") = """
+    private fun søknad(status: String) = """
         {
             "id": "id",
             "fnr": "$FØDSELSNUMMER",
@@ -84,7 +111,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
                 "orgnummer": "1234"
             },
             "opprettet": "$OPPRETTET_DATO",
-            "type": "$type",
+            "type": "ARBEIDSTAKERE",
             "soknadsperioder": [],
             "status": "$status",
             "sykmeldingId": "id",
@@ -92,7 +119,47 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
             "tom": "2020-01-01"
         }
 
-    """.trimIndent()
+    """
+
+    private val sendtSøknadArbeidsgiver = """
+        {
+            "id": "id",
+            "fnr": "$FØDSELSNUMMER",
+            "aktorId": "$AKTØR",
+            "arbeidsgiver": {
+                "orgnummer": "1234"
+            },
+            "opprettet": "${LocalDateTime.now()}",
+            "sendtArbeidsgiver": "${LocalDateTime.now()}",
+            "soknadsperioder": [],
+            "egenmeldinger": [],
+            "fravar": [],
+            "status": "SENDT",
+            "type": "ARBEIDSTAKERE",
+            "sykmeldingId": "id",
+            "fom": "2020-01-01",
+            "tom": "2020-01-01"
+        }"""
+
+    private val sendtSøknadNav = """
+        {
+            "id": "id",
+            "fnr": "$FØDSELSNUMMER",
+            "aktorId": "$AKTØR",
+            "arbeidsgiver": {
+                "orgnummer": "1234"
+            },
+            "opprettet": "${LocalDateTime.now()}",
+            "sendtNav": "${LocalDateTime.now()}",
+            "soknadsperioder": [],
+            "egenmeldinger": [],
+            "fravar": [],
+            "status": "SENDT",
+            "type": "ARBEIDSTAKERE",
+            "sykmeldingId": "id",
+            "fom": "2020-01-01",
+            "tom": "2020-01-01"
+        }"""
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient)
@@ -105,6 +172,18 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
             meldingMediator = meldingMediator
         )
         Inntektsmeldinger(
+            rapidsConnection = testRapid,
+            meldingMediator = meldingMediator
+        )
+        NyeSøknader(
+            rapidsConnection = testRapid,
+            meldingMediator = meldingMediator
+        )
+        SendteSøknaderArbeidsgiver(
+            rapidsConnection = testRapid,
+            meldingMediator = meldingMediator
+        )
+        SendteSøknaderNav(
             rapidsConnection = testRapid,
             meldingMediator = meldingMediator
         )
