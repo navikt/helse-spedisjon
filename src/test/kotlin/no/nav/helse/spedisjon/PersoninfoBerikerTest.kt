@@ -15,7 +15,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
     @Test
     fun `Beriker fremtidig søknad`() {
         testRapid.sendTestMessage(søknad("FREMTIDIG"))
-        assertBeriket("ny_søknad_beriket") {
+        assertBeriket("ny_søknad") {
             assertEquals("NY", it["status"].textValue())
             assertTrue(it["fremtidig_søknad"].asBoolean())
         }
@@ -24,13 +24,13 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
     @Test
     fun `Beriker inntektsmelding`() {
         testRapid.sendTestMessage(inntektmelding(FØDSELSNUMMER))
-        assertBeriket("inntektsmelding_beriket")
+        assertBeriket("inntektsmelding")
     }
 
     @Test
     fun `Beriker ny søknad`() {
         testRapid.sendTestMessage(søknad("NY"))
-        assertBeriket("ny_søknad_beriket") {
+        assertBeriket("ny_søknad") {
             assertEquals("NY", it["status"].textValue())
             assertNull(it["fremtidig_søknad"])
         }
@@ -39,25 +39,26 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
     @Test
     fun `Beriker sendt søknad arbeidsgiver`() {
         testRapid.sendTestMessage(sendtSøknadArbeidsgiver)
-        assertBeriket("sendt_søknad_arbeidsgiver_beriket")
+        assertBeriket("sendt_søknad_arbeidsgiver")
     }
 
     @Test
     fun `Beriker sendt søknad nav`() {
         testRapid.sendTestMessage(sendtSøknadNav)
-        assertBeriket("sendt_søknad_nav_beriket")
+        assertBeriket("sendt_søknad_nav")
     }
 
-    private fun assertBeriket(forventetEventName: String, assertions: (jsonNode: JsonNode) -> Unit = {}) {
+    private fun assertBeriket(forventetEvent: String, assertions: (jsonNode: JsonNode) -> Unit = {}) {
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         val duplikatkontroll = hentDuplikatkontroll(FØDSELSNUMMER)
         testRapid.sendTestMessage(personinfoV3Løsning(duplikatkontroll))
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertEquals(3, testRapid.inspektør.size)
+        assertEquals(forventetEvent, testRapid.inspektør.message(0).path("@event_name").asText())
         assertEquals("behov", testRapid.inspektør.message(1).path("@event_name").asText())
         val beriket = testRapid.inspektør.message(2)
-        assertEquals(forventetEventName, beriket["@event_name"].textValue())
-        assertEquals("1950-10-27", beriket.path("supplement").path("fødselsdato").asText())
+        assertEquals("${forventetEvent}_beriket", beriket["@event_name"].textValue())
+        assertEquals("1950-10-27", beriket.path("fødselsdato").asText())
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertions(beriket)
     }
 
