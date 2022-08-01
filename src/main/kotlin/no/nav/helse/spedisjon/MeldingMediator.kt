@@ -1,7 +1,6 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.TextNode
 import io.prometheus.client.Counter
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
@@ -98,7 +97,7 @@ internal class MeldingMediator(
         json.put("fødselsdato", fødselsdato.toString())
 
         val beriketEvent = json["@event_name"].asText() + "_beriket"
-        json.replace("@event_name", TextNode(beriketEvent))
+        json.put("@event_name", beriketEvent)
         context.publish(fnr, json.toString())
         sikkerLogg.info("publiserte $beriketEvent for $fnr: \n$json")
     }
