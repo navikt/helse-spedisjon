@@ -3,14 +3,13 @@ package no.nav.helse.spedisjon
 import com.fasterxml.jackson.databind.JsonNode
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import kotliquery.using
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
 internal class BerikelseDao(private val dataSource: DataSource) {
 
     fun behovEtterspurt(fnr: String, duplikatkontroll: String, behov: List<String>, opprettet: LocalDateTime) =
-        using(sessionOf(dataSource)) {
+        sessionOf(dataSource).use {
             it.run(
                 queryOf("""
                 INSERT INTO berikelse (fnr, duplikatkontroll, behov, opprettet) values(:fnr, :duplikatkontroll, :behov, :opprettet)
@@ -22,7 +21,7 @@ internal class BerikelseDao(private val dataSource: DataSource) {
                     "opprettet" to opprettet)).asUpdate)
         }
 
-    fun behovBesvart(duplikatkontroll: String, løsning: JsonNode) = using(sessionOf(dataSource)) {
+    fun behovBesvart(duplikatkontroll: String, løsning: JsonNode) = sessionOf(dataSource).use {
         it.run(
             queryOf("""
                 UPDATE berikelse SET løsning = :losning::json
@@ -31,7 +30,7 @@ internal class BerikelseDao(private val dataSource: DataSource) {
     }
 
     fun ubesvarteBehov(opprettetFør: LocalDateTime): List<UbesvartBehov> =
-        using(sessionOf(dataSource)) {
+        sessionOf(dataSource).use {
             it.run(
                 queryOf("""SELECT fnr, duplikatkontroll, behov FROM berikelse WHERE løsning is null AND opprettet < :opprettetFor""",
                     mapOf("opprettetFor" to opprettetFør))
