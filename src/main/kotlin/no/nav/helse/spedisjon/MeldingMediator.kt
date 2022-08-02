@@ -2,6 +2,7 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.prometheus.client.Counter
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
@@ -16,7 +17,9 @@ internal class MeldingMediator(
     private val aktørregisteretClient: AktørregisteretClient,
 ) {
     internal companion object {
+        private val logg = LoggerFactory.getLogger(MeldingMediator::class.java)
         private val sikkerLogg = LoggerFactory.getLogger("tjenestekall")
+        private val objectMapper = jacksonObjectMapper()
         private val meldingsteller = Counter.build("melding_totals", "Antall meldinger mottatt")
             .labelNames("type")
             .register()
@@ -34,13 +37,15 @@ internal class MeldingMediator(
             json as ObjectNode
             val eventName = json["@event_name"].asText()
             val beriketEvent = eventName + "_beriket"
-            json.put("fødselsdato", fødselsdato.toString())
-            json.put(aktørIdFeltnavn(eventName), aktørId)
             json.put("@event_name", beriketEvent)
+            json.setAll<ObjectNode>(løsningJson(eventName, fødselsdato, aktørId))
             sikkerLogg.info("publiserer $beriketEvent for ${melding.first}: \n$json")
             return json
         }
         private fun aktørIdFeltnavn(eventName: String) = if (eventName == "inntektsmelding") "arbeidstakerAktorId" else "aktorId"
+
+        private fun løsningJson(eventName: String, fødselsdato: LocalDate, aktørId: String) =
+            objectMapper.createObjectNode().put("fødselsdato", fødselsdato.toString()).put(aktørIdFeltnavn(eventName), aktørId)
     }
 
     private var fnroppslag = false
@@ -90,13 +95,14 @@ internal class MeldingMediator(
         block()?.also { this[key] = it }
     }
 
-    fun sendBehov(fødselsnummer: String, behovsliste: List<String>, behovskilde: String, context: MessageContext) {
+    fun sendBehov(fødselsnummer: String, behov: List<String>, duplikatkontroll: String, context: MessageContext) {
         context.publish(fødselsnummer,
             JsonMessage.newNeed(behov = listOf("HentPersoninfoV3"),
                 map = mapOf("HentPersoninfoV3" to mapOf(
                     "ident" to fødselsnummer,
-                    "attributter" to behovsliste,
-                ), "spedisjonMeldingId" to behovskilde)).toJson())
+                    "attributter" to behov,
+                ), "spedisjonMeldingId" to duplikatkontroll)).toJson())
+        berikelseDao.behovEtterspurt(fødselsnummer, duplikatkontroll, behov, LocalDateTime.now())
     }
 
     fun onPersoninfoBerikelse(
@@ -110,11 +116,15 @@ internal class MeldingMediator(
             sikkerLogg.warn("Mottok personinfoberikelse med duplikatkontroll=$duplikatkontroll som vi ikke fant i databasen")
             return
         }
+        if (berikelseDao.behovErBesvart(duplikatkontroll)) return
         context.publish(melding.first, berik(melding, fødselsdato, aktørId).toString())
+        val eventName = melding.second["@event_name"].asText()
+        berikelseDao.behovBesvart(duplikatkontroll, løsningJson(eventName, fødselsdato, aktørId))
     }
 
     fun retryBehov(opprettetFør: LocalDateTime, context:MessageContext) {
         berikelseDao.ubesvarteBehov(opprettetFør).forEach { ubesvartBehov ->
+            logg.info("Sender ut nytt behov for duplikatkontroll=${ubesvartBehov.duplikatkontroll}")
             sendBehov(ubesvartBehov.fnr, ubesvartBehov.behov, ubesvartBehov.duplikatkontroll, context)
         }
     }

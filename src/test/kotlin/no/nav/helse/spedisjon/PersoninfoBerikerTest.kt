@@ -48,6 +48,14 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         assertBeriket("sendt_søknad_nav")
     }
 
+    @Test
+    fun `Beriker ikke en melding som allerede er beriket`() {
+        testRapid.sendTestMessage(sendtSøknadNav)
+        assertBeriket("sendt_søknad_nav")
+        testRapid.sendTestMessage(personinfoV3Løsning(hentDuplikatkontroll(FØDSELSNUMMER)))
+        assertEquals(3, testRapid.inspektør.size)
+    }
+
     private fun assertBeriket(forventetEvent: String, assertions: (jsonNode: JsonNode) -> Unit = {}) {
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         val duplikatkontroll = hentDuplikatkontroll(FØDSELSNUMMER)
@@ -59,6 +67,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         assertEquals("${forventetEvent}_beriket", beriket["@event_name"].textValue())
         assertEquals("1950-10-27", beriket.path("fødselsdato").asText())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(beriket.path("@id").asText(), testRapid.inspektør.message(0).path("@id").asText())
         assertions(beriket)
     }
 
@@ -163,7 +172,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         }"""
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(), aktørregisteretClient)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
         PersoninfoBeriker(
             rapidsConnection = testRapid,
             meldingMediator = meldingMediator

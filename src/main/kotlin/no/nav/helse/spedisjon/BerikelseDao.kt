@@ -42,6 +42,15 @@ internal class BerikelseDao(private val dataSource: DataSource) {
                         )
                     }.asList)
         }
+
+    fun behovErBesvart(duplikatkontroll: String) = sessionOf(dataSource).use {
+        it.run(queryOf(
+            """
+            SELECT 1 FROM berikelse WHERE duplikatkontroll = :duplikatkontroll
+            AND løsning is not null
+        """, mapOf("duplikatkontroll" to duplikatkontroll)
+        ).map { row -> row }.asList).isNotEmpty()
+    }
 }
 
 internal data class UbesvartBehov(val fnr: String, val duplikatkontroll: String, val behov: List<String>)
