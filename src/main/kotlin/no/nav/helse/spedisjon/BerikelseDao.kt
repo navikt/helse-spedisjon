@@ -41,3 +41,5 @@ internal class BerikelseDao(private val dataSource: DataSource) {
                     }.asList)
         }
 }
+
+internal data class RetryMelding(val fnr: String, val duplikatkontroll: String)
