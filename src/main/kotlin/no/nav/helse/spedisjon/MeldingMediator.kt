@@ -8,6 +8,7 @@ import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.isMissingOrNull
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 internal class MeldingMediator(
     private val meldingDao: MeldingDao,
@@ -110,5 +111,12 @@ internal class MeldingMediator(
         }
         context.publish(melding.first, berik(melding, fødselsdato, aktørId).toString())
     }
+
+    fun retryBehov(tidligereEnn: LocalDateTime, context:MessageContext) {
+        val fattigeDokumenter = finnDokumenterUtenBerikelse(tidligereEnn)
+        fattigeDokumenter.forEach { sendBehov(it.fnr, emptyList(), it.duplikatkontroll, context) }
+    }
+
+    fun finnDokumenterUtenBerikelse(tidligereEnn: LocalDateTime): List<RetryMelding> = emptyList()
 
 }
