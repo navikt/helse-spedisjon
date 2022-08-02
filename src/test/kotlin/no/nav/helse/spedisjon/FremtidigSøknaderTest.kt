@@ -14,6 +14,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
     fun `tar inn fremtidig søknad`() {
         testRapid.sendTestMessage(søknad())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("ny_søknad", "behov")
         assertEquals("NY", testRapid.inspektør.message(0)["status"].textValue())
         assertEquals(true, testRapid.inspektør.message(0)["fremtidig_søknad"].booleanValue())
     }
@@ -23,6 +24,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         testRapid.sendTestMessage(søknad("FREMTIDIG"))
         testRapid.sendTestMessage(søknad("NY"))
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("ny_søknad", "behov", "behov") // Sendes behov på begge, men kun første som får løsning publiseres videre på rapiden
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
@@ -53,7 +55,5 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
             "fom": "2020-01-01",
             "tom": "2020-01-01"
         }
-
-    """.trimIndent()
-
+    """
 }

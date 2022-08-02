@@ -34,6 +34,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 }""")
 
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("inntektsmelding", "behov")
     }
 
     @Test
@@ -59,6 +60,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 }"""
         )
         assertEquals(0, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents()
     }
 
     @Test
@@ -82,6 +84,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         )
 
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("inntektsmelding", "behov")
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {

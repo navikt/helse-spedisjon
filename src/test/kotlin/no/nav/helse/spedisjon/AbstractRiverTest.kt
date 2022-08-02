@@ -11,6 +11,7 @@ import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.LocalDateTime
 import javax.sql.DataSource
@@ -84,6 +85,14 @@ internal abstract class AbstractRiverTest {
                 }.asSingle
             )
         }
+    }
+
+    protected fun assertSendteEvents(vararg events: String) {
+        val sendteEvents = when (testRapid.inspektør.size == 0) {
+            true -> emptyList<String>()
+            false -> (0 until testRapid.inspektør.size).map { testRapid.inspektør.message(it).path("@event_name").asText() }
+        }
+        assertEquals(events.toList(), sendteEvents)
     }
 
     protected fun String.json(block: (node: ObjectNode) -> Unit) : String {

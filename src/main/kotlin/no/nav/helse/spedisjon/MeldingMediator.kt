@@ -85,6 +85,15 @@ internal class MeldingMediator(
         context.publish(melding.fødselsnummer(), melding.json())
     }
 
+    fun onMeldingAsync(melding: Melding, context: MessageContext) {
+        messageRecognized = true
+        meldingsteller.labels(melding.type).inc()
+        if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
+        sendBehov(melding.fødselsnummer(), listOf("aktørId", "fødselsdato"), melding.duplikatkontroll(), context)
+        unikteller.labels(melding.type).inc()
+        sendtteller.labels(melding.type).inc()
+    }
+
     fun afterMessage(message: String) {
         if (messageRecognized || riverErrors.isEmpty()) return
         sikkerLogg.warn("kunne ikke gjenkjenne melding:\n\t$message\n\nProblemer:\n${riverErrors.joinToString(separator = "\n")}")

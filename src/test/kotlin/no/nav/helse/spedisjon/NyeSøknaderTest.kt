@@ -33,6 +33,7 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
 }""")
 
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("ny_søknad", "behov")
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {

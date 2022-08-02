@@ -18,24 +18,28 @@ internal class SendteSøknaderNavTest : AbstractRiverTest() {
     fun `leser sendte søknader`() {
         testRapid.sendTestMessage(SØKNAD)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("sendt_søknad_nav", "behov")
     }
 
     @Test
     fun `leser sendte søknader hvor sendTilGosys=false`() {
         testRapid.sendTestMessage(SØKNAD.json { it.put("sendTilGosys", false) })
         assertEquals(1, antallMeldinger())
+        assertSendteEvents("sendt_søknad_nav", "behov")
     }
 
     @Test
     fun `leser sendte søknader hvor sendTilGosys=null`() {
         testRapid.sendTestMessage(SØKNAD.json { it.putNull("sendTilGosys") })
         assertEquals(1, antallMeldinger())
+        assertSendteEvents("sendt_søknad_nav", "behov")
     }
 
     @Test
     fun `ignorer sendte søknader hvor sendTilGosys=true`() {
         testRapid.sendTestMessage(SØKNAD.json { it.put("sendTilGosys", true) })
         assertEquals(0, antallMeldinger())
+        assertSendteEvents()
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
