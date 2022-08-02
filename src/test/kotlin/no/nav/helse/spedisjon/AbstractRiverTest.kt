@@ -18,7 +18,7 @@ import javax.sql.DataSource
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal abstract class AbstractRiverTest {
     private val postgres = PostgreSQLContainer<Nothing>("postgres:13")
-    private lateinit var dataSource: DataSource
+    protected lateinit var dataSource: DataSource
     protected val testRapid = TestRapid()
 
     protected companion object {
