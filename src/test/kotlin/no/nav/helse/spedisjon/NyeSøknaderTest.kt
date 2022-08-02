@@ -38,7 +38,7 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         NyeSøknader(
             rapidsConnection = rapidsConnection,
-            meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient)
+            meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(), aktørregisteretClient)
         )
     }
 

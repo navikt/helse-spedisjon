@@ -8,18 +8,13 @@ import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.slf4j.LoggerFactory
 
 internal class LogWrapperTest {
     private val rapid = TestRapid()
 
     private val appender = ListAppender<ILoggingEvent>().apply { start() }
 
-    private val log = (LoggerFactory.getLogger("tjenestekall") as ch.qos.logback.classic.Logger).apply {
-        addAppender(appender)
-    }
-
-    private val mediator = MeldingMediator(mockk(), mockk())
+    private val mediator = MeldingMediator(mockk(), mockk(), mockk())
 
     @BeforeEach
     fun setup() {

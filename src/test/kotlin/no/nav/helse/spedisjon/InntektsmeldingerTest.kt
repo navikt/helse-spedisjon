@@ -85,7 +85,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), aktørregisteretClient)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(), aktørregisteretClient)
         LogWrapper(testRapid, meldingMediator = meldingMediator).apply {
             Inntektsmeldinger(
                 rapidsConnection = this,

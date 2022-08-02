@@ -9,7 +9,9 @@ import java.io.File
 fun main() {
     val env = System.getenv()
     val dataSourceBuilder = DataSourceBuilder(env)
-    val meldingDao = MeldingDao(dataSourceBuilder.getDataSource())
+    val dataSource = dataSourceBuilder.getDataSource()
+    val meldingDao = MeldingDao(dataSource)
+    val berikelseDao = BerikelseDao(dataSource)
 
     val aktørregisteretClient = AktørregisteretRestClient(env.getValue("AKTORREGISTERET_URL"), StsRestClient(
         baseUrl = "http://security-token-service.default.svc.nais.local",
@@ -17,7 +19,7 @@ fun main() {
         password = "/var/run/secrets/nais.io/service_user/password".readFile()
     ))
 
-    val meldingMediator = MeldingMediator(meldingDao, aktørregisteretClient)
+    val meldingMediator = MeldingMediator(meldingDao, berikelseDao, aktørregisteretClient)
 
     LogWrapper(RapidApplication.create(env), meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
@@ -26,6 +28,7 @@ fun main() {
         SendteSøknaderNav(this, meldingMediator)
         Inntektsmeldinger(this, meldingMediator)
         PersoninfoBeriker(this, meldingMediator)
+        PersoninfoBerikerRetry(this, meldingMediator)
     }.apply {
         register(object : RapidsConnection.StatusListener {
             override fun onStartup(rapidsConnection: RapidsConnection) {

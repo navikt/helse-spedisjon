@@ -12,6 +12,7 @@ import java.time.LocalDateTime
 
 internal class MeldingMediator(
     private val meldingDao: MeldingDao,
+    private val berikelseDao: BerikelseDao,
     private val aktørregisteretClient: AktørregisteretClient,
 ) {
     internal companion object {
@@ -112,11 +113,9 @@ internal class MeldingMediator(
         context.publish(melding.first, berik(melding, fødselsdato, aktørId).toString())
     }
 
-    fun retryBehov(tidligereEnn: LocalDateTime, context:MessageContext) {
-        val fattigeDokumenter = finnDokumenterUtenBerikelse(tidligereEnn)
-        fattigeDokumenter.forEach { sendBehov(it.fnr, emptyList(), it.duplikatkontroll, context) }
+    fun retryBehov(opprettetFør: LocalDateTime, context:MessageContext) {
+        berikelseDao.ubesvarteBehov(opprettetFør).forEach { ubesvartBehov ->
+            sendBehov(ubesvartBehov.fnr, ubesvartBehov.behov, ubesvartBehov.duplikatkontroll, context)
+        }
     }
-
-    fun finnDokumenterUtenBerikelse(tidligereEnn: LocalDateTime): List<UbesvartBehov> = emptyList()
-
 }
