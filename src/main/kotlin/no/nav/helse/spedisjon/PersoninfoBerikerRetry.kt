@@ -4,7 +4,6 @@ import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
-import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -15,7 +14,6 @@ internal class PersoninfoBerikerRetry(
     private val retryIntervall: Duration = Duration.ofSeconds(30)
     private val timeout: Duration = Duration.ofMinutes(15)
     private var sistRetry: LocalDateTime = LocalDateTime.MIN
-    private val logger = LoggerFactory.getLogger(PersoninfoBerikerRetry::class.java)
 
     init {
         River(rapidsConnection).register(this)
@@ -28,7 +26,6 @@ internal class PersoninfoBerikerRetry(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         if (skalKjøreRetry()) {
-            logger.info("Kjører retry av berikelse")
             meldingMediator.retryBehov(opprettetFør = LocalDateTime.now().minus(timeout), context)
             harKjørtRetry()
         }

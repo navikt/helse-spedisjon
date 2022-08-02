@@ -113,10 +113,13 @@ internal class MeldingMediator(
     ) {
         val melding = meldingDao.hent(duplikatkontroll)
         if (melding == null) {
-            sikkerLogg.warn("Mottok personinfoberikelse med duplikatkontroll=$duplikatkontroll som vi ikke fant i databasen")
+            logg.warn("Mottok personinfoberikelse med duplikatkontroll=$duplikatkontroll som vi ikke fant i databasen")
             return
         }
-        if (berikelseDao.behovErBesvart(duplikatkontroll)) return
+        if (berikelseDao.behovErBesvart(duplikatkontroll)) {
+            logg.info("Behov er allerede besvart for duplikatkontroll=$duplikatkontroll")
+            return
+        }
         context.publish(melding.first, berik(melding, fødselsdato, aktørId).toString())
         val eventName = melding.second["@event_name"].asText()
         berikelseDao.behovBesvart(duplikatkontroll, løsningJson(eventName, fødselsdato, aktørId))
