@@ -31,6 +31,12 @@ internal class BerikelseDaoTest: AbstractRiverTest() {
         assertEquals(0, dao.ubesvarteBehov(LocalDateTime.now().minusMinutes(11)).size)
     }
 
+    @Test
+    fun `ubsevart behov inneholder nødvendig informasjon`() {
+        val dao = BerikelseDao(dataSource)
+        dao.behovEtterspurt("fnr", "duplikatkontroll", listOf("aktørId", "fødselsdato"), LocalDateTime.now().minusMinutes(1))
+        assertEquals(listOf(UbesvartBehov("fnr", "duplikatkontroll".padEnd(128, ' '), listOf("aktørId", "fødselsdato"))), dao.ubesvarteBehov(LocalDateTime.now()))
+    }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {}
 }

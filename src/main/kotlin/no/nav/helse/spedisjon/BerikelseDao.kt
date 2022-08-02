@@ -30,16 +30,19 @@ internal class BerikelseDao(private val dataSource: DataSource) {
             """, mapOf("losning" to løsning.toString(), "duplikatkontroll" to duplikatkontroll)).asUpdate)
     }
 
-    fun ubesvarteBehov(opprettetFør: LocalDateTime): List<RetryMelding> =
+    fun ubesvarteBehov(opprettetFør: LocalDateTime): List<UbesvartBehov> =
         using(sessionOf(dataSource)) {
             it.run(
-                queryOf("""SELECT fnr, duplikatkontroll FROM berikelse WHERE løsning is null AND opprettet < :opprettetFor""",
+                queryOf("""SELECT fnr, duplikatkontroll, behov FROM berikelse WHERE løsning is null AND opprettet < :opprettetFor""",
                     mapOf("opprettetFor" to opprettetFør))
                     .map { row ->
-                        RetryMelding(fnr = row.string("fnr"),
-                            duplikatkontroll = row.string("duplikatkontroll"))
+                        UbesvartBehov(
+                            fnr = row.string("fnr"),
+                            duplikatkontroll = row.string("duplikatkontroll"),
+                            behov = row.string("behov").split(", ")
+                        )
                     }.asList)
         }
 }
 
-internal data class RetryMelding(val fnr: String, val duplikatkontroll: String)
+internal data class UbesvartBehov(val fnr: String, val duplikatkontroll: String, val behov: List<String>)

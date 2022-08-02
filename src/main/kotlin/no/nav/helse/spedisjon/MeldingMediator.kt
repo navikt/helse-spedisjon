@@ -117,6 +117,6 @@ internal class MeldingMediator(
         fattigeDokumenter.forEach { sendBehov(it.fnr, emptyList(), it.duplikatkontroll, context) }
     }
 
-    fun finnDokumenterUtenBerikelse(tidligereEnn: LocalDateTime): List<RetryMelding> = emptyList()
+    fun finnDokumenterUtenBerikelse(tidligereEnn: LocalDateTime): List<UbesvartBehov> = emptyList()
 
 }
