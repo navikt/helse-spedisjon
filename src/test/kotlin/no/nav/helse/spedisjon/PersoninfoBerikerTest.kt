@@ -39,7 +39,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
     @Test
     fun `Beriker sendt søknad arbeidsgiver`() {
         testRapid.sendTestMessage(sendtSøknadArbeidsgiver)
-        assertBeriketGammelFlyt("sendt_søknad_arbeidsgiver")
+        assertBeriket("sendt_søknad_arbeidsgiver")
     }
 
     @Test
