@@ -52,14 +52,13 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
     fun `Beriker ikke en melding som allerede er beriket`() {
         testRapid.sendTestMessage(sendtSøknadNav)
         assertBeriket("sendt_søknad_nav")
-        testRapid.sendTestMessage(personinfoV3Løsning(hentDuplikatkontroll(FØDSELSNUMMER)))
+        sendBerikelse()
         assertEquals(3, testRapid.inspektør.size)
     }
 
     private fun assertBeriket(forventetEvent: String, assertions: (jsonNode: JsonNode) -> Unit = {}) {
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        val duplikatkontroll = hentDuplikatkontroll(FØDSELSNUMMER)
-        testRapid.sendTestMessage(personinfoV3Løsning(duplikatkontroll))
+        sendBerikelse()
         assertEquals(3, testRapid.inspektør.size)
         assertEquals(forventetEvent, testRapid.inspektør.message(0).path("@event_name").asText())
         assertEquals("behov", testRapid.inspektør.message(1).path("@event_name").asText())
@@ -70,28 +69,6 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         assertEquals(beriket.path("@id").asText(), testRapid.inspektør.message(0).path("@id").asText())
         assertions(beriket)
     }
-
-    private fun personinfoV3Løsning(duplikatkontroll: String?) =
-        """
-        {
-            "@id": "514ae64c-a692-4d83-9a9a-7308a5453986",
-            "@behovId": "9a06d800-f6dd-423f-99bc-6dde4f017931",
-            "@behov": ["HentPersoninfoV3"],
-            "@final": true,
-            "HentPersoninfoV3": {
-                "ident": "27105027856",
-                "attributter": ["fødselsdato", "aktørId"]
-            },
-            "@opprettet": "2022-06-27T15:01:43.756488972",
-            "spedisjonMeldingId": "$duplikatkontroll",
-            "@løsning": {
-                "HentPersoninfoV3": {
-                    "aktørId": "$AKTØR",
-                    "fødselsdato": "1950-10-27"
-                }
-            }
-        }
-        """
 
     private fun inntektmelding() =
         """
