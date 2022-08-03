@@ -32,9 +32,9 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     "arkivreferanse": "arkivref",
     "foersteFravaersdag": "2020-01-01"
 }""")
-
+        sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("inntektsmelding", "behov")
+        assertSendteEvents("behov", "inntektsmelding")
     }
 
     @Test
@@ -82,9 +82,9 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     "foersteFravaersdag": null
 }"""
         )
-
+        sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("inntektsmelding", "behov")
+        assertSendteEvents("behov", "inntektsmelding")
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
@@ -95,6 +95,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
                 meldingMediator = meldingMediator
             )
         }
+        PersoninfoBeriker(testRapid, meldingMediator)
     }
 
     @BeforeEach

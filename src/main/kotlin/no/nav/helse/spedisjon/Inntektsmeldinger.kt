@@ -37,15 +37,8 @@ internal class Inntektsmeldinger(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        meldingMediator.onPacket(packet, "arbeidstakerAktorId", "arbeidstakerFnr")
         val inntektsmelding = Melding.Inntektsmelding(packet)
-        meldingMediator.onMelding(inntektsmelding, context)
-        meldingMediator.sendBehov(
-            inntektsmelding.fødselsnummer(),
-            listOf("aktørId", "fødselsdato"),
-            inntektsmelding.duplikatkontroll(),
-            context
-        )
+        meldingMediator.onMeldingAsync(inntektsmelding, context)
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {

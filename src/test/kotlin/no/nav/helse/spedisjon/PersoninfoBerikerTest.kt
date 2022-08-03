@@ -24,7 +24,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
     @Test
     fun `Beriker inntektsmelding`() {
         testRapid.sendTestMessage(inntektmelding())
-        assertBeriketGammelFlyt("inntektsmelding")
+        assertBeriket("inntektsmelding")
     }
 
     @Test
@@ -78,7 +78,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         val beriket = testRapid.inspektør.message(1)
         assertEquals(forventetEvent, beriket["@event_name"].textValue())
         assertEquals("1950-10-27", beriket.path("fødselsdato").asText())
-        assertEquals(AKTØR, beriket.path("aktorId").asText())
+        assertEquals(AKTØR, beriket.path(MeldingMediator.aktørIdFeltnavn(forventetEvent)).asText())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertions(beriket)
     }

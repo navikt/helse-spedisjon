@@ -42,9 +42,9 @@ internal class MeldingMediator(
             sikkerLogg.info("publiserer $beriketEvent for ${melding.first}: \n$json")
             return json
         }
-        private fun aktørIdFeltnavn(eventName: String) = if (eventName == "inntektsmelding") "arbeidstakerAktorId" else "aktorId"
+        internal fun aktørIdFeltnavn(eventName: String) = if (eventName == "inntektsmelding") "arbeidstakerAktorId" else "aktorId"
 
-        private fun beriketEventName(eventName: String) = if (eventName == "ny_søknad") eventName else "${eventName}_beriket"
+        private fun beriketEventName(eventName: String) = if (eventName in listOf("ny_søknad", "inntektsmelding")) eventName else "${eventName}_beriket"
 
         private fun løsningJson(eventName: String, fødselsdato: LocalDate, aktørId: String) =
             objectMapper.createObjectNode().put("fødselsdato", fødselsdato.toString()).put(aktørIdFeltnavn(eventName), aktørId)
