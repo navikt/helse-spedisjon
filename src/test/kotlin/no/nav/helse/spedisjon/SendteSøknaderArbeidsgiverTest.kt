@@ -1,7 +1,6 @@
 package no.nav.helse.spedisjon
 
 import io.mockk.clearAllMocks
-import io.mockk.mockk
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,8 +10,6 @@ import java.time.LocalDateTime
 import javax.sql.DataSource
 
 internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
-
-    private val aktørregisteretClient = mockk<AktørregisteretClient>()
 
     @Test
     fun `leser sendte søknader`() {
@@ -46,7 +43,7 @@ internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
         SendteSøknaderArbeidsgiver(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator

@@ -40,7 +40,7 @@ class FremtidigSøknaderRiver internal constructor(
         packet["fremtidig_søknad"] = true
 
         val nySøknadMelding = Melding.NySøknad(packet)
-        meldingMediator.onMeldingAsync(nySøknadMelding, context)
+        meldingMediator.onMelding(nySøknadMelding, context)
     }
 
 }

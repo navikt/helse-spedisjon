@@ -74,7 +74,7 @@ internal abstract class AbstractRiverTest {
             }.asSingle)
         }
 
-    protected fun hentDuplikatkontroll(fnr: String = FØDSELSNUMMER): String? {
+    private fun hentDuplikatkontroll(fnr: String = FØDSELSNUMMER): String? {
         return sessionOf(dataSource).use {
             it.run(
                 queryOf(

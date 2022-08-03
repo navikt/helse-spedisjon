@@ -37,9 +37,6 @@ spec:
     enabled: true
   vault:
     enabled: true
-    paths:
-      - mountPath: /var/run/secrets/nais.io/service_user
-        kvPath: /serviceuser/data/prod/srvspedisjon
   env:
   - name: KAFKA_CONSUMER_GROUP_ID
     value: spedisjon-v1
@@ -55,5 +52,4 @@ spec:
     value: spedisjon
   - name: VAULT_MOUNTPATH
     value: postgresql/prod-fss/
-  - name: AKTORREGISTERET_URL
-    value: https://app.adeo.no/aktoerregister
+

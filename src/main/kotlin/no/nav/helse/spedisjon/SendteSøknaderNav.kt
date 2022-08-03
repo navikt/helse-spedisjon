@@ -27,7 +27,7 @@ internal class SendteSøknaderNav(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val søknad = Melding.SendtSøknadNav(packet)
-        meldingMediator.onMeldingAsync(søknad, context)
+        meldingMediator.onMelding(søknad, context)
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {

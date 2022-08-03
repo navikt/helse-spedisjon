@@ -1,7 +1,6 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
-import io.mockk.mockk
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -9,8 +8,6 @@ import java.time.LocalDateTime
 import javax.sql.DataSource
 
 internal class PersoninfoBerikerTest : AbstractRiverTest() {
-
-    private val aktørregisteretClient = mockk<AktørregisteretClient>()
 
     @Test
     fun `Beriker fremtidig søknad`() {
@@ -148,7 +145,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         }"""
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
         PersoninfoBeriker(
             rapidsConnection = testRapid,
             meldingMediator = meldingMediator

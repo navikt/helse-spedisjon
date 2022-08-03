@@ -1,14 +1,11 @@
 package no.nav.helse.spedisjon
 
-import io.mockk.mockk
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import javax.sql.DataSource
 
 internal class FremtidigSøknaderTest: AbstractRiverTest() {
-
-    private val aktørregisteretClient = mockk<AktørregisteretClient>()
 
     @Test
     fun `tar inn fremtidig søknad`() {
@@ -31,7 +28,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
         FremtidigSøknaderRiver(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator

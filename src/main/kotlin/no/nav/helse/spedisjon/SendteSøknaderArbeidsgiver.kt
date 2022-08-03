@@ -28,7 +28,7 @@ internal class SendteSøknaderArbeidsgiver(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val søknad = Melding.SendtSøknadArbeidsgiver(packet)
-        meldingMediator.onMeldingAsync(søknad, context)
+        meldingMediator.onMelding(søknad, context)
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {

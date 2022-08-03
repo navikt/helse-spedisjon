@@ -3,8 +3,6 @@ package no.nav.helse.spedisjon
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
-import no.nav.helse.spedisjon.AktørregisteretClient.AktørregisteretRestClient
-import java.io.File
 
 fun main() {
     val env = System.getenv()
@@ -13,13 +11,7 @@ fun main() {
     val meldingDao = MeldingDao(dataSource)
     val berikelseDao = BerikelseDao(dataSource)
 
-    val aktørregisteretClient = AktørregisteretRestClient(env.getValue("AKTORREGISTERET_URL"), StsRestClient(
-        baseUrl = "http://security-token-service.default.svc.nais.local",
-        username = "/var/run/secrets/nais.io/service_user/username".readFile(),
-        password = "/var/run/secrets/nais.io/service_user/password".readFile()
-    ))
-
-    val meldingMediator = MeldingMediator(meldingDao, berikelseDao, aktørregisteretClient)
+    val meldingMediator = MeldingMediator(meldingDao, berikelseDao)
 
     LogWrapper(RapidApplication.create(env), meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
@@ -88,5 +80,3 @@ internal class LogWrapper(
         rapidsConnection.stop()
     }
 }
-
-private fun String.readFile() = File(this).readText(Charsets.UTF_8)

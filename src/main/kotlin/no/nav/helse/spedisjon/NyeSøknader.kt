@@ -24,7 +24,7 @@ internal class NyeSøknader(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val nySøknadMelding = Melding.NySøknad(packet)
-        meldingMediator.onMeldingAsync(nySøknadMelding, context)
+        meldingMediator.onMelding(nySøknadMelding, context)
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {

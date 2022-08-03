@@ -38,7 +38,7 @@ internal class Inntektsmeldinger(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val inntektsmelding = Melding.Inntektsmelding(packet)
-        meldingMediator.onMeldingAsync(inntektsmelding, context)
+        meldingMediator.onMelding(inntektsmelding, context)
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {

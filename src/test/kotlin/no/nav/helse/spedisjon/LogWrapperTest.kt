@@ -2,6 +2,7 @@ package no.nav.helse.spedisjon
 
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import io.mockk.every
 import io.mockk.mockk
 import no.nav.helse.rapids_rivers.*
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
+import java.time.LocalDateTime
 
 internal class LogWrapperTest {
     private val rapid = TestRapid()
@@ -19,12 +21,16 @@ internal class LogWrapperTest {
         addAppender(appender)
     }
 
-    private val mediator = MeldingMediator(mockk(), mockk(), mockk())
+    private val berikelsesMock:BerikelseDao = mockk()
+    private val meldingMock:MeldingDao = mockk()
+    private val mediator = MeldingMediator(meldingMock, berikelsesMock)
 
     @BeforeEach
     fun setup() {
         appender.list.clear()
         rapid.reset()
+        every { berikelsesMock.behovEtterspurt(any(), any(), any(), any()) }.answers { }
+        every { meldingMock.leggInn(any()) }.answers { true }
     }
 
     @Test
@@ -60,11 +66,18 @@ internal class LogWrapperTest {
         }
 
         override fun onPacket(packet: JsonMessage, context: MessageContext) {
-            mediator.onPacket(packet, "b_key", "a_key")
+            mediator.onMelding(TestMelding(packet), context)
         }
         override fun onError(problems: MessageProblems, context: MessageContext) {
             mediator.onRiverError("Ukjent melding:\n$problems")
         }
     }
 
+}
+
+internal class TestMelding(packet: JsonMessage) : Melding(packet) {
+    override val type: String = "test_melding"
+    override fun fødselsnummer(): String = "123412341234"
+    override fun rapportertDato(): LocalDateTime = LocalDateTime.now()
+    override fun duplikatnøkkel(): String = "1"
 }

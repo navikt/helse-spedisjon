@@ -8,7 +8,7 @@ import javax.sql.DataSource
 
 internal class BerikelseDao(private val dataSource: DataSource) {
 
-    fun behovEtterspurt(fnr: String, duplikatkontroll: String, behov: List<String>, opprettet: LocalDateTime) =
+    fun behovEtterspurt(fnr: String, duplikatkontroll: String, behov: List<String>, opprettet: LocalDateTime): Unit =
         sessionOf(dataSource).use {
             it.run(
                 queryOf("""

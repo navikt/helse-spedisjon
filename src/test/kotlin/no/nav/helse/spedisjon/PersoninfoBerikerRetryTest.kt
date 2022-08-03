@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon
 
-import io.mockk.mockk
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -25,7 +24,7 @@ internal class PersoninfoBerikerRetryTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         PersoninfoBerikerRetry(
             rapidsConnection = rapidsConnection,
-            meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), mockk())
+            meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
         )
     }
 
