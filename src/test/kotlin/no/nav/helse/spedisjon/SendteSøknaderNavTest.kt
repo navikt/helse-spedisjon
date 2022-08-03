@@ -17,22 +17,25 @@ internal class SendteSøknaderNavTest : AbstractRiverTest() {
     @Test
     fun `leser sendte søknader`() {
         testRapid.sendTestMessage(SØKNAD)
+        sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("sendt_søknad_nav", "behov")
+        assertSendteEvents("behov", "sendt_søknad_nav")
     }
 
     @Test
     fun `leser sendte søknader hvor sendTilGosys=false`() {
         testRapid.sendTestMessage(SØKNAD.json { it.put("sendTilGosys", false) })
+        sendBerikelse()
         assertEquals(1, antallMeldinger())
-        assertSendteEvents("sendt_søknad_nav", "behov")
+        assertSendteEvents("behov", "sendt_søknad_nav")
     }
 
     @Test
     fun `leser sendte søknader hvor sendTilGosys=null`() {
         testRapid.sendTestMessage(SØKNAD.json { it.putNull("sendTilGosys") })
+        sendBerikelse()
         assertEquals(1, antallMeldinger())
-        assertSendteEvents("sendt_søknad_nav", "behov")
+        assertSendteEvents("behov", "sendt_søknad_nav")
     }
 
     @Test
@@ -43,10 +46,12 @@ internal class SendteSøknaderNavTest : AbstractRiverTest() {
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
         SendteSøknaderNav(
             rapidsConnection = rapidsConnection,
-            meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
+            meldingMediator = meldingMediator
         )
+        PersoninfoBeriker(rapidsConnection, meldingMediator)
     }
 
     @BeforeEach

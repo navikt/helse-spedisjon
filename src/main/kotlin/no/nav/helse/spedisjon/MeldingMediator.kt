@@ -29,22 +29,16 @@ internal class MeldingMediator(
         private val sendtteller = Counter.build("melding_sendt_totals", "Antall meldinger sendt")
             .labelNames("type")
             .register()
-        private val fnrteller = Counter.build("melding_oppslag_fnr_totals", "Antall ganger fnr er slått opp")
-            .labelNames("type")
-            .register()
+
         internal fun berik(melding: Pair<String, JsonNode>, fødselsdato: LocalDate, aktørId: String): JsonNode {
             val json = melding.second
             json as ObjectNode
             val eventName = json["@event_name"].asText()
-            val beriketEvent = beriketEventName(eventName)
-            json.put("@event_name", beriketEvent)
             json.setAll<ObjectNode>(løsningJson(eventName, fødselsdato, aktørId))
-            sikkerLogg.info("publiserer $beriketEvent for ${melding.first}: \n$json")
+            sikkerLogg.info("publiserer $eventName for ${melding.first}: \n$json")
             return json
         }
         internal fun aktørIdFeltnavn(eventName: String) = if (eventName == "inntektsmelding") "arbeidstakerAktorId" else "aktorId"
-
-        private fun beriketEventName(eventName: String) = if (eventName in listOf("ny_søknad", "inntektsmelding", "sendt_søknad_arbeidsgiver")) eventName else "${eventName}_beriket"
 
         private fun løsningJson(eventName: String, fødselsdato: LocalDate, aktørId: String) =
             objectMapper.createObjectNode().put("fødselsdato", fødselsdato.toString()).put(aktørIdFeltnavn(eventName), aktørId)
@@ -76,15 +70,6 @@ internal class MeldingMediator(
 
     fun onRiverError(error: String) {
         riverErrors.add(error)
-    }
-
-    fun onMelding(melding: Melding, context: MessageContext) {
-        meldingsteller.labels(melding.type).inc()
-        if (fnroppslag) fnrteller.labels(melding.type).inc()
-        if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
-        unikteller.labels(melding.type).inc()
-        sendtteller.labels(melding.type).inc()
-        context.publish(melding.fødselsnummer(), melding.json())
     }
 
     fun onMeldingAsync(melding: Melding, context: MessageContext) {

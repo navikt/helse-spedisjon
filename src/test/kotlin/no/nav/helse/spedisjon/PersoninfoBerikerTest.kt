@@ -45,29 +45,15 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
     @Test
     fun `Beriker sendt søknad nav`() {
         testRapid.sendTestMessage(sendtSøknadNav)
-        assertBeriketGammelFlyt("sendt_søknad_nav")
+        assertBeriket("sendt_søknad_nav")
     }
 
     @Test
     fun `Beriker ikke en melding som allerede er beriket`() {
         testRapid.sendTestMessage(sendtSøknadNav)
-        assertBeriketGammelFlyt("sendt_søknad_nav")
+        assertBeriket("sendt_søknad_nav")
         sendBerikelse()
-        assertEquals(3, testRapid.inspektør.size)
-    }
-
-    private fun assertBeriketGammelFlyt(forventetEvent: String, assertions: (jsonNode: JsonNode) -> Unit = {}) {
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        sendBerikelse()
-        assertEquals(3, testRapid.inspektør.size)
-        assertEquals(forventetEvent, testRapid.inspektør.message(0).path("@event_name").asText())
-        assertEquals("behov", testRapid.inspektør.message(1).path("@event_name").asText())
-        val beriket = testRapid.inspektør.message(2)
-        assertEquals("${forventetEvent}_beriket", beriket["@event_name"].textValue())
-        assertEquals("1950-10-27", beriket.path("fødselsdato").asText())
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertEquals(beriket.path("@id").asText(), testRapid.inspektør.message(0).path("@id").asText())
-        assertions(beriket)
+        assertEquals(2, testRapid.inspektør.size)
     }
 
     private fun assertBeriket(forventetEvent: String, assertions: (jsonNode: JsonNode) -> Unit = {}) {
