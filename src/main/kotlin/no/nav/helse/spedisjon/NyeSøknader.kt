@@ -23,15 +23,8 @@ internal class NyeSøknader(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        meldingMediator.onPacket(packet, "aktorId", "fnr")
         val nySøknadMelding = Melding.NySøknad(packet)
-        meldingMediator.onMelding(nySøknadMelding, context)
-        meldingMediator.sendBehov(
-            nySøknadMelding.fødselsnummer(),
-            listOf("aktørId", "fødselsdato"),
-            nySøknadMelding.duplikatkontroll(),
-            context
-        )
+        meldingMediator.onMeldingAsync(nySøknadMelding, context)
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {

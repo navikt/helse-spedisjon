@@ -36,13 +36,15 @@ internal class MeldingMediator(
             val json = melding.second
             json as ObjectNode
             val eventName = json["@event_name"].asText()
-            val beriketEvent = eventName + "_beriket"
+            val beriketEvent = beriketEventName(eventName)
             json.put("@event_name", beriketEvent)
             json.setAll<ObjectNode>(løsningJson(eventName, fødselsdato, aktørId))
             sikkerLogg.info("publiserer $beriketEvent for ${melding.first}: \n$json")
             return json
         }
         private fun aktørIdFeltnavn(eventName: String) = if (eventName == "inntektsmelding") "arbeidstakerAktorId" else "aktorId"
+
+        private fun beriketEventName(eventName: String) = if (eventName == "ny_søknad") eventName else "${eventName}_beriket"
 
         private fun løsningJson(eventName: String, fødselsdato: LocalDate, aktørId: String) =
             objectMapper.createObjectNode().put("fødselsdato", fødselsdato.toString()).put(aktørIdFeltnavn(eventName), aktørId)
@@ -88,8 +90,9 @@ internal class MeldingMediator(
     fun onMeldingAsync(melding: Melding, context: MessageContext) {
         messageRecognized = true
         meldingsteller.labels(melding.type).inc()
-        if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
+        // Sender alltid behov selv om vi har lagret meldingen før. Vi sender uansett kun ut melding ved første løsning
         sendBehov(melding.fødselsnummer(), listOf("aktørId", "fødselsdato"), melding.duplikatkontroll(), context)
+        if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
         unikteller.labels(melding.type).inc()
         sendtteller.labels(melding.type).inc()
     }

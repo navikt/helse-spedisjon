@@ -13,29 +13,36 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
     @Test
     fun `tar inn fremtidig søknad`() {
         testRapid.sendTestMessage(søknad())
+        sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("ny_søknad", "behov")
-        assertEquals("NY", testRapid.inspektør.message(0)["status"].textValue())
-        assertEquals(true, testRapid.inspektør.message(0)["fremtidig_søknad"].booleanValue())
+        assertSendteEvents("behov", "ny_søknad")
+        assertEquals("NY", testRapid.inspektør.message(1)["status"].textValue())
+        assertEquals(true, testRapid.inspektør.message(1)["fremtidig_søknad"].booleanValue())
     }
 
     @Test
     fun `ignorerer ny søknad om vi har en fremtidig`() {
         testRapid.sendTestMessage(søknad("FREMTIDIG"))
         testRapid.sendTestMessage(søknad("NY"))
+        sendBerikelse()
+        sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("ny_søknad", "behov", "behov") // Sendes behov på begge, men kun første som får løsning publiseres videre på rapiden
+        assertSendteEvents("behov", "behov", "ny_søknad") // Sendes behov på begge, men kun første som får løsning publiseres videre på rapiden
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
         FremtidigSøknaderRiver(
             rapidsConnection = rapidsConnection,
-            meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
+            meldingMediator = meldingMediator
         )
-
         NyeSøknader(
             rapidsConnection = rapidsConnection,
-            meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
+            meldingMediator = meldingMediator
+        )
+        PersoninfoBeriker(
+            rapidsConnection = rapidsConnection,
+            meldingMediator = meldingMediator
         )
     }
 

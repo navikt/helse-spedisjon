@@ -31,15 +31,20 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     "fom": "2020-01-01",
     "tom": "2020-01-01"
 }""")
-
+        sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("ny_søknad", "behov")
+        assertSendteEvents("behov", "ny_søknad")
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
         NyeSøknader(
             rapidsConnection = rapidsConnection,
-            meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource), aktørregisteretClient)
+            meldingMediator = meldingMediator
+        )
+        PersoninfoBeriker(
+            rapidsConnection = rapidsConnection,
+            meldingMediator = meldingMediator
         )
     }
 

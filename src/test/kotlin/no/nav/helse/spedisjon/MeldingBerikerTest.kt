@@ -17,7 +17,7 @@ class MeldingBerikerTest {
         )
         assertEquals("2012-12-31", beriketJson.path("fødselsdato").asText())
         assertEquals("12345", beriketJson.path("aktorId").asText())
-        assertEquals("ny_søknad_beriket", beriketJson.path("@event_name").asText())
+        assertEquals("ny_søknad", beriketJson.path("@event_name").asText())
     }
 
     @Test

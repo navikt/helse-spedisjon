@@ -33,7 +33,6 @@ class FremtidigSøknaderRiver internal constructor(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         tjenestekallLog.info("Behandler fremtidig søknad: ${packet.toJson()}")
-        meldingMediator.onPacket(packet, "aktorId", "fnr")
 
         // Innad i domenet vårt skiller vi ikke mellom fremtidige og nye søknader,
         // derfor gir det mening å maskere fremtidig søknad som ny, for å unngå to identiske håndteringer nedover i løpya
@@ -41,13 +40,7 @@ class FremtidigSøknaderRiver internal constructor(
         packet["fremtidig_søknad"] = true
 
         val nySøknadMelding = Melding.NySøknad(packet)
-        meldingMediator.onMelding(nySøknadMelding, context)
-        meldingMediator.sendBehov(
-            nySøknadMelding.fødselsnummer(),
-            listOf("aktørId", "fødselsdato"),
-            nySøknadMelding.duplikatkontroll(),
-            context
-        )
+        meldingMediator.onMeldingAsync(nySøknadMelding, context)
     }
 
 }
