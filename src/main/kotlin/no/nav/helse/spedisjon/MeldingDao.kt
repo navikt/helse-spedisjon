@@ -2,14 +2,11 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import kotliquery.queryOf
-import kotliquery.sessionOf
-import kotliquery.using
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import org.slf4j.LoggerFactory
 import javax.sql.DataSource
 
-internal class MeldingDao(private val dataSource: DataSource){
+internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
 
     private companion object {
         private val log = LoggerFactory.getLogger("tjenestekall")
@@ -23,31 +20,17 @@ internal class MeldingDao(private val dataSource: DataSource){
         }
     }
 
-    fun hent(dupliatkontroll: String): Pair<String, JsonNode>? {
-        return sessionOf(dataSource).use {
-            it.run(
-                queryOf(
-                    """SELECT fnr, data FROM melding WHERE duplikatkontroll = ?""",
-                    dupliatkontroll
-                ).map { row ->
-                    row.string("fnr") to objectMapper.readTree(row.string("data"))
-                }.asSingle
-            )
-        }
+    fun hent(duplikatkontroll: String): Pair<String, JsonNode>? {
+        return """SELECT fnr, data FROM melding WHERE duplikatkontroll = :duplikatkontroll"""
+            .singleQuery(mapOf("duplikatkontroll" to duplikatkontroll))
+            { row -> row.string("fnr") to objectMapper.readTree(row.string("data")) }
     }
 
     private fun leggInnUtenDuplikat(melding: Melding) =
-        using(sessionOf(dataSource)) {
-            it.run(
-                queryOf(
-                    """INSERT INTO melding (type, fnr, data, opprettet, duplikatkontroll)
-                    VALUES (?, ?, ?::json, ?, ?) ON CONFLICT(duplikatkontroll) do nothing""",
-                    melding.type,
-                    melding.fødselsnummer(),
-                    melding.json(),
-                    melding.rapportertDato(),
-                    melding.duplikatkontroll()
-                ).asUpdate
-            )
-        } == 1
+        """INSERT INTO melding (type, fnr, data, opprettet, duplikatkontroll) VALUES (:type, :fnr, :json::json, :rapportert, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""
+            .update(mapOf( "type" to melding.type,
+                            "fnr" to melding.fødselsnummer(),
+                            "json" to melding.json(),
+                            "rapportert" to melding.rapportertDato(),
+                            "duplikatkontroll" to melding.duplikatkontroll())) == 1
 }
