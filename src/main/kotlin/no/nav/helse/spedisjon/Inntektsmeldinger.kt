@@ -13,7 +13,7 @@ internal class Inntektsmeldinger(
                 it.rejectKey("@event_name")
                 it.demandKey("inntektsmeldingId")
                 it.requireKey(
-                    "inntektsmeldingId", "arbeidstakerAktorId", "virksomhetsnummer",
+                    "inntektsmeldingId", "virksomhetsnummer",
                     "arbeidsgivertype", "beregnetInntekt",
                     "status", "arkivreferanse", "arbeidstakerFnr"
                 )
@@ -31,7 +31,7 @@ internal class Inntektsmeldinger(
                 it.interestedIn("foersteFravaersdag", JsonNode::asLocalDate)
                 it.interestedIn("refusjon.opphoersdato", JsonNode::asLocalDate)
                 it.require("mottattDato", JsonNode::asLocalDateTime)
-                it.interestedIn("refusjon.beloepPrMnd")
+                it.interestedIn("refusjon.beloepPrMnd", "arbeidstakerAktorId")
             }
         }.register(this)
     }
