@@ -57,8 +57,7 @@ internal class MeldingMediator(
     fun onMelding(melding: Melding, context: MessageContext) {
         messageRecognized = true
         meldingsteller.labels(melding.type).inc()
-        // Sender alltid behov selv om vi har lagret meldingen før. Vi sender uansett kun ut melding ved første løsning
-        sendBehov(melding.fødselsnummer(), listOf("aktørId", "fødselsdato"), melding.duplikatkontroll(), context)
+        sendBehovÈnGang(melding.fødselsnummer(), listOf("aktørId", "fødselsdato"), melding.duplikatkontroll(), context)
         if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
         unikteller.labels(melding.type).inc()
         sendtteller.labels(melding.type).inc()
@@ -69,7 +68,12 @@ internal class MeldingMediator(
         sikkerLogg.warn("kunne ikke gjenkjenne melding:\n\t$message\n\nProblemer:\n${riverErrors.joinToString(separator = "\n")}")
     }
 
-    fun sendBehov(fødselsnummer: String, behov: List<String>, duplikatkontroll: String, context: MessageContext) {
+    private fun sendBehovÈnGang(fødselsnummer: String, behov: List<String>, duplikatkontroll: String, context: MessageContext) {
+        if (berikelseDao.behovErEtterspurt(duplikatkontroll)) return // Om om vi allerede har etterspurt behov gjør vi det ikke på ny
+        sendBehov(fødselsnummer, behov, duplikatkontroll, context)
+    }
+
+    private fun sendBehov(fødselsnummer: String, behov: List<String>, duplikatkontroll: String, context: MessageContext) {
         context.publish(fødselsnummer,
             JsonMessage.newNeed(behov = listOf("HentPersoninfoV3"),
                 map = mapOf("HentPersoninfoV3" to mapOf(

@@ -16,9 +16,10 @@ internal class BerikelseDao(dataSource: DataSource) : AbstractDao(dataSource) {
                 "opprettet" to opprettet))
     }
 
-    fun behovBesvart(duplikatkontroll: String, løsning: JsonNode) =
+    fun behovBesvart(duplikatkontroll: String, løsning: JsonNode) {
         """UPDATE berikelse SET løsning = :losning::json WHERE duplikatkontroll = :duplikatkontroll AND løsning is null"""
             .update(mapOf("losning" to løsning.toString(), "duplikatkontroll" to duplikatkontroll))
+    }
 
     fun ubesvarteBehov(opprettetFør: LocalDateTime): List<UbesvartBehov> =
          """SELECT fnr, duplikatkontroll, behov FROM berikelse WHERE løsning is null AND opprettet < :opprettetFor"""
@@ -26,11 +27,15 @@ internal class BerikelseDao(dataSource: DataSource) : AbstractDao(dataSource) {
                 { row -> UbesvartBehov( fnr = row.string("fnr"),
                                         duplikatkontroll = row.string("duplikatkontroll"),
                                         behov = row.string("behov").split(", ")) }
-
     fun behovErBesvart(duplikatkontroll: String) =
-            """ SELECT 1 FROM berikelse WHERE duplikatkontroll = :duplikatkontroll AND løsning is not null """
+            """SELECT 1 FROM berikelse WHERE duplikatkontroll = :duplikatkontroll AND løsning is not null"""
                 .listQuery(mapOf("duplikatkontroll" to duplikatkontroll))
-                { row -> row}.isNotEmpty()
+                { row -> row }.isNotEmpty()
+
+    fun behovErEtterspurt(duplikatkontroll: String) =
+            """SELECT 1 FROM berikelse WHERE duplikatkontroll = :duplikatkontroll"""
+                .listQuery(mapOf("duplikatkontroll" to duplikatkontroll))
+                { row -> row }.isNotEmpty()
 }
 
 internal data class UbesvartBehov(val fnr: String, val duplikatkontroll: String, val behov: List<String>)

@@ -30,6 +30,7 @@ internal class LogWrapperTest {
         appender.list.clear()
         rapid.reset()
         every { berikelsesMock.behovEtterspurt(any(), any(), any(), any()) }.answers { }
+        every { berikelsesMock.behovErEtterspurt(any()) }.answers { false }
         every { meldingMock.leggInn(any()) }.answers { true }
     }
 

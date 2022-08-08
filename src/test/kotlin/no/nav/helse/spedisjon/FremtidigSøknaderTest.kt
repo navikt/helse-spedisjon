@@ -24,7 +24,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         sendBerikelse()
         sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov", "behov", "ny_søknad") // Sendes behov på begge, men kun første som får løsning publiseres videre på rapiden
+        assertSendteEvents("behov", "ny_søknad")
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {

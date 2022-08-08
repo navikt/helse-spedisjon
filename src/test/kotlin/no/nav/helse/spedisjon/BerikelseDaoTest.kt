@@ -15,7 +15,7 @@ internal class BerikelseDaoTest: AbstractRiverTest() {
     fun `ikke finn ting som er beriket`() {
         val dao = BerikelseDao(dataSource)
         dao.behovEtterspurt("fnr", "duplikatkontroll", listOf("aktørId", "fødselsdato"), LocalDateTime.now())
-        dao.behovBesvart("duplikatkontroll", jacksonObjectMapper().readTree("{}"))
+        dao.behovBesvart("duplikatkontroll", enLøsning)
         assertEquals(0, dao.ubesvarteBehov(LocalDateTime.now()).size)
     }
 
@@ -42,13 +42,31 @@ internal class BerikelseDaoTest: AbstractRiverTest() {
 
     @Test
     fun `markeres som besvart når vi mottar løsning`() {
-        val duplkatkontroll = "${UUID.randomUUID()}".sha512()
+        val duplikatkontroll = "${UUID.randomUUID()}".sha512()
         val dao = BerikelseDao(dataSource)
-        dao.behovEtterspurt("fnr", duplkatkontroll, listOf("aktørId", "fødselsdato"), LocalDateTime.now())
-        assertFalse(dao.behovErBesvart(duplkatkontroll))
-        dao.behovBesvart(duplkatkontroll, jacksonObjectMapper().createObjectNode())
-        assertTrue(dao.behovErBesvart(duplkatkontroll))
+        dao.behovEtterspurt("fnr", duplikatkontroll, listOf("aktørId", "fødselsdato"), LocalDateTime.now())
+        assertFalse(dao.behovErBesvart(duplikatkontroll))
+        dao.behovBesvart(duplikatkontroll, enLøsning)
+        assertTrue(dao.behovErBesvart(duplikatkontroll))
+    }
+
+    @Test
+    fun `markere når behov er etterspurt og besvart`() {
+        val duplikatkontroll = "${UUID.randomUUID()}".sha512()
+        val dao = BerikelseDao(dataSource)
+        assertFalse(dao.behovErEtterspurt(duplikatkontroll))
+        assertFalse(dao.behovErBesvart(duplikatkontroll))
+        dao.behovEtterspurt("fnr", duplikatkontroll, listOf("foo"), LocalDateTime.now())
+        assertTrue(dao.behovErEtterspurt(duplikatkontroll))
+        assertFalse(dao.behovErBesvart(duplikatkontroll))
+        dao.behovBesvart(duplikatkontroll, enLøsning)
+        assertTrue(dao.behovErEtterspurt(duplikatkontroll))
+        assertTrue(dao.behovErBesvart(duplikatkontroll))
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {}
+
+    private companion object {
+        private val enLøsning = jacksonObjectMapper().readTree("""{"foo": "bar"}""")
+    }
 }
