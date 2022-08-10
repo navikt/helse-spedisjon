@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.prometheus.client.Counter
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
+import no.nav.helse.spedisjon.Personidentifikator.Companion.fødselsdatoOrNull
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -98,13 +99,19 @@ internal class MeldingMediator(
             logg.info("Behov er allerede besvart for duplikatkontroll=$duplikatkontroll")
             return
         }
-        context.publish(melding.first, berik(melding, fødselsdato, aktørId).toString())
-        val eventName = melding.second["@event_name"].asText()
+        val (fødselsnummer, json) = melding
+        val eventName = json["@event_name"].asText()
+        if (fødselsdato != fødselsnummer.fødselsdatoOrNull()) {
+            sikkerLogg.info("publiserer $eventName for $fødselsnummer hvor fødselsdato ($fødselsdato) ikke kan utledes fra personidentifikator")
+        }
+        context.publish(fødselsnummer, berik(melding, fødselsdato, aktørId).toString())
         berikelseDao.behovBesvart(duplikatkontroll, løsningJson(eventName, fødselsdato, aktørId))
     }
 
     fun retryBehov(opprettetFør: LocalDateTime, context:MessageContext) {
-        berikelseDao.ubesvarteBehov(opprettetFør).forEach { ubesvartBehov ->
+        val ubesvarteBehov = berikelseDao.ubesvarteBehov(opprettetFør)
+        logg.info("Er ${ubesvarteBehov.size} ubesvarte behov som er opprettet før $opprettetFør")
+        ubesvarteBehov.forEach { ubesvartBehov ->
             logg.info("Sender ut nytt behov for duplikatkontroll=${ubesvartBehov.duplikatkontroll}")
             sendBehov(ubesvartBehov.fnr, ubesvartBehov.behov, ubesvartBehov.duplikatkontroll, context)
         }
