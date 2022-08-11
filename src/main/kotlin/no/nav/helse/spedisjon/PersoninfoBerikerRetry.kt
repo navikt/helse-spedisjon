@@ -11,7 +11,7 @@ internal class PersoninfoBerikerRetry(
     rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator,
 ) : River.PacketListener {
-    private val retryIntervall: Duration = Duration.ofSeconds(30)
+    private val retryIntervall: Duration = Duration.ofMinutes(5)
     private val timeout: Duration = Duration.ofMinutes(15)
     private var sistRetry: LocalDateTime = LocalDateTime.MIN
 
