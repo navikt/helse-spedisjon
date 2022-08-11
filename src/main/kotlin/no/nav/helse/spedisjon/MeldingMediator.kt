@@ -58,8 +58,8 @@ internal class MeldingMediator(
     fun onMelding(melding: Melding, context: MessageContext) {
         messageRecognized = true
         meldingsteller.labels(melding.type).inc()
-        sendBehovÈnGang(melding.fødselsnummer(), listOf("aktørId", "fødselsdato"), melding.duplikatkontroll(), context)
         if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
+        sendBehovÈnGang(melding.fødselsnummer(), listOf("aktørId", "fødselsdato"), melding.duplikatkontroll(), context)
         unikteller.labels(melding.type).inc()
         sendtteller.labels(melding.type).inc()
     }
