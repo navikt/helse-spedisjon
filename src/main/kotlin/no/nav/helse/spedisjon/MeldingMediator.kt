@@ -112,7 +112,7 @@ internal class MeldingMediator(
         val ubesvarteBehov = berikelseDao.ubesvarteBehov(opprettetFør)
         logg.info("Er ${ubesvarteBehov.size} ubesvarte behov som er opprettet før $opprettetFør")
         ubesvarteBehov.forEach { ubesvartBehov ->
-            logg.info("Sender ut nytt behov for duplikatkontroll=${ubesvartBehov.duplikatkontroll}")
+            ubesvartBehov.logg(logg)
             sendBehov(ubesvartBehov.fnr, ubesvartBehov.behov, ubesvartBehov.duplikatkontroll, context)
         }
     }

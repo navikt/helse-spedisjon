@@ -6,7 +6,7 @@ import no.nav.helse.spedisjon.Melding.Companion.sha512
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 import javax.sql.DataSource
 
 internal class BerikelseDaoTest: AbstractRiverTest() {
@@ -36,8 +36,9 @@ internal class BerikelseDaoTest: AbstractRiverTest() {
     @Test
     fun `ubesvart behov inneholder nødvendig informasjon`() {
         val dao = BerikelseDao(dataSource)
-        dao.behovEtterspurt("fnr", "duplikatkontroll", listOf("aktørId", "fødselsdato"), LocalDateTime.now().minusMinutes(1))
-        assertEquals(listOf(UbesvartBehov("fnr", "duplikatkontroll".padEnd(128, ' '), listOf("aktørId", "fødselsdato"))), dao.ubesvarteBehov(LocalDateTime.now()))
+        val opprettet = LocalDateTime.now().minusMinutes(1)
+        dao.behovEtterspurt("fnr", "duplikatkontroll", listOf("aktørId", "fødselsdato"), opprettet)
+        assertEquals(listOf(UbesvartBehov("fnr", "duplikatkontroll".padEnd(128, ' '), listOf("aktørId", "fødselsdato"), opprettet)), dao.ubesvarteBehov(LocalDateTime.now()))
     }
 
     @Test
@@ -64,9 +65,19 @@ internal class BerikelseDaoTest: AbstractRiverTest() {
         assertTrue(dao.behovErBesvart(duplikatkontroll))
     }
 
+    @Test
+    fun `markerer uløste behov som er gamle (eldre enn 3 timer)`() {
+        assertFalse("1".ubesvartBehov(LocalDateTime.now()).gammelt)
+        assertTrue("2".ubesvartBehov(LocalDateTime.now().minusHours(3).minusSeconds(1)).gammelt)
+        assertFalse("3".ubesvartBehov(LocalDateTime.now().minusHours(3).plusSeconds(2)).gammelt)
+        assertTrue("4".ubesvartBehov(LocalDateTime.now().minusDays(5)).gammelt)
+        assertFalse("5".ubesvartBehov(LocalDateTime.now().plusDays(5)).gammelt)
+    }
+
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {}
 
     private companion object {
         private val enLøsning = jacksonObjectMapper().readTree("""{"foo": "bar"}""")
+        private fun String.ubesvartBehov(opprettet: LocalDateTime) = UbesvartBehov("fnr", this, emptyList(), opprettet)
     }
 }

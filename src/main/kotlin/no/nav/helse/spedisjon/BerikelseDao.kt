@@ -1,6 +1,8 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
+import org.slf4j.Logger
+import java.time.Duration
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
@@ -22,11 +24,12 @@ internal class BerikelseDao(dataSource: DataSource) : AbstractDao(dataSource) {
     }
 
     fun ubesvarteBehov(opprettetFør: LocalDateTime): List<UbesvartBehov> =
-         """SELECT fnr, duplikatkontroll, behov FROM berikelse WHERE løsning is null AND opprettet < :opprettetFor"""
+         """SELECT fnr, duplikatkontroll, behov, opprettet FROM berikelse WHERE løsning is null AND opprettet < :opprettetFor"""
              .listQuery(mapOf("opprettetFor" to opprettetFør))
                 { row -> UbesvartBehov( fnr = row.string("fnr"),
                                         duplikatkontroll = row.string("duplikatkontroll"),
-                                        behov = row.string("behov").split(", ")) }
+                                        behov = row.string("behov").split(", "),
+                                        opprettet = row.localDateTime("opprettet")) }
     fun behovErBesvart(duplikatkontroll: String) =
             """SELECT 1 FROM berikelse WHERE duplikatkontroll = :duplikatkontroll AND løsning is not null"""
                 .listQuery(mapOf("duplikatkontroll" to duplikatkontroll))
@@ -38,4 +41,18 @@ internal class BerikelseDao(dataSource: DataSource) : AbstractDao(dataSource) {
                 { row -> row }.isNotEmpty()
 }
 
-internal data class UbesvartBehov(val fnr: String, val duplikatkontroll: String, val behov: List<String>)
+internal data class UbesvartBehov(
+    val fnr: String,
+    val duplikatkontroll: String,
+    val behov: List<String>,
+    private val opprettet: LocalDateTime) {
+    private val sidenOpprettet = Duration.between(opprettet, LocalDateTime.now())
+    val gammelt = sidenOpprettet > treTimer
+    fun logg(logger: Logger) {
+        if (gammelt) logger.error("Sender ut nytt behov for gammel melding med duplikatkontroll=$duplikatkontroll. Meldingen kom inn $opprettet ($sidenOpprettet siden). Denne bør undersøkes nærmere!")
+        else logger.info("Sender ut nytt behov for melding med duplikatkontroll=$duplikatkontroll. Meldingen kom inn $opprettet ($sidenOpprettet siden)")
+    }
+    private companion object {
+        private val treTimer = Duration.ofHours(3)
+    }
+}
