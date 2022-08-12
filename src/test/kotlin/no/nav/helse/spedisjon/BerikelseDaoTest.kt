@@ -36,7 +36,7 @@ internal class BerikelseDaoTest: AbstractRiverTest() {
     @Test
     fun `ubesvart behov inneholder nødvendig informasjon`() {
         val dao = BerikelseDao(dataSource)
-        val opprettet = LocalDateTime.now().minusMinutes(1)
+        val opprettet = LocalDateTime.parse("2022-08-11T00:15:00.600")
         dao.behovEtterspurt("fnr", "duplikatkontroll", listOf("aktørId", "fødselsdato"), opprettet)
         assertEquals(listOf(UbesvartBehov("fnr", "duplikatkontroll".padEnd(128, ' '), listOf("aktørId", "fødselsdato"), opprettet)), dao.ubesvarteBehov(LocalDateTime.now()))
     }
