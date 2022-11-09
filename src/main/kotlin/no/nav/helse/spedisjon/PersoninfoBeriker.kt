@@ -1,6 +1,7 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.MissingNode
 import no.nav.helse.rapids_rivers.*
 import org.slf4j.LoggerFactory
 
@@ -18,6 +19,7 @@ internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val
                 it.requireKey("spedisjonMeldingId", "HentPersoninfoV3.ident")
                 it.requireKey("@løsning.HentPersoninfoV3.aktørId")
                 it.require("@løsning.HentPersoninfoV3.fødselsdato") { JsonNode::asLocalDate }
+                it.interestedIn("@løsning.HentPersoninfoV3.støttes")
              }
         }.register(this)
     }
@@ -25,9 +27,13 @@ internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val aktørId = packet["@løsning.HentPersoninfoV3.aktørId"].asText()
         val fødselsdato = packet["@løsning.HentPersoninfoV3.fødselsdato"].asLocalDate()
+        val støttes = when(packet["@løsning.HentPersoninfoV3.støttes"]) {
+            is MissingNode -> true
+            else -> packet["@løsning.HentPersoninfoV3.støttes"].asBoolean()
+        }
         val ident = packet["HentPersoninfoV3.ident"].asText()
         val spedisjonMeldingId = packet["spedisjonMeldingId"].asText()
         tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og spedisjonMeldingId=$spedisjonMeldingId")
-        meldingMediator.onPersoninfoBerikelse(spedisjonMeldingId, fødselsdato, aktørId, context)
+        meldingMediator.onPersoninfoBerikelse(spedisjonMeldingId, fødselsdato, aktørId, støttes, context)
     }
 }

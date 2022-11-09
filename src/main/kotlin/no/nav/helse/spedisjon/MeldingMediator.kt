@@ -88,6 +88,7 @@ internal class MeldingMediator(
         duplikatkontroll: String,
         fødselsdato: LocalDate,
         aktørId: String,
+        støttes: Boolean,
         context: MessageContext
     ) {
         val melding = meldingDao.hent(duplikatkontroll)
@@ -104,7 +105,12 @@ internal class MeldingMediator(
         if (fødselsdato != fødselsnummer.fødselsdatoOrNull()) {
             sikkerLogg.info("publiserer $eventName for $fødselsnummer hvor fødselsdato ($fødselsdato) ikke kan utledes fra personidentifikator")
         }
-        context.publish(fødselsnummer, berik(melding, fødselsdato, aktørId).toString())
+        if(støttes) {
+            context.publish(fødselsnummer, berik(melding, fødselsdato, aktørId).toString())
+        }
+        else {
+            sikkerLogg.info("Personen støttes ikke $aktørId")
+        }
         berikelseDao.behovBesvart(duplikatkontroll, løsningJson(eventName, fødselsdato, aktørId))
     }
 
