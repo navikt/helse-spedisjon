@@ -3,6 +3,7 @@ package no.nav.helse.spedisjon
 import io.mockk.clearAllMocks
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -13,6 +14,13 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
     @BeforeEach
     fun clear() {
         clearAllMocks()
+    }
+
+    @Test
+    fun `Ber om attributt støttes i berikelse av person`() {
+        testRapid.sendTestMessage(søknad(status = "FREMTIDIG"))
+        val personInfoBerikelseBehov = testRapid.inspektør.message(0)
+        assertTrue(personInfoBerikelseBehov.get("HentPersoninfoV3").get("attributter").map { it.asText() }.toList().contains("støttes"))
     }
 
     @Test
@@ -33,10 +41,14 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
 
     @Test
     fun `søknad_nav til person som ikke støttes lagres, men sendes ikke videre`() {
-        testRapid.sendTestMessage(søknad(status = "SENDT", ekstralinjer = listOf(
-            """"sendtNav": "${LocalDateTime.now()}"""",
-            """"egenmeldinger": []""",
-            """"fravar": []"""))
+        testRapid.sendTestMessage(
+            søknad(
+                status = "SENDT", ekstralinjer = listOf(
+                    """"sendtNav": "${LocalDateTime.now()}"""",
+                    """"egenmeldinger": []""",
+                    """"fravar": []"""
+                )
+            )
         )
         sendBerikelse(støttes = false)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
@@ -45,11 +57,15 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
 
     @Test
     fun `søknad_arbeidsgiver til person som ikke støttes lagres, men sendes ikke videre`() {
-        testRapid.sendTestMessage(søknad(status = "SENDT", ekstralinjer = listOf(
-            """"sendtArbeidsgiver": "${LocalDateTime.now()}"""",
-            """"egenmeldinger": []""",
-            """"fravar": []"""
-        )))
+        testRapid.sendTestMessage(
+            søknad(
+                status = "SENDT", ekstralinjer = listOf(
+                    """"sendtArbeidsgiver": "${LocalDateTime.now()}"""",
+                    """"egenmeldinger": []""",
+                    """"fravar": []"""
+                )
+            )
+        )
         sendBerikelse(støttes = false)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("behov")
@@ -57,7 +73,8 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
 
     @Test
     fun `inntektsmelding til person som ikke støttes lagres, men sendes ikke videre`() {
-        testRapid.sendTestMessage("""
+        testRapid.sendTestMessage(
+            """
         {
             "inntektsmeldingId": "id",
             "arbeidstakerFnr": "$FØDSELSNUMMER",
@@ -73,7 +90,8 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
             "arkivreferanse": "arkivref",
             "foersteFravaersdag": "2020-01-01"
         }
-        """)
+        """
+        )
         sendBerikelse(støttes = false)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("behov")
@@ -91,9 +109,13 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
         PersoninfoBeriker(testRapid, meldingMediator)
     }
 
-    private fun søknad(status: String = "FREMTIDIG", type: String = "ARBEIDSTAKERE", ekstralinjer: List<String> = emptyList()) = """
+    private fun søknad(
+        status: String = "FREMTIDIG",
+        type: String = "ARBEIDSTAKERE",
+        ekstralinjer: List<String> = emptyList()
+    ) = """
         {
-            ${if(ekstralinjer.isNotEmpty()) ekstralinjer.joinToString(postfix = ",") else ""}
+            ${if (ekstralinjer.isNotEmpty()) ekstralinjer.joinToString(postfix = ",") else ""}
             "id": "id",
             "fnr": "$FØDSELSNUMMER",
             "aktorId": "$AKTØR",
