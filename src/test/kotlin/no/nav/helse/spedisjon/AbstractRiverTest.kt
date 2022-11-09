@@ -35,6 +35,7 @@ internal abstract class AbstractRiverTest {
     fun setup() {
         Flyway.configure()
             .dataSource(dataSource)
+            .cleanDisabled(false)
             .load()
             .also { it.clean() }
             .migrate()

@@ -1,9 +1,9 @@
 val junitJupiterVersion = "5.9.1"
 val testcontainersVersion = "1.17.5"
-val flywayCoreVersion = "8.5.12"
+val flywayCoreVersion = "9.7.0"
 val rapidsAndRiversVersion = "2022092314391663936769.9d5d33074875"
 val hikariCPVersion = "5.0.1"
-val vaultJdbcVersion = "1.3.10"
+val postgresqlVersion = "42.5.0"
 val kotliqueryVersion = "1.9.0"
 val mockkVersion = "1.13.2"
 val wiremockJre8Version = "2.34.0"
@@ -22,7 +22,7 @@ dependencies {
     implementation("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
     implementation("org.flywaydb:flyway-core:$flywayCoreVersion")
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
-    implementation("no.nav:vault-jdbc:$vaultJdbcVersion")
+    implementation("org.postgresql:postgresql:$postgresqlVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
 
     testImplementation("io.mockk:mockk:$mockkVersion")
