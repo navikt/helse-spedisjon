@@ -101,7 +101,7 @@ internal abstract class AbstractRiverTest {
         return node.toString()
     }
 
-    private fun personinfoV3Løsning(duplikatkontroll: String, fnr: String) =
+    private fun personinfoV3Løsning(duplikatkontroll: String, fnr: String, støttes: Boolean) =
         """
         {
             "@id": "514ae64c-a692-4d83-9a9a-7308a5453986",
@@ -110,21 +110,22 @@ internal abstract class AbstractRiverTest {
             "@final": true,
             "HentPersoninfoV3": {
                 "ident": "$fnr",
-                "attributter": ["fødselsdato", "aktørId"]
+                "attributter": ["fødselsdato", "aktørId", "støttes"]
             },
             "@opprettet": "2022-06-27T15:01:43.756488972",
             "spedisjonMeldingId": "$duplikatkontroll",
             "@løsning": {
                 "HentPersoninfoV3": {
                     "aktørId": "$AKTØR",
-                    "fødselsdato": "1950-10-27"
+                    "fødselsdato": "1950-10-27",
+                    "støttes": $støttes
                 }
             }
         }
         """
 
-    protected fun sendBerikelse(fnr: String = FØDSELSNUMMER) {
+    protected fun sendBerikelse(fnr: String = FØDSELSNUMMER, støttes: Boolean = true) {
         val duplikatkontroll = requireNotNull(hentDuplikatkontroll(fnr)) { "Fant ikke duplikatkontroll for $fnr" }
-        testRapid.sendTestMessage(personinfoV3Løsning(duplikatkontroll, fnr))
+        testRapid.sendTestMessage(personinfoV3Løsning(duplikatkontroll, fnr, støttes))
     }
 }
