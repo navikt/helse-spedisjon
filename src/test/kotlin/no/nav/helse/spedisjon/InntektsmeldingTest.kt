@@ -17,7 +17,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     @Test
     fun `tar imot inntektsmelding`(){
         val mediator = InntektsmeldingMediator(MeldingDao(dataSource), InntektsmeldingDao(dataSource))
-        val im = Melding.Inntektsmelding(inntektsmeldingJsonMessage)
+        val im = Melding.Inntektsmelding(genererInntektsmelding("a"))
         mediator.lagreInntektsmelding(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
@@ -26,11 +26,24 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     @Test
     fun `lagrer inntektsmelding bare en gang`(){
         val mediator = InntektsmeldingMediator(MeldingDao(dataSource), InntektsmeldingDao(dataSource))
-        val im = Melding.Inntektsmelding(inntektsmeldingJsonMessage)
+        val im = Melding.Inntektsmelding(genererInntektsmelding("a"))
         mediator.lagreInntektsmelding(im)
         mediator.lagreInntektsmelding(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
+    }
+
+    @Test
+    fun `henter opp bare inntektsmeldinger som er timet ut`(){
+        val inntektsmeldingDao = InntektsmeldingDao(dataSource)
+        val meldingDao = MeldingDao(dataSource)
+        meldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding("a")))
+        meldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding("b")))
+        inntektsmeldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding("a")), LocalDateTime.now().plusMinutes(1))
+        inntektsmeldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding("b")), LocalDateTime.now().minusMinutes(1))
+        val metaInntektsmeldinger = inntektsmeldingDao.hentUsendteMeldinger()
+        assertEquals(1, metaInntektsmeldinger.size)
+        assertEquals("b", metaInntektsmeldinger.first().third["arkivreferanse"].asText())
     }
 
     private fun antallInntektsmeldinger(fnr: String, orgnummer: String) =
@@ -40,17 +53,19 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             }.asSingle)
         }
 
-    val inntektsmelding = """{
+    private fun genererInntektsmelding(arkivreferanse: String): JsonMessage {
+        val inntektsmelding = """{
         "arbeidstakerFnr": "$FØDSELSNUMMER",
         "virksomhetsnummer": "$ORGNUMMER",
         "mottattDato": "${LocalDateTime.now()}",
-        "arkivreferanse": "${UUID.randomUUID()}"
+        "arkivreferanse": "$arkivreferanse"
         }"""
 
-    val inntektsmeldingJsonMessage = JsonMessage(inntektsmelding, MessageProblems(inntektsmelding)).also {
-        it.interestedIn("arbeidstakerFnr")
-        it.interestedIn("virksomhetsnummer")
-        it.interestedIn("mottattDato")
-        it.interestedIn("arkivreferanse")
+        return JsonMessage(inntektsmelding, MessageProblems(inntektsmelding)).also {
+            it.interestedIn("arbeidstakerFnr")
+            it.interestedIn("virksomhetsnummer")
+            it.interestedIn("mottattDato")
+            it.interestedIn("arkivreferanse")
+        }
     }
 }
