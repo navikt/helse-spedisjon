@@ -3,6 +3,7 @@ package no.nav.helse.spedisjon
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
+import java.time.Duration
 
 fun main() {
     val env = System.getenv()
@@ -21,6 +22,7 @@ fun main() {
         Inntektsmeldinger(this, meldingMediator)
         PersoninfoBeriker(this, meldingMediator)
         PersoninfoBerikerRetry(this, meldingMediator)
+        Puls(this, Duration.ofMinutes(1))
     }.apply {
         register(object : RapidsConnection.StatusListener {
             override fun onStartup(rapidsConnection: RapidsConnection) {
