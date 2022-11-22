@@ -2,43 +2,22 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import kotliquery.using
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
-import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.testcontainers.containers.PostgreSQLContainer
-import java.time.LocalDateTime
 import javax.sql.DataSource
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal abstract class AbstractRiverTest {
-    private val postgres = PostgreSQLContainer<Nothing>("postgres:13")
-    protected lateinit var dataSource: DataSource
+internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
     protected val testRapid = TestRapid()
-
-    protected companion object {
-        private val objectMapper = jacksonObjectMapper()
-        const val FØDSELSNUMMER = "fnr"
-        const val AKTØR = "aktørId"
-        val OPPRETTET_DATO: LocalDateTime = LocalDateTime.now()
-    }
 
     protected abstract fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource)
 
-    @BeforeEach
-    fun setup() {
-        Flyway.configure()
-            .dataSource(dataSource)
-            .cleanDisabled(false)
-            .load()
-            .also { it.clean() }
-            .migrate()
+    protected companion object {
+        private val objectMapper = jacksonObjectMapper()
     }
 
     @AfterEach
@@ -47,33 +26,9 @@ internal abstract class AbstractRiverTest {
     }
 
     @BeforeAll
-    fun `start postgres`() {
-        postgres.start()
-        dataSource = HikariDataSource(HikariConfig().apply {
-            jdbcUrl = postgres.jdbcUrl
-            username = postgres.username
-            password = postgres.password
-            maximumPoolSize = 3
-            minimumIdle = 1
-            initializationFailTimeout = 5000
-            idleTimeout = 10001
-            connectionTimeout = 1000
-            maxLifetime = 30001
-        })
+    fun `create river`() {
         createRiver(testRapid, dataSource)
     }
-
-    @AfterAll
-    fun `stop postgres`() {
-        postgres.stop()
-    }
-
-    protected fun antallMeldinger(fnr: String = FØDSELSNUMMER) =
-        using(sessionOf(dataSource)) {
-            it.run(queryOf("SELECT COUNT(1) FROM melding WHERE fnr = ?", fnr).map { row ->
-                row.long(1)
-            }.asSingle)
-        }
 
     private fun hentDuplikatkontroll(fnr: String = FØDSELSNUMMER): String? {
         return sessionOf(dataSource).use {
