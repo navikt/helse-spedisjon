@@ -56,5 +56,6 @@ abstract class Melding(protected val packet: JsonMessage) {
         override fun fødselsnummer(): String = packet["arbeidstakerFnr"].asText().toString()
         override fun rapportertDato() = packet["mottattDato"].asLocalDateTime()
         override fun duplikatnøkkel(): String = packet["arkivreferanse"].asText()
+        fun orgnummer(): String = packet["virksomhetsnummer"].asText()
     }
 }
