@@ -23,6 +23,16 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
     }
 
+    @Test
+    fun `lagrer inntektsmelding bare en gang`(){
+        val mediator = InntektsmeldingMediator(MeldingDao(dataSource), InntektsmeldingDao(dataSource))
+        val im = Melding.Inntektsmelding(inntektsmeldingJsonMessage)
+        mediator.lagreInntektsmelding(im)
+        mediator.lagreInntektsmelding(im)
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
+    }
+
     private fun antallInntektsmeldinger(fnr: String, orgnummer: String) =
         using(sessionOf(dataSource)) {
             it.run(queryOf("SELECT COUNT(1) FROM inntektsmelding WHERE fnr = :fnr and orgnummer = :orgnummer", mapOf("fnr" to fnr, "orgnummer" to orgnummer)).map { row ->
