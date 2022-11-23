@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import org.slf4j.LoggerFactory
@@ -20,12 +19,20 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
             if (!it) log.info("Duplikat melding: {} melding={}", keyValue("duplikatkontroll", melding.duplikatkontroll()), melding.json())
         }
     }
-
-    fun hentUsendteMeldinger(): List<Triple<String, String, JsonNode>> {
-        return """SELECT i.fnr, i.orgnummer, m.data FROM inntektsmelding i JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll WHERE i.republisert IS NULL AND i.timeout < :timeout"""
-            .listQuery<Triple<String, String, JsonNode>>(mapOf("timeout" to LocalDateTime.now()))
-            { row -> Triple(row.string("fnr"), row.string("orgnummer"), objectMapper.readTree(row.string("data"))) }
+    // formål: hente ut de meldingene vi mener vi skal sende videre - de må være beriket
+    fun hentUsendteMeldinger(): List<SendeklarInntektsmelding> {
+        return """SELECT i.fnr, i.orgnummer, m.data, b.løsning 
+            FROM inntektsmelding i 
+            JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
+            JOIN berikelse b ON i.duplikatkontroll = b.duplikatkontroll
+            WHERE i.republisert IS NULL AND i.timeout < :timeout AND b.løsning IS NOT NULL""".trimMargin()
+            .listQuery(mapOf("timeout" to LocalDateTime.now()))
+            { row -> SendeklarInntektsmelding(row.string("fnr"), row.string("orgnummer"), Melding.les("inntektsmelding", row.string("data")) as Melding.Inntektsmelding, objectMapper.readTree(row.string("løsning"))) }
     }
+
+    // ny funksjon som teller usendte meldinger basert på fødselsnummer og orgnummer slik at vi kan se om vi har flere enn en.
+    // telle alle de vi har mottatt i løpet av perioden fra den meldingen vi ønsker å sende ut til nå
+    // hendt usendt emeldinger gir oss en liste, og for hver melding i den lista, må vi kalle denne nye funksjonen
 
     private fun leggInnUtenDuplikat(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime) =
         """INSERT INTO inntektsmelding (fnr, orgnummer, mottatt, timeout, duplikatkontroll) VALUES (:fnr, :orgnummer, :mottatt, :timeout, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""

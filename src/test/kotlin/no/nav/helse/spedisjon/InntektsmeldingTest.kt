@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -35,16 +36,26 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     }
 
     @Test
-    fun `henter opp bare inntektsmeldinger som er timet ut`(){
+    fun `henter opp bare inntektsmeldinger som er timet ut og beriket`(){
         val inntektsmeldingDao = InntektsmeldingDao(dataSource)
         val meldingDao = MeldingDao(dataSource)
-        meldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding("a")))
-        meldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding("b")))
-        inntektsmeldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding("a")), LocalDateTime.now().plusMinutes(1))
-        inntektsmeldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding("b")), LocalDateTime.now().minusMinutes(1))
+        val berikelsesDao = BerikelseDao(dataSource)
+        val a = Melding.Inntektsmelding(genererInntektsmelding("a"))
+        val b = Melding.Inntektsmelding(genererInntektsmelding("b"))
+        val c = Melding.Inntektsmelding(genererInntektsmelding("c"))
+        meldingDao.leggInn(a)
+        meldingDao.leggInn(b)
+        meldingDao.leggInn(c)
+        inntektsmeldingDao.leggInn(a, LocalDateTime.now().plusMinutes(1))
+        inntektsmeldingDao.leggInn(b, LocalDateTime.now().minusMinutes(1))
+        inntektsmeldingDao.leggInn(c, LocalDateTime.now().minusMinutes(1))
+        berikelsesDao.behovEtterspurt(a.fødselsnummer(), a.duplikatkontroll(), listOf("aktørId"), LocalDateTime.now())
+        berikelsesDao.behovEtterspurt(b.fødselsnummer(), b.duplikatkontroll(), listOf("aktørId"), LocalDateTime.now())
+        berikelsesDao.behovEtterspurt(c.fødselsnummer(), c.duplikatkontroll(), listOf("aktørId"), LocalDateTime.now())
+        berikelsesDao.behovBesvart(b.duplikatkontroll(), jacksonObjectMapper().createArrayNode())
         val metaInntektsmeldinger = inntektsmeldingDao.hentUsendteMeldinger()
         assertEquals(1, metaInntektsmeldinger.size)
-        assertEquals("b", metaInntektsmeldinger.first().third["arkivreferanse"].asText())
+        assertEquals(b.duplikatkontroll(), metaInntektsmeldinger.first().originalMelding.duplikatkontroll())
     }
 
     private fun antallInntektsmeldinger(fnr: String, orgnummer: String) =
