@@ -13,14 +13,14 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
         private val objectMapper = jacksonObjectMapper()
     }
 
-    fun leggInn(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime): Boolean {
+    fun leggInn(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime = LocalDateTime.now()): Boolean {
         log.info("legger inn ekstra info om inntektsmelding")
-        return leggInnUtenDuplikat(melding, ønsketPublisert).also {
+        return leggInnUtenDuplikat(melding, ønsketPublisert, mottatt).also {
             if (!it) log.info("Duplikat melding: {} melding={}", keyValue("duplikatkontroll", melding.duplikatkontroll()), melding.json())
         }
     }
-    // formål: hente ut de meldingene vi mener vi skal sende videre - de må være beriket
-    fun hentUsendteMeldinger(): List<SendeklarInntektsmelding> {
+
+    fun hentSendeklareMeldinger(): List<SendeklarInntektsmelding> {
         return """SELECT i.fnr, i.orgnummer, m.data, b.løsning 
             FROM inntektsmelding i 
             JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
@@ -30,15 +30,19 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
             { row -> SendeklarInntektsmelding(row.string("fnr"), row.string("orgnummer"), Melding.les("inntektsmelding", row.string("data")) as Melding.Inntektsmelding, objectMapper.readTree(row.string("løsning"))) }
     }
 
-    // ny funksjon som teller usendte meldinger basert på fødselsnummer og orgnummer slik at vi kan se om vi har flere enn en.
-    // telle alle de vi har mottatt i løpet av perioden fra den meldingen vi ønsker å sende ut til nå
-    // hendt usendt emeldinger gir oss en liste, og for hver melding i den lista, må vi kalle denne nye funksjonen
+    fun tellInntektsmeldinger(fnr: String, orgnummer: String, tattImotEtter: LocalDateTime): Int {
+        return """SELECT COUNT (1)
+            FROM inntektsmelding 
+            WHERE mottatt >= :tattImotEtter AND fnr = :fnr AND orgnummer = :orgnummer
+        """.trimMargin().singleQuery(mapOf("tattImotEtter" to tattImotEtter, "fnr" to fnr, "orgnummer" to orgnummer))
+        { row -> row.int("count") }!!
+    }
 
-    private fun leggInnUtenDuplikat(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime) =
+    private fun leggInnUtenDuplikat(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime) =
         """INSERT INTO inntektsmelding (fnr, orgnummer, mottatt, timeout, duplikatkontroll) VALUES (:fnr, :orgnummer, :mottatt, :timeout, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""
             .update(mapOf(  "fnr" to melding.fødselsnummer(),
                             "orgnummer" to melding.orgnummer(),
-                            "mottatt" to LocalDateTime.now(),
+                            "mottatt" to mottatt,
                             "timeout" to ønsketPublisert,
                             "duplikatkontroll" to melding.duplikatkontroll())) == 1
 

@@ -19,7 +19,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     @Test
     fun `tar imot inntektsmelding`(){
         val mediator = InntektsmeldingMediator(dataSource)
-        val im = Melding.Inntektsmelding(genererInntektsmelding("a"))
+        val im = Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a"))
         mediator.lagreInntektsmelding(im, TestRapid())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
@@ -28,7 +28,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     @Test
     fun `lagrer inntektsmelding bare en gang`(){
         val mediator = InntektsmeldingMediator(dataSource)
-        val im = Melding.Inntektsmelding(genererInntektsmelding("a"))
+        val im = Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a"))
         mediator.lagreInntektsmelding(im, TestRapid())
         mediator.lagreInntektsmelding(im, TestRapid())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
@@ -37,25 +37,37 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
     fun `henter opp bare inntektsmeldinger som er timet ut og beriket`(){
-        val inntektsmeldingDao = InntektsmeldingDao(dataSource)
-        val meldingDao = MeldingDao(dataSource)
+        val b = lagreMeldingSendBehov(arkivreferanse = "b", timeout = LocalDateTime.now().minusMinutes(1))
+        lagreMeldingSendBehov(arkivreferanse = "a", timeout = LocalDateTime.now().plusMinutes(1))
+        lagreMeldingSendBehov(arkivreferanse = "c", timeout = LocalDateTime.now().minusMinutes(1))
         val berikelsesDao = BerikelseDao(dataSource)
-        val a = Melding.Inntektsmelding(genererInntektsmelding("a"))
-        val b = Melding.Inntektsmelding(genererInntektsmelding("b"))
-        val c = Melding.Inntektsmelding(genererInntektsmelding("c"))
-        meldingDao.leggInn(a)
-        meldingDao.leggInn(b)
-        meldingDao.leggInn(c)
-        inntektsmeldingDao.leggInn(a, LocalDateTime.now().plusMinutes(1))
-        inntektsmeldingDao.leggInn(b, LocalDateTime.now().minusMinutes(1))
-        inntektsmeldingDao.leggInn(c, LocalDateTime.now().minusMinutes(1))
-        berikelsesDao.behovEtterspurt(a.fødselsnummer(), a.duplikatkontroll(), listOf("aktørId"), LocalDateTime.now())
-        berikelsesDao.behovEtterspurt(b.fødselsnummer(), b.duplikatkontroll(), listOf("aktørId"), LocalDateTime.now())
-        berikelsesDao.behovEtterspurt(c.fødselsnummer(), c.duplikatkontroll(), listOf("aktørId"), LocalDateTime.now())
-        berikelsesDao.behovBesvart(b.duplikatkontroll(), jacksonObjectMapper().createArrayNode())
-        val metaInntektsmeldinger = inntektsmeldingDao.hentUsendteMeldinger()
+        val inntektsmeldingDao = InntektsmeldingDao(dataSource)
+        berikelsesDao.behovBesvart(b, jacksonObjectMapper().createArrayNode())
+        val metaInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger()
         assertEquals(1, metaInntektsmeldinger.size)
-        assertEquals(b.duplikatkontroll(), metaInntektsmeldinger.first().originalMelding.duplikatkontroll())
+        assertEquals(b, metaInntektsmeldinger.first().originalMelding.duplikatkontroll())
+    }
+
+    @Test
+    fun `teller en inntektsmeldinger`(){
+        val inntektsmeldingDao = InntektsmeldingDao(dataSource)
+        val mottatt = LocalDateTime.of(2022, 11, 3, 3, 3)
+        inntektsmeldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a")), mottatt.plusMinutes(5), mottatt)
+        assertEquals(1, inntektsmeldingDao.tellInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER, mottatt))
+        assertEquals(0, inntektsmeldingDao.tellInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER, mottatt.plusSeconds(1)))
+        assertEquals(1, inntektsmeldingDao.tellInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER, mottatt.minusSeconds(1)))
+        assertEquals(0, inntektsmeldingDao.tellInntektsmeldinger("123", ORGNUMMER, mottatt.minusSeconds(1)))
+        assertEquals(0, inntektsmeldingDao.tellInntektsmeldinger(FØDSELSNUMMER, "123", mottatt.minusSeconds(1)))
+    }
+
+    @Test
+    fun `teller flere inntektsmeldinger`(){
+        val inntektsmeldingDao = InntektsmeldingDao(dataSource)
+        val mottatt = LocalDateTime.of(2022, 11, 3, 3, 3)
+        inntektsmeldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a")), mottatt.plusMinutes(5), mottatt)
+        inntektsmeldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "b")), mottatt.plusMinutes(5), mottatt.minusMinutes(1))
+        inntektsmeldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "c")), mottatt.plusMinutes(5), mottatt)
+        assertEquals(2, inntektsmeldingDao.tellInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER, mottatt))
     }
 
     private fun antallInntektsmeldinger(fnr: String, orgnummer: String) =
@@ -65,10 +77,10 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             }.asSingle)
         }
 
-    private fun genererInntektsmelding(arkivreferanse: String): JsonMessage {
+    private fun genererInntektsmelding(fnr: String = FØDSELSNUMMER, orgnummer: String = ORGNUMMER, arkivreferanse: String): JsonMessage {
         val inntektsmelding = """{
-        "arbeidstakerFnr": "$FØDSELSNUMMER",
-        "virksomhetsnummer": "$ORGNUMMER",
+        "arbeidstakerFnr": "$fnr",
+        "virksomhetsnummer": "$orgnummer",
         "mottattDato": "${LocalDateTime.now()}",
         "arkivreferanse": "$arkivreferanse"
         }"""
@@ -80,4 +92,16 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             it.interestedIn("arkivreferanse")
         }
     }
+
+    private fun lagreMeldingSendBehov(fnr: String = FØDSELSNUMMER, orgnummer: String = ORGNUMMER, arkivreferanse: String, timeout: LocalDateTime) : String{
+        val inntektsmeldingDao = InntektsmeldingDao(dataSource)
+        val meldingDao = MeldingDao(dataSource)
+        val berikelsesDao = BerikelseDao(dataSource)
+        val melding = Melding.Inntektsmelding(genererInntektsmelding(fnr, orgnummer, arkivreferanse))
+        meldingDao.leggInn(melding)
+        inntektsmeldingDao.leggInn(melding, timeout)
+        berikelsesDao.behovEtterspurt(melding.fødselsnummer(), melding.duplikatkontroll(), listOf("aktørId"), LocalDateTime.now())
+        return melding.duplikatkontroll()
+    }
+
 }
