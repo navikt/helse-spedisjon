@@ -34,6 +34,6 @@ class Puls(
     }
 
     private fun publiserInntektsmeldinger(context: MessageContext) {
-        secureLogger.info("nå prøver vi å publisere inntektsmeldinger")
+        secureLogger.info("nå prøver vi å publisere inntektsmeldinger, klokkeslett ${LocalDateTime.now()}")
     }
 }
