@@ -21,13 +21,19 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
     }
 
     fun hentSendeklareMeldinger(): List<SendeklarInntektsmelding> {
-        return """SELECT i.fnr, i.orgnummer, m.data, b.løsning 
+        return """SELECT i.fnr, i.orgnummer, i.mottatt, m.data, b.løsning 
             FROM inntektsmelding i 
             JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
             JOIN berikelse b ON i.duplikatkontroll = b.duplikatkontroll
             WHERE i.republisert IS NULL AND i.timeout < :timeout AND b.løsning IS NOT NULL""".trimMargin()
             .listQuery(mapOf("timeout" to LocalDateTime.now()))
-            { row -> SendeklarInntektsmelding(row.string("fnr"), row.string("orgnummer"), Melding.les("inntektsmelding", row.string("data")) as Melding.Inntektsmelding, objectMapper.readTree(row.string("løsning"))) }
+            { row -> SendeklarInntektsmelding(
+                row.string("fnr"),
+                row.string("orgnummer"),
+                Melding.les("inntektsmelding", row.string("data")) as Melding.Inntektsmelding,
+                objectMapper.readTree(row.string("løsning")),
+                row.localDateTime("mottatt")
+            ) }
     }
 
     fun tellInntektsmeldinger(fnr: String, orgnummer: String, tattImotEtter: LocalDateTime): Int {

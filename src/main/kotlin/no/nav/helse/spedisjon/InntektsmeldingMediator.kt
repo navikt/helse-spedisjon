@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.helse.rapids_rivers.MessageContext
 import java.time.LocalDateTime
 import javax.sql.DataSource
@@ -17,8 +18,13 @@ internal class InntektsmeldingMediator (
         if (!inntektsmeldingDao.leggInn(inntektsmelding, LocalDateTime.now().plusMinutes(5))) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
     }
 
-    // funksjon som ... er testbar ... den originale im pluss berikelsen pluss flagget
-    // bygge json her
+    fun republiser(messageContext: MessageContext){
+        val sendeklareInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger()
+        sendeklareInntektsmeldinger.forEach {
+            //it.send(inntektsmeldingDao, messageContext)
+            messageContext.publish(jacksonObjectMapper().writeValueAsString(it.json(inntektsmeldingDao)))
+        }
+    }
 
 
 

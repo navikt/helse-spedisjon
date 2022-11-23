@@ -77,7 +77,13 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             "fødselsdato": "2022-01-01"
             }
         """.trimIndent()
-        val sendeklarInntektsmelding = SendeklarInntektsmelding("", "", Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a")), jacksonObjectMapper().readTree(berikelse))
+        val sendeklarInntektsmelding = SendeklarInntektsmelding(
+            "",
+            "",
+            Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a")),
+            jacksonObjectMapper().readTree(berikelse),
+            LocalDateTime.now()
+        )
         val payload = sendeklarInntektsmelding.json(1)
         assertEquals(FØDSELSNUMMER, payload["arbeidstakerFnr"].asText())
         assertEquals(ORGNUMMER, payload["virksomhetsnummer"].asText())
