@@ -61,7 +61,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         val beriket = testRapid.inspektør.message(1)
         assertEquals(forventetEvent, beriket["@event_name"].textValue())
         assertEquals("1950-10-27", beriket.path("fødselsdato").asText())
-        assertEquals(AKTØR, beriket.path(MeldingMediator.aktørIdFeltnavn(forventetEvent)).asText())
+        assertEquals(AKTØR, beriket.path(PersonBerikerMediator.aktørIdFeltnavn(forventetEvent)).asText())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertions(beriket)
     }
@@ -146,9 +146,10 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
+        val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
         PersoninfoBeriker(
             rapidsConnection = testRapid,
-            meldingMediator = meldingMediator
+            personBerikerMediator = personBerikerMediator
         )
         FremtidigSøknaderRiver(
             rapidsConnection = testRapid,

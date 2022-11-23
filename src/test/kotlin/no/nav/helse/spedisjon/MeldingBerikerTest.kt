@@ -1,17 +1,17 @@
 package no.nav.helse.spedisjon
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 class MeldingBerikerTest {
 
     @Test
     fun `skal putte på fødselsdato og aktørId`() {
-        val json = jacksonObjectMapper().readTree(nySøknad)
-        val beriketJson = MeldingMediator.berik(
-            "01010112345" to json,
+        val json = Melding.les("ny_søknad", nySøknad)!!
+        val beriketJson = PersonBerikerMediator.berik(
+            json,
             LocalDate.of(2012, 12, 31),
             "12345"
         )
@@ -22,9 +22,9 @@ class MeldingBerikerTest {
 
     @Test
     fun `inntektsmelding har rart aktørid-feltnavn`() {
-        val json = jacksonObjectMapper().readTree(inntektsmelding)
-        val beriketJson = MeldingMediator.berik(
-            "01010112345" to json,
+        val json = Melding.les("inntektsmelding", inntektsmelding)!!
+        val beriketJson = PersonBerikerMediator.berik(
+            json,
             LocalDate.of(2012, 12, 31),
             "12345"
         )
@@ -36,12 +36,14 @@ class MeldingBerikerTest {
 
 private val nySøknad = """
     {
-      "@event_name": "ny_søknad"
+      "@event_name": "ny_søknad",
+      "opprettet": "${LocalDateTime.now()}"
     }
 """.trimIndent()
 
 private val inntektsmelding = """
     {
-      "@event_name": "inntektsmelding"
+      "@event_name": "inntektsmelding",
+      "mottattDato": "${LocalDateTime.now()}"
     }
 """.trimIndent()

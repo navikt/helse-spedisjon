@@ -99,6 +99,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
+        val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
         LogWrapper(testRapid, meldingMediator = meldingMediator).apply {
             Inntektsmeldinger(rapidsConnection = this, meldingMediator = meldingMediator)
             NyeSøknader(this, meldingMediator)
@@ -106,7 +107,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
             SendteSøknaderArbeidsgiver(this, meldingMediator)
             SendteSøknaderNav(this, meldingMediator)
         }
-        PersoninfoBeriker(testRapid, meldingMediator)
+        PersoninfoBeriker(testRapid, personBerikerMediator)
     }
 
     private fun søknad(

@@ -29,6 +29,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
+        val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
         FremtidigSøknaderRiver(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator
@@ -39,7 +40,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         )
         PersoninfoBeriker(
             rapidsConnection = rapidsConnection,
-            meldingMediator = meldingMediator
+            personBerikerMediator = personBerikerMediator
         )
     }
 

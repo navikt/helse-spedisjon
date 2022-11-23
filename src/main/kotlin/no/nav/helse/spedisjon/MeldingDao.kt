@@ -1,7 +1,5 @@
 package no.nav.helse.spedisjon
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import org.slf4j.LoggerFactory
 import javax.sql.DataSource
@@ -10,7 +8,6 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
 
     private companion object {
         private val log = LoggerFactory.getLogger("tjenestekall")
-        private val objectMapper = jacksonObjectMapper()
     }
 
     fun leggInn(melding: Melding): Boolean {
@@ -20,10 +17,10 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
         }
     }
 
-    fun hent(duplikatkontroll: String): Pair<String, JsonNode>? {
-        return """SELECT fnr, data FROM melding WHERE duplikatkontroll = :duplikatkontroll"""
+    fun hent(duplikatkontroll: String): Melding? {
+        return """SELECT type, data FROM melding WHERE duplikatkontroll = :duplikatkontroll"""
             .singleQuery(mapOf("duplikatkontroll" to duplikatkontroll))
-            { row -> row.string("fnr") to objectMapper.readTree(row.string("data")) }
+            { row -> Melding.les(row.string("type"), row.string("data")) }
     }
 
     private fun leggInnUtenDuplikat(melding: Melding) =

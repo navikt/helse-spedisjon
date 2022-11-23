@@ -1,14 +1,10 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.prometheus.client.Counter
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
-import no.nav.helse.spedisjon.Personidentifikator.Companion.fødselsdatoOrNull
 import org.slf4j.LoggerFactory
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 internal class MeldingMediator(
@@ -18,7 +14,6 @@ internal class MeldingMediator(
     internal companion object {
         private val logg = LoggerFactory.getLogger(MeldingMediator::class.java)
         private val sikkerLogg = LoggerFactory.getLogger("tjenestekall")
-        private val objectMapper = jacksonObjectMapper()
         private val meldingsteller = Counter.build("melding_totals", "Antall meldinger mottatt")
             .labelNames("type")
             .register()
@@ -29,18 +24,6 @@ internal class MeldingMediator(
             .labelNames("type")
             .register()
 
-        internal fun berik(melding: Pair<String, JsonNode>, fødselsdato: LocalDate, aktørId: String): JsonNode {
-            val json = melding.second
-            json as ObjectNode
-            val eventName = json["@event_name"].asText()
-            json.setAll<ObjectNode>(løsningJson(eventName, fødselsdato, aktørId))
-            sikkerLogg.info("publiserer $eventName for ${melding.first}: \n$json")
-            return json
-        }
-        internal fun aktørIdFeltnavn(eventName: String) = if (eventName == "inntektsmelding") "arbeidstakerAktorId" else "aktorId"
-
-        private fun løsningJson(eventName: String, fødselsdato: LocalDate, aktørId: String) =
-            objectMapper.createObjectNode().put("fødselsdato", fødselsdato.toString()).put(aktørIdFeltnavn(eventName), aktørId)
     }
 
     private var messageRecognized = false
@@ -85,33 +68,11 @@ internal class MeldingMediator(
     }
 
     fun onPersoninfoBerikelse(
-        duplikatkontroll: String,
-        fødselsdato: LocalDate,
-        aktørId: String,
-        støttes: Boolean,
-        context: MessageContext
+        context: MessageContext,
+        fødselsnummer: String,
+        beriketMelding: JsonNode
     ) {
-        val melding = meldingDao.hent(duplikatkontroll)
-        if (melding == null) {
-            logg.warn("Mottok personinfoberikelse med duplikatkontroll=$duplikatkontroll som vi ikke fant i databasen")
-            return
-        }
-        if (berikelseDao.behovErBesvart(duplikatkontroll)) {
-            logg.info("Behov er allerede besvart for duplikatkontroll=$duplikatkontroll")
-            return
-        }
-        val (fødselsnummer, json) = melding
-        val eventName = json["@event_name"].asText()
-        if (fødselsdato != fødselsnummer.fødselsdatoOrNull()) {
-            sikkerLogg.info("publiserer $eventName for $fødselsnummer hvor fødselsdato ($fødselsdato) ikke kan utledes fra personidentifikator")
-        }
-        if(støttes) {
-            context.publish(fødselsnummer, berik(melding, fødselsdato, aktørId).toString())
-        }
-        else {
-            sikkerLogg.info("Personen støttes ikke $aktørId")
-        }
-        berikelseDao.behovBesvart(duplikatkontroll, løsningJson(eventName, fødselsdato, aktørId))
+        context.publish(fødselsnummer, beriketMelding.toString())
     }
 
     fun retryBehov(opprettetFør: LocalDateTime, context:MessageContext) {

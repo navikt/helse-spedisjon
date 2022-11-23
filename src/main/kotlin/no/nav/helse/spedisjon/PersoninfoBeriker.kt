@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.MissingNode
 import no.nav.helse.rapids_rivers.*
 import org.slf4j.LoggerFactory
 
-internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val meldingMediator: MeldingMediator): River.PacketListener {
+internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val personBerikerMediator: PersonBerikerMediator): River.PacketListener {
 
     companion object {
         private val tjenestekallLog = LoggerFactory.getLogger("tjenestekall")
@@ -34,6 +34,6 @@ internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val
         val ident = packet["HentPersoninfoV3.ident"].asText()
         val spedisjonMeldingId = packet["spedisjonMeldingId"].asText()
         tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og spedisjonMeldingId=$spedisjonMeldingId")
-        meldingMediator.onPersoninfoBerikelse(spedisjonMeldingId, fødselsdato, aktørId, støttes, context)
+        personBerikerMediator.onPersoninfoBerikelse(spedisjonMeldingId, fødselsdato, aktørId, støttes, context)
     }
 }

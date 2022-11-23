@@ -13,6 +13,7 @@ fun main() {
     val berikelseDao = BerikelseDao(dataSource)
 
     val meldingMediator = MeldingMediator(meldingDao, berikelseDao)
+    val personBerikerMediator = PersonBerikerMediator(meldingDao, berikelseDao, meldingMediator)
 
     LogWrapper(RapidApplication.create(env), meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
@@ -20,7 +21,7 @@ fun main() {
         SendteSøknaderArbeidsgiver(this, meldingMediator)
         SendteSøknaderNav(this, meldingMediator)
         Inntektsmeldinger(this, meldingMediator)
-        PersoninfoBeriker(this, meldingMediator)
+        PersoninfoBeriker(this, personBerikerMediator)
         PersoninfoBerikerRetry(this, meldingMediator)
         Puls(this, Duration.ofMinutes(1))
     }.apply {

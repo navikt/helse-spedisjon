@@ -44,11 +44,12 @@ internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
+        val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
         SendteSøknaderArbeidsgiver(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator
         )
-        PersoninfoBeriker(rapidsConnection, meldingMediator)
+        PersoninfoBeriker(rapidsConnection, personBerikerMediator)
     }
 
     @BeforeEach
