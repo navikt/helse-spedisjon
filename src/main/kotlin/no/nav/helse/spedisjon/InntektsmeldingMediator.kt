@@ -17,5 +17,9 @@ internal class InntektsmeldingMediator (
         if (!inntektsmeldingDao.leggInn(inntektsmelding, LocalDateTime.now().plusMinutes(5))) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
     }
 
+    // funksjon som ... er testbar ... den originale im pluss berikelsen pluss flagget
+    // bygge json her
+
+
 
 }

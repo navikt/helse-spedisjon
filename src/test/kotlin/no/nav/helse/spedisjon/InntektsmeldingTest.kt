@@ -70,6 +70,26 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         assertEquals(2, inntektsmeldingDao.tellInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER, mottatt))
     }
 
+    @Test
+    fun `lager json som inneholder berikelsesfelter og forventet flagg`(){
+        val berikelse = """{ 
+            "aktørId": "a",
+            "fødselsdato": "2022-01-01"
+            }
+        """.trimIndent()
+        val sendeklarInntektsmelding = SendeklarInntektsmelding("", "", Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a")), jacksonObjectMapper().readTree(berikelse))
+        val payload = sendeklarInntektsmelding.json(1)
+        assertEquals(FØDSELSNUMMER, payload["arbeidstakerFnr"].asText())
+        assertEquals(ORGNUMMER, payload["virksomhetsnummer"].asText())
+        assertEquals("a", payload["arbeidstakerAktorId"].asText())
+        assertEquals("2022-01-01", payload["fødselsdato"].asText())
+        assertEquals("false", payload["harFlereInntektsmeldinger"].asText())
+        val payload2 = sendeklarInntektsmelding.json(0)
+        val payload3 = sendeklarInntektsmelding.json(2)
+        assertEquals("false", payload2["harFlereInntektsmeldinger"].asText())
+        assertEquals("true", payload3["harFlereInntektsmeldinger"].asText())
+    }
+
     private fun antallInntektsmeldinger(fnr: String, orgnummer: String) =
         using(sessionOf(dataSource)) {
             it.run(queryOf("SELECT COUNT(1) FROM inntektsmelding WHERE fnr = :fnr and orgnummer = :orgnummer", mapOf("fnr" to fnr, "orgnummer" to orgnummer)).map { row ->
