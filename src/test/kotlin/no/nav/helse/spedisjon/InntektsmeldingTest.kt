@@ -5,6 +5,7 @@ import kotliquery.sessionOf
 import kotliquery.using
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageProblems
+import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -16,19 +17,19 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
     fun `tar imot inntektsmelding`(){
-        val mediator = InntektsmeldingMediator(MeldingDao(dataSource), InntektsmeldingDao(dataSource))
+        val mediator = InntektsmeldingMediator(dataSource)
         val im = Melding.Inntektsmelding(genererInntektsmelding("a"))
-        mediator.lagreInntektsmelding(im)
+        mediator.lagreInntektsmelding(im, TestRapid())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
     }
 
     @Test
     fun `lagrer inntektsmelding bare en gang`(){
-        val mediator = InntektsmeldingMediator(MeldingDao(dataSource), InntektsmeldingDao(dataSource))
+        val mediator = InntektsmeldingMediator(dataSource)
         val im = Melding.Inntektsmelding(genererInntektsmelding("a"))
-        mediator.lagreInntektsmelding(im)
-        mediator.lagreInntektsmelding(im)
+        mediator.lagreInntektsmelding(im, TestRapid())
+        mediator.lagreInntektsmelding(im, TestRapid())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
     }
