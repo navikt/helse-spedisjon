@@ -5,7 +5,7 @@ import no.nav.helse.rapids_rivers.*
 
 internal class Inntektsmeldinger(
     rapidsConnection: RapidsConnection,
-    private val meldingMediator: MeldingMediator
+    private val inntektsmeldingMediator: InntektsmeldingMediator
 ) : River.PacketListener {
     init {
         River(rapidsConnection).apply {
@@ -38,10 +38,10 @@ internal class Inntektsmeldinger(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val inntektsmelding = Melding.Inntektsmelding(packet)
-        meldingMediator.onMelding(inntektsmelding, context)
+        inntektsmeldingMediator.lagreInntektsmelding(inntektsmelding, context)
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {
-        meldingMediator.onRiverError("kunne ikke gjenkjenne Inntektsmelding:\n$problems")
+        inntektsmeldingMediator.onRiverError("kunne ikke gjenkjenne Inntektsmelding:\n$problems")
     }
 }

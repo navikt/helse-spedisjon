@@ -30,11 +30,13 @@ internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
         createRiver(testRapid, dataSource)
     }
 
-    private fun hentDuplikatkontroll(fnr: String = FØDSELSNUMMER): String? {
+    private fun hentSisteDuplikatkontroll(fnr: String = FØDSELSNUMMER): String? {
         return sessionOf(dataSource).use {
             it.run(
                 queryOf(
-                    """SELECT duplikatkontroll FROM melding WHERE fnr = ?""",
+                    """SELECT duplikatkontroll FROM melding WHERE fnr = ?
+                       ORDER BY opprettet DESC
+                    """.trimMargin(),
                     fnr
                 ).map { row ->
                     row.string("duplikatkontroll")
@@ -81,7 +83,7 @@ internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
         """
 
     protected fun sendBerikelse(fnr: String = FØDSELSNUMMER, støttes: Boolean = true) {
-        val duplikatkontroll = requireNotNull(hentDuplikatkontroll(fnr)) { "Fant ikke duplikatkontroll for $fnr" }
-        testRapid.sendTestMessage(personinfoV3Løsning(duplikatkontroll, fnr, støttes))
+        val sisteDuplikatkontroll = requireNotNull(hentSisteDuplikatkontroll(fnr)) { "Fant ikke duplikatkontroll for $fnr" }
+        testRapid.sendTestMessage(personinfoV3Løsning(sisteDuplikatkontroll, fnr, støttes))
     }
 }

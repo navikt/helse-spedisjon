@@ -20,6 +20,12 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
         }
     }
 
+    fun markerSomRepublisert(melding: Melding.Inntektsmelding) {
+        log.info("markerer inntektsmelding med duplikatkontroll ${melding.duplikatkontroll()} som republisert")
+        """UPDATE inntektsmelding SET republisert = :republisert WHERE duplikatkontroll = :duplikatkontroll"""
+            .update(mapOf("republisert" to LocalDateTime.now(), "duplikatkontroll" to melding.duplikatkontroll()))
+    }
+
     fun hentSendeklareMeldinger(): List<SendeklarInntektsmelding> {
         return """SELECT i.fnr, i.orgnummer, i.mottatt, m.data, b.løsning 
             FROM inntektsmelding i 

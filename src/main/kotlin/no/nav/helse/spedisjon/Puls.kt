@@ -8,9 +8,10 @@ import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.LocalDateTime
 
-class Puls(
+internal class Puls(
     rapidsConnection: RapidsConnection,
-    schedule: Duration
+    schedule: Duration,
+    private val inntektsmeldingsMediator: InntektsmeldingMediator
 ) : River.PacketListener {
 
     private companion object {
@@ -34,6 +35,7 @@ class Puls(
     }
 
     private fun publiserInntektsmeldinger(context: MessageContext) {
-        secureLogger.info("nå prøver vi å publisere inntektsmeldinger")
+        secureLogger.info("henter inntektsmeldinger som potensielt skal publiseres")
+        inntektsmeldingsMediator.republiser(context)
     }
 }

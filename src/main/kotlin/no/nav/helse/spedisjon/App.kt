@@ -10,20 +10,22 @@ fun main() {
     val dataSourceBuilder = DataSourceBuilder(env)
     val dataSource = dataSourceBuilder.getDataSource()
     val meldingDao = MeldingDao(dataSource)
+    val inntektsmeldingDao = InntektsmeldingDao(dataSource)
     val berikelseDao = BerikelseDao(dataSource)
 
     val meldingMediator = MeldingMediator(meldingDao, berikelseDao)
     val personBerikerMediator = PersonBerikerMediator(meldingDao, berikelseDao, meldingMediator)
+    val inntektsmeldingMediator = InntektsmeldingMediator(dataSource, meldingDao, inntektsmeldingDao, berikelseDao, meldingMediator)
 
     LogWrapper(RapidApplication.create(env), meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
         FremtidigSøknaderRiver(this, meldingMediator)
         SendteSøknaderArbeidsgiver(this, meldingMediator)
         SendteSøknaderNav(this, meldingMediator)
-        Inntektsmeldinger(this, meldingMediator)
+        Inntektsmeldinger(this, inntektsmeldingMediator)
         PersoninfoBeriker(this, personBerikerMediator)
         PersoninfoBerikerRetry(this, meldingMediator)
-        Puls(this, Duration.ofMinutes(1))
+        Puls(this, Duration.ofMinutes(1), inntektsmeldingMediator)
     }.apply {
         register(object : RapidsConnection.StatusListener {
             override fun onStartup(rapidsConnection: RapidsConnection) {

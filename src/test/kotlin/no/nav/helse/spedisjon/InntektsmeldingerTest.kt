@@ -1,8 +1,10 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.databind.JsonNode
 import io.mockk.clearAllMocks
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -30,6 +32,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 }""")
         sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        manipulerTimeoutOgPubliser()
         assertSendteEvents("behov", "inntektsmelding")
     }
 
@@ -75,17 +78,76 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 }"""
         )
         sendBerikelse()
+        manipulerTimeoutOgPubliser()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("behov", "inntektsmelding")
     }
 
+    @Test
+    fun `flere inntektsmeldinger forskjellig duplikatkontroll`() {
+        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse") )
+        sendBerikelse()
+        manipulerTimeoutOgPubliser()
+        testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2") )
+        sendBerikelse()
+        assertEquals(2, antallMeldinger(FØDSELSNUMMER))
+        manipulerTimeoutOgPubliser()
+        assertSendteEvents("behov", "inntektsmelding", "behov", "inntektsmelding")
+    }
+
+    @Test
+    fun `begge inntektsmeldinger får flagg satt - begge er beriket`() {
+        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse") )
+        sendBerikelse()
+        testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2") )
+        sendBerikelse()
+        manipulerTimeoutOgPubliser()
+        assertSendteEvents("behov", "behov", "inntektsmelding", "inntektsmelding")
+        inntektsmeldinger() .forEach {
+            assertTrue(it.path("harFlereInntektsmeldinger").asBoolean())
+        }
+    }
+
+    @Test
+    fun `bare en inntektsmelding får flagg satt - en er beriket`() {
+
+    }
+
+    private fun inntektsmeldinger() : List<JsonNode> {
+        return (0 until testRapid.inspektør.size).mapNotNull {
+            val message = testRapid.inspektør.message(it)
+            if (message.path("@event_name").asText() == "inntektsmelding") message
+            else null
+        }
+    }
+
+    private fun inntektsmelding(id: String, virksomhetsnummer: String, arkivreferanse: String) : String{
+        return """
+{
+    "inntektsmeldingId": "$id",
+    "arbeidstakerFnr": "$FØDSELSNUMMER",
+    "arbeidstakerAktorId": "$AKTØR",
+    "virksomhetsnummer": "$virksomhetsnummer",
+    "arbeidsgivertype": "BEDRIFT",
+    "beregnetInntekt": "1000",
+    "mottattDato": "${LocalDateTime.now()}",
+    "endringIRefusjoner": [],
+    "arbeidsgiverperioder": [],
+    "ferieperioder": [],
+    "status": "GYLDIG",
+    "arkivreferanse": "$arkivreferanse",
+    "foersteFravaersdag": null
+}"""
+    }
+
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
+        val inntektsmeldingMediator = InntektsmeldingMediator(dataSource)
         val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
-        LogWrapper(testRapid, meldingMediator = meldingMediator).apply {
+        LogWrapper(testRapid, meldingMediator).apply {
             Inntektsmeldinger(
                 rapidsConnection = this,
-                meldingMediator = meldingMediator
+                inntektsmeldingMediator = inntektsmeldingMediator
             )
         }
         PersoninfoBeriker(testRapid, personBerikerMediator)
@@ -94,5 +156,10 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     @BeforeEach
     fun clear() {
         clearAllMocks()
+    }
+
+    private fun manipulerTimeoutOgPubliser(){
+        manipulerTimeoutInntektsmelding(FØDSELSNUMMER)
+        InntektsmeldingMediator(dataSource).republiser(testRapid)
     }
 }

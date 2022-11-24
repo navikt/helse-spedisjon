@@ -12,50 +12,60 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
     @Test
     fun `Beriker fremtidig søknad`() {
         testRapid.sendTestMessage(søknad("FREMTIDIG"))
-        assertBeriket("ny_søknad") {
+        assertBeriket("ny_søknad", {
             assertEquals("NY", it["status"].textValue())
             assertTrue(it["fremtidig_søknad"].asBoolean())
-        }
+        }, false)
     }
 
     @Test
     fun `Beriker inntektsmelding`() {
-        testRapid.sendTestMessage(inntektmelding())
-        assertBeriket("inntektsmelding")
+        testRapid.sendTestMessage(inntektmelding(FØDSELSNUMMER))
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        sendBerikelse(FØDSELSNUMMER)
+        manipulerTimeoutInntektsmelding(FØDSELSNUMMER)
+        InntektsmeldingMediator(dataSource).republiser(testRapid)
+        assertBeriket("inntektsmelding", harBeriket = true)
     }
 
     @Test
     fun `Beriker ny søknad`() {
         testRapid.sendTestMessage(søknad("NY"))
-        assertBeriket("ny_søknad") {
+        assertBeriket("ny_søknad", {
             assertEquals("NY", it["status"].textValue())
             assertNull(it["fremtidig_søknad"])
-        }
+        }, false)
     }
 
     @Test
     fun `Beriker sendt søknad arbeidsgiver`() {
         testRapid.sendTestMessage(sendtSøknadArbeidsgiver)
-        assertBeriket("sendt_søknad_arbeidsgiver")
+        assertBeriket("sendt_søknad_arbeidsgiver", harBeriket = false)
     }
 
     @Test
     fun `Beriker sendt søknad nav`() {
         testRapid.sendTestMessage(sendtSøknadNav)
-        assertBeriket("sendt_søknad_nav")
+        assertBeriket("sendt_søknad_nav", harBeriket = false)
     }
 
     @Test
     fun `Beriker ikke en melding som allerede er beriket`() {
         testRapid.sendTestMessage(sendtSøknadNav)
-        assertBeriket("sendt_søknad_nav")
+        assertBeriket("sendt_søknad_nav", harBeriket = false)
         sendBerikelse()
         assertEquals(2, testRapid.inspektør.size)
     }
 
-    private fun assertBeriket(forventetEvent: String, assertions: (jsonNode: JsonNode) -> Unit = {}) {
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        sendBerikelse()
+    private fun assertBeriket(
+        forventetEvent: String,
+        assertions: (jsonNode: JsonNode) -> Unit = {},
+        harBeriket: Boolean = false
+    ) {
+        if (!harBeriket){
+            assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+            sendBerikelse()
+        }
         assertEquals(2, testRapid.inspektør.size)
         assertEquals("behov", testRapid.inspektør.message(0).path("@event_name").asText())
         val beriket = testRapid.inspektør.message(1)
@@ -66,11 +76,11 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         assertions(beriket)
     }
 
-    private fun inntektmelding() =
+    private fun inntektmelding(fnr: String = FØDSELSNUMMER) =
         """
         {
             "inntektsmeldingId": "id",
-            "arbeidstakerFnr": "$FØDSELSNUMMER",
+            "arbeidstakerFnr": "$fnr",
             "arbeidstakerAktorId": "$AKTØR",
             "virksomhetsnummer": "1234",
             "arbeidsgivertype": "BEDRIFT",
@@ -146,6 +156,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
+        val inntektsmeldingMediator = InntektsmeldingMediator(dataSource)
         val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
         PersoninfoBeriker(
             rapidsConnection = testRapid,
@@ -157,7 +168,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         )
         Inntektsmeldinger(
             rapidsConnection = testRapid,
-            meldingMediator = meldingMediator
+            inntektsmeldingMediator = inntektsmeldingMediator
         )
         NyeSøknader(
             rapidsConnection = testRapid,

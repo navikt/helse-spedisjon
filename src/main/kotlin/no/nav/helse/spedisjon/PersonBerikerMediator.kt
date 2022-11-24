@@ -54,11 +54,13 @@ internal class PersonBerikerMediator(
         }
         val eventName = melding.type
         if (fødselsdato != melding.fødselsnummer().fødselsdatoOrNull()) {
-            sikkerLogg.info("publiserer $eventName for ${melding.fødselsnummer()} hvor fødselsdato ($fødselsdato) ikke kan utledes fra personidentifikator")
+            sikkerLogg.info("Mottok personInfoBerikelse på $eventName for ${melding.fødselsnummer()} hvor fødselsdato ($fødselsdato) ikke kan utledes fra personidentifikator")
         }
         val beriketMelding = berik(melding, fødselsdato, aktørId)
         if(støttes) {
-            meldingMediator.onPersoninfoBerikelse(context, melding.fødselsnummer(), beriketMelding)
+            if (eventName != "inntektsmelding"){
+                meldingMediator.onPersoninfoBerikelse(context, melding.fødselsnummer(), beriketMelding)
+            }
         }
         else {
             sikkerLogg.info("Personen støttes ikke $aktørId")
