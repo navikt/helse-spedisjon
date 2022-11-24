@@ -49,10 +49,14 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     }
 
     @Test
-    fun `teller en inntektsmeldinger`(){
+    fun `teller en inntektsmelding`(){
         val inntektsmeldingDao = InntektsmeldingDao(dataSource)
         val mottatt = LocalDateTime.of(2022, 11, 3, 3, 3)
-        inntektsmeldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a")), mottatt.plusMinutes(5), mottatt)
+        inntektsmeldingDao.leggInn(
+            melding = Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a")),
+            ønsketPublisert = mottatt.plusMinutes(5),
+            mottatt = mottatt
+        )
         assertEquals(1, inntektsmeldingDao.tellInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER, mottatt))
         assertEquals(0, inntektsmeldingDao.tellInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER, mottatt.plusSeconds(1)))
         assertEquals(1, inntektsmeldingDao.tellInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER, mottatt.minusSeconds(1)))

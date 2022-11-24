@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.asLocalDate
+import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -16,9 +17,15 @@ internal class SendeklarInntektsmelding(
     private val mottatt: LocalDateTime
 ) {
 
+    companion object {
+        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
+        internal fun List<SendeklarInntektsmelding>.sorter() = sortedBy { it.mottatt }
+    }
+
     fun json(inntektsmeldingDao: InntektsmeldingDao) = json(inntektsmeldingDao.tellInntektsmeldinger(fnr, orgnummer, mottatt))
     fun send(inntektsmeldingDao: InntektsmeldingDao, messageContext: MessageContext) {
-
+        sikkerlogg.info("Publiserer inntektsmelding med fødselsnummer: $fnr og orgnummer: $orgnummer")
+        messageContext.publish(jacksonObjectMapper().writeValueAsString(json(inntektsmeldingDao)))
     }
 
     fun json(antallInntektsmeldinger: Int): JsonNode {

@@ -1,7 +1,8 @@
 package no.nav.helse.spedisjon
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.helse.rapids_rivers.MessageContext
+import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
+import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
@@ -13,19 +14,26 @@ internal class InntektsmeldingMediator (
     private val meldingMediator: MeldingMediator = MeldingMediator(meldingDao, berikelseDao)
     ) {
 
+    private companion object {
+        private val logg = LoggerFactory.getLogger(Puls::class.java)
+        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
+    }
+
     fun lagreInntektsmelding(inntektsmelding: Melding.Inntektsmelding, messageContext: MessageContext) {
         meldingMediator.onMelding(inntektsmelding, messageContext)
         if (!inntektsmeldingDao.leggInn(inntektsmelding, LocalDateTime.now().plusMinutes(5))) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
     }
 
     fun republiser(messageContext: MessageContext){
-        val sendeklareInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger()
+        val sendeklareInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger().sorter()
+        sikkerlogg.info("Hentet ${sendeklareInntektsmeldinger.size} fra databasen")
+        logg.info("Hentet ${sendeklareInntektsmeldinger.size} fra databasen")
         sendeklareInntektsmeldinger.forEach {
-            //it.send(inntektsmeldingDao, messageContext)
-            messageContext.publish(jacksonObjectMapper().writeValueAsString(it.json(inntektsmeldingDao)))
+            it.send(inntektsmeldingDao, messageContext)
         }
     }
 
-
-
+    fun onRiverError(error: String) {
+        meldingMediator.onRiverError(error)
+    }
 }

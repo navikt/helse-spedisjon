@@ -20,7 +20,8 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
 
     @Test
     fun `Beriker inntektsmelding`() {
-        testRapid.sendTestMessage(inntektmelding())
+        testRapid.sendTestMessage(inntektmelding(FØDSELSNUMMER))
+        manipulerTidspunktForMottattInntektsmelding(FØDSELSNUMMER)
         assertBeriket("inntektsmelding")
     }
 
@@ -66,11 +67,11 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         assertions(beriket)
     }
 
-    private fun inntektmelding() =
+    private fun inntektmelding(fnr: String = FØDSELSNUMMER) =
         """
         {
             "inntektsmeldingId": "id",
-            "arbeidstakerFnr": "$FØDSELSNUMMER",
+            "arbeidstakerFnr": "$fnr",
             "arbeidstakerAktorId": "$AKTØR",
             "virksomhetsnummer": "1234",
             "arbeidsgivertype": "BEDRIFT",
@@ -146,6 +147,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
+        val inntektsmeldingMediator = InntektsmeldingMediator(dataSource)
         val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
         PersoninfoBeriker(
             rapidsConnection = testRapid,
@@ -157,7 +159,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         )
         Inntektsmeldinger(
             rapidsConnection = testRapid,
-            meldingMediator = meldingMediator
+            inntektsmeldingMediator = inntektsmeldingMediator
         )
         NyeSøknader(
             rapidsConnection = testRapid,

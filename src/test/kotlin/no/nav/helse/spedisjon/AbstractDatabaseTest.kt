@@ -6,11 +6,14 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
 import org.flywaydb.core.Flyway
+import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.testcontainers.containers.PostgreSQLContainer
+import java.time.Duration
 import java.time.LocalDateTime
+import java.util.*
 import javax.sql.DataSource
 
 abstract class AbstractDatabaseTest {
@@ -62,5 +65,13 @@ abstract class AbstractDatabaseTest {
                 row.long(1)
             }.asSingle)
         }
+
+    protected fun manipulerTidspunktForMottattInntektsmelding(fødselsnummer: String, trekkFra: Duration = Duration.ofSeconds(500)) {
+        @Language("PostgreSQL")
+        val statement = """UPDATE inntektsmelding SET mottatt = (SELECT mottatt FROM inntektsmelding WHERE fnr = :fnr) - INTERVAL '${trekkFra.seconds} SECONDS'"""
+        using(sessionOf(dataSource)) {session ->
+            session.run(queryOf(statement, mapOf("fnr" to fødselsnummer, "trekkFra" to trekkFra)).asUpdate)
+        }
+    }
 
 }
