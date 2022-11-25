@@ -11,7 +11,8 @@ internal class InntektsmeldingMediator (
     private val meldingDao: MeldingDao = MeldingDao(dataSource),
     private val inntektsmeldingDao: InntektsmeldingDao = InntektsmeldingDao(dataSource),
     private val berikelseDao: BerikelseDao = BerikelseDao(dataSource),
-    private val meldingMediator: MeldingMediator = MeldingMediator(meldingDao, berikelseDao)
+    private val meldingMediator: MeldingMediator = MeldingMediator(meldingDao, berikelseDao),
+    private val inntektsmeldingTimeoutMinutter: Long = 5
     ) {
 
     private companion object {
@@ -21,7 +22,7 @@ internal class InntektsmeldingMediator (
 
     fun lagreInntektsmelding(inntektsmelding: Melding.Inntektsmelding, messageContext: MessageContext) {
         meldingMediator.onMelding(inntektsmelding, messageContext)
-        if (!inntektsmeldingDao.leggInn(inntektsmelding, LocalDateTime.now().plusMinutes(5))) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
+        if (!inntektsmeldingDao.leggInn(inntektsmelding, LocalDateTime.now().plusMinutes(inntektsmeldingTimeoutMinutter))) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
     }
 
     fun republiser(messageContext: MessageContext){
@@ -29,7 +30,7 @@ internal class InntektsmeldingMediator (
         sikkerlogg.info("Hentet ${sendeklareInntektsmeldinger.size} fra databasen")
         logg.info("Hentet ${sendeklareInntektsmeldinger.size} fra databasen")
         sendeklareInntektsmeldinger.forEach {
-            it.send(inntektsmeldingDao, messageContext)
+            it.send(inntektsmeldingDao, messageContext, inntektsmeldingTimeoutMinutter)
         }
     }
 

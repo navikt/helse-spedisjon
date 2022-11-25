@@ -22,10 +22,20 @@ internal class SendeklarInntektsmelding(
         internal fun List<SendeklarInntektsmelding>.sorter() = sortedBy { it.mottatt }
     }
 
-    fun json(inntektsmeldingDao: InntektsmeldingDao) = json(inntektsmeldingDao.tellInntektsmeldinger(fnr, orgnummer, mottatt.minusMinutes(5)))
-    fun send(inntektsmeldingDao: InntektsmeldingDao, messageContext: MessageContext) {
+    fun json(inntektsmeldingDao: InntektsmeldingDao, inntektsmeldingTimeoutMinutter: Long) = json(
+        inntektsmeldingDao.tellInntektsmeldinger(
+            fnr,
+            orgnummer,
+            mottatt.minusMinutes(inntektsmeldingTimeoutMinutter)
+        )
+    )
+    fun send(
+        inntektsmeldingDao: InntektsmeldingDao,
+        messageContext: MessageContext,
+        inntektsmeldingTimeoutMinutter: Long
+    ) {
         sikkerlogg.info("Publiserer inntektsmelding med fødselsnummer: $fnr og orgnummer: $orgnummer")
-        messageContext.publish(jacksonObjectMapper().writeValueAsString(json(inntektsmeldingDao)))
+        messageContext.publish(jacksonObjectMapper().writeValueAsString(json(inntektsmeldingDao, inntektsmeldingTimeoutMinutter)))
         inntektsmeldingDao.markerSomRepublisert(originalMelding)
     }
 

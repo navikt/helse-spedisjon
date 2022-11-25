@@ -15,7 +15,14 @@ fun main() {
 
     val meldingMediator = MeldingMediator(meldingDao, berikelseDao)
     val personBerikerMediator = PersonBerikerMediator(meldingDao, berikelseDao, meldingMediator)
-    val inntektsmeldingMediator = InntektsmeldingMediator(dataSource, meldingDao, inntektsmeldingDao, berikelseDao, meldingMediator)
+    val inntektsmeldingMediator = InntektsmeldingMediator(
+        dataSource,
+        meldingDao,
+        inntektsmeldingDao,
+        berikelseDao,
+        meldingMediator,
+        inntektsmeldingTimeoutMinutter = 5
+    )
 
     LogWrapper(RapidApplication.create(env), meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
