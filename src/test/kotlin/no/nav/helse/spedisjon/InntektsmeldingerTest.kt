@@ -96,7 +96,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     }
 
     @Test
-    fun `begge inntektsmeldinger får flagg satt - begge er beriket`() {
+    fun `flere inntektsmeldinger - begge er beriket`() {
         testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse") )
         sendBerikelse()
         testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2") )
@@ -109,9 +109,17 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     }
 
     @Test
-    fun `bare en inntektsmelding får flagg satt - en er beriket`() {
-
+    fun `flere inntektsmeldinger - en er beriket`() {
+        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse") )
+        sendBerikelse()
+        testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2") )
+        manipulerTimeoutOgPubliser()
+        assertSendteEvents("behov", "behov", "inntektsmelding")
+        assertEquals(1, inntektsmeldinger().size)
+        assertEquals("id", inntektsmeldinger().single().get("inntektsmeldingId").asText())
+        assertTrue(inntektsmeldinger().single().path("harFlereInntektsmeldinger").asBoolean())
     }
+
 
     private fun inntektsmeldinger() : List<JsonNode> {
         return (0 until testRapid.inspektør.size).mapNotNull {

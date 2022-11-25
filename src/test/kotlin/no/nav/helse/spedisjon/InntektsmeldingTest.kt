@@ -7,6 +7,8 @@ import kotliquery.using
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
+import no.nav.helse.spedisjon.Melding.Companion.sha512
+import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -100,12 +102,32 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         assertEquals("true", payload3["harFlereInntektsmeldinger"].asText())
     }
 
+    @Test
+    fun `sendeklar inntektsmelding sorteringstest`(){
+        val sendeKlareInntektsmeldinger = listOf(
+            genererSendeklarInntektsmelding("andre", LocalDateTime.now()),
+            genererSendeklarInntektsmelding("første", LocalDateTime.now().minusMinutes(1)),
+            genererSendeklarInntektsmelding("tredje", LocalDateTime.now().plusMinutes(1))
+            ).sorter()
+
+        assertEquals(listOf("første", "andre", "tredje").map { it.sha512() }, sendeKlareInntektsmeldinger.map { it.originalMelding.duplikatkontroll() })
+    }
+
     private fun antallInntektsmeldinger(fnr: String, orgnummer: String) =
         using(sessionOf(dataSource)) {
             it.run(queryOf("SELECT COUNT(1) FROM inntektsmelding WHERE fnr = :fnr and orgnummer = :orgnummer", mapOf("fnr" to fnr, "orgnummer" to orgnummer)).map { row ->
                 row.long(1)
             }.asSingle)
         }
+
+    private fun genererSendeklarInntektsmelding(arkivreferanse: String, mottatt: LocalDateTime): SendeklarInntektsmelding {
+        val berikelse = """{ 
+            "arbeidstakerAktorId": "a",
+            "fødselsdato": "2022-01-01"
+            }
+            """
+        return SendeklarInntektsmelding(FØDSELSNUMMER, ORGNUMMER, Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = arkivreferanse)), jacksonObjectMapper().readTree(berikelse), mottatt)
+    }
 
     private fun genererInntektsmelding(fnr: String = FØDSELSNUMMER, orgnummer: String = ORGNUMMER, arkivreferanse: String): JsonMessage {
         val inntektsmelding = """{
