@@ -20,10 +20,10 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
         }
     }
 
-    fun markerSomRepublisert(melding: Melding.Inntektsmelding) {
-        log.info("markerer inntektsmelding med duplikatkontroll ${melding.duplikatkontroll()} som republisert")
-        """UPDATE inntektsmelding SET republisert = :republisert WHERE duplikatkontroll = :duplikatkontroll"""
-            .update(mapOf("republisert" to LocalDateTime.now(), "duplikatkontroll" to melding.duplikatkontroll()))
+    fun markerSomEkspedert(melding: Melding.Inntektsmelding) {
+        log.info("markerer inntektsmelding med duplikatkontroll ${melding.duplikatkontroll()} som ekspedert")
+        """UPDATE inntektsmelding SET ekspedert = :ekspedert WHERE duplikatkontroll = :duplikatkontroll"""
+            .update(mapOf("ekspedert" to LocalDateTime.now(), "duplikatkontroll" to melding.duplikatkontroll()))
     }
 
     fun hentSendeklareMeldinger(): List<SendeklarInntektsmelding> {
@@ -31,7 +31,7 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
             FROM inntektsmelding i 
             JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
             JOIN berikelse b ON i.duplikatkontroll = b.duplikatkontroll
-            WHERE i.republisert IS NULL AND i.timeout < :timeout AND b.løsning IS NOT NULL""".trimMargin()
+            WHERE i.ekspedert IS NULL AND i.timeout < :timeout AND b.løsning IS NOT NULL""".trimMargin()
             .listQuery(mapOf("timeout" to LocalDateTime.now()))
             { row -> SendeklarInntektsmelding(
                 row.string("fnr"),
