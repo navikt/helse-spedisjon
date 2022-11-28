@@ -9,7 +9,7 @@ import javax.sql.DataSource
 internal class InntektsmeldingMediator (
     dataSource: DataSource,
     private val meldingDao: MeldingDao = MeldingDao(dataSource),
-    private val inntektsmeldingDao: InntektsmeldingDao = InntektsmeldingDao(dataSource),
+    private val  inntektsmeldingDao: InntektsmeldingDao = InntektsmeldingDao(dataSource),
     private val berikelseDao: BerikelseDao = BerikelseDao(dataSource),
     private val meldingMediator: MeldingMediator = MeldingMediator(meldingDao, berikelseDao),
     private val inntektsmeldingTimeoutMinutter: Long = 5

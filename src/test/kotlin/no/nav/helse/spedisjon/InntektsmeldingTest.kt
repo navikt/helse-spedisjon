@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -12,6 +11,7 @@ import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 
@@ -44,7 +44,8 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         lagreMeldingSendBehov(arkivreferanse = "c", timeout = LocalDateTime.now().minusMinutes(1))
         val berikelsesDao = BerikelseDao(dataSource)
         val inntektsmeldingDao = InntektsmeldingDao(dataSource)
-        berikelsesDao.behovBesvart(b, jacksonObjectMapper().createArrayNode())
+        val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "b", true, b)
+        berikelse.lagre(berikelsesDao, "inntektsmelding")
         val metaInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger()
         assertEquals(1, metaInntektsmeldinger.size)
         assertEquals(b, metaInntektsmeldinger.first().originalMelding.duplikatkontroll())
@@ -78,16 +79,12 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
     fun `lager json som inneholder berikelsesfelter og forventet flagg`(){
-        val berikelse = """{ 
-            "arbeidstakerAktorId": "a",
-            "fødselsdato": "2022-01-01"
-            }
-        """.trimIndent()
+        val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "a", true, "a")
         val sendeklarInntektsmelding = SendeklarInntektsmelding(
             "",
             "",
             Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a")),
-            jacksonObjectMapper().readTree(berikelse),
+            berikelse,
             LocalDateTime.now()
         )
         val payload = sendeklarInntektsmelding.json(1)
@@ -121,12 +118,8 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         }
 
     private fun genererSendeklarInntektsmelding(arkivreferanse: String, mottatt: LocalDateTime): SendeklarInntektsmelding {
-        val berikelse = """{ 
-            "arbeidstakerAktorId": "a",
-            "fødselsdato": "2022-01-01"
-            }
-            """
-        return SendeklarInntektsmelding(FØDSELSNUMMER, ORGNUMMER, Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = arkivreferanse)), jacksonObjectMapper().readTree(berikelse), mottatt)
+        val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "a", true, "a".sha512())
+        return SendeklarInntektsmelding(FØDSELSNUMMER, ORGNUMMER, Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = arkivreferanse)), berikelse, mottatt)
     }
 
     private fun genererInntektsmelding(fnr: String = FØDSELSNUMMER, orgnummer: String = ORGNUMMER, arkivreferanse: String): JsonMessage {
