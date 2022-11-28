@@ -36,6 +36,5 @@ internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val
         tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og spedisjonMeldingId=$spedisjonMeldingId")
         val berikelse = Berikelse(fødselsdato, aktørId, støttes, spedisjonMeldingId)
         personBerikerMediator.onPersoninfoBerikelse(spedisjonMeldingId, berikelse, context)
-        //personBerikerMediator.onPersoninfoBerikelse(spedisjonMeldingId, fødselsdato, aktørId, støttes, context)
     }
 }
