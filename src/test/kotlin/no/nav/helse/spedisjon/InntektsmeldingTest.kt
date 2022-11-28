@@ -88,7 +88,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             LocalDateTime.now()
         )
         berikelse.behandle(sendeklarInntektsmelding.originalMelding) {
-            val payload = sendeklarInntektsmelding.json(it as ObjectNode, 1)
+            val payload = sendeklarInntektsmelding.flaggFlereInntektsmeldinger(it as ObjectNode, 1)
             assertEquals(FØDSELSNUMMER, payload["arbeidstakerFnr"].asText())
             assertEquals(ORGNUMMER, payload["virksomhetsnummer"].asText())
             assertEquals("a", payload["arbeidstakerAktorId"].asText())
@@ -96,11 +96,11 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             assertEquals("false", payload["harFlereInntektsmeldinger"].asText())
         }
         berikelse.behandle(sendeklarInntektsmelding.originalMelding) {
-            val payload = sendeklarInntektsmelding.json(it as ObjectNode, 0)
+            val payload = sendeklarInntektsmelding.flaggFlereInntektsmeldinger(it as ObjectNode, 0)
             assertEquals("false", payload["harFlereInntektsmeldinger"].asText())
         }
         berikelse.behandle(sendeklarInntektsmelding.originalMelding) {
-            val payload = sendeklarInntektsmelding.json(it as ObjectNode, 2)
+            val payload = sendeklarInntektsmelding.flaggFlereInntektsmeldinger(it as ObjectNode, 2)
             assertEquals("true", payload["harFlereInntektsmeldinger"].asText())
         }
     }

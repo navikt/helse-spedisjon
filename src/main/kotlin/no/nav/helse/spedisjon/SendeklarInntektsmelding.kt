@@ -27,7 +27,7 @@ internal class SendeklarInntektsmelding(
     ) {
         berikelse.behandle(originalMelding) { beriketMelding ->
             sikkerlogg.info("Publiserer inntektsmelding med fødselsnummer: $fnr og orgnummer: $orgnummer")
-            val json = json((beriketMelding as ObjectNode), tell(inntektsmeldingDao, inntektsmeldingTimeoutMinutter))
+            val json = flaggFlereInntektsmeldinger((beriketMelding as ObjectNode), tell(inntektsmeldingDao, inntektsmeldingTimeoutMinutter))
             messageContext.publish(fnr, jacksonObjectMapper().writeValueAsString(json))
         }
 
@@ -37,7 +37,7 @@ internal class SendeklarInntektsmelding(
     private fun tell(inntektsmeldingDao: InntektsmeldingDao, inntektsmeldingTimeoutMinutter: Long) =
         inntektsmeldingDao.tellInntektsmeldinger(fnr, orgnummer, mottatt.minusMinutes(inntektsmeldingTimeoutMinutter))
 
-    fun json(beriketMelding: ObjectNode, antallInntektsmeldinger: Int): JsonNode =
+    fun flaggFlereInntektsmeldinger(beriketMelding: ObjectNode, antallInntektsmeldinger: Int): JsonNode =
         beriketMelding.put("harFlereInntektsmeldinger", antallInntektsmeldinger > 1)
 
 }
