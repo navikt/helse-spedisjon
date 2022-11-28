@@ -12,6 +12,7 @@ import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.fail
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -25,6 +26,15 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         mediator.lagreInntektsmelding(im, TestRapid())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
+    }
+
+
+    @Test
+    fun `ikke callback på ustøttede personer`() {
+        Berikelse(LocalDate.now(), "a", false, "a")
+            .behandle(Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a"))) {
+            fail { "Skulle aldri kalt callback på ikke-støttede meldinger." }
+        }
     }
 
     @Test
