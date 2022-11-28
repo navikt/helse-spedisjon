@@ -49,8 +49,12 @@ internal class PersonBerikerMediator(
             logg.info("Behov er allerede besvart for duplikatkontroll=$duplikatkontroll")
             return
         }
-        berikelse.behandle(melding, berikelseDao) {
-                beriketMelding -> meldingMediator.onPersoninfoBerikelse(context, melding.fødselsnummer(), beriketMelding)
+
+        if (melding.type != "inntektsmelding"){
+            berikelse.behandle(melding) {
+                    beriketMelding -> meldingMediator.onPersoninfoBerikelse(context, melding.fødselsnummer(), beriketMelding)
+            }
         }
+        berikelse.lagre(berikelseDao, melding.type)
     }
 }

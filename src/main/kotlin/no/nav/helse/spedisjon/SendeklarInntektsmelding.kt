@@ -1,6 +1,7 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.helse.rapids_rivers.MessageContext
 import org.slf4j.LoggerFactory
@@ -31,8 +32,13 @@ internal class SendeklarInntektsmelding(
         messageContext: MessageContext,
         inntektsmeldingTimeoutMinutter: Long
     ) {
-        sikkerlogg.info("Publiserer inntektsmelding med fødselsnummer: $fnr og orgnummer: $orgnummer")
-        messageContext.publish(jacksonObjectMapper().writeValueAsString(json(inntektsmeldingDao, inntektsmeldingTimeoutMinutter)))
+        berikelse.behandle(originalMelding) {
+            sikkerlogg.info("Publiserer inntektsmelding med fødselsnummer: $fnr og orgnummer: $orgnummer")
+            val antall = inntektsmeldingDao.tellInntektsmeldinger(fnr, orgnummer, mottatt.minusMinutes(inntektsmeldingTimeoutMinutter))
+            val json = (it as ObjectNode).put("harFlereInntektsmeldinger", antall > 1)
+            messageContext.publish(jacksonObjectMapper().writeValueAsString(json))
+        }
+
         inntektsmeldingDao.markerSomEkspedert(originalMelding)
     }
 

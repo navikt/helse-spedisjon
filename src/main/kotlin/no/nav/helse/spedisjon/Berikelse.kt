@@ -28,18 +28,14 @@ internal class Berikelse(
         }
     }
 
-    internal fun behandle(melding: Melding, berikelseDao: BerikelseDao, onBeriketMelding: (JsonNode) -> Unit) {
-        val eventName = melding.type
+    internal fun behandle(melding: Melding, onBeriketMelding: (JsonNode) -> Unit) {
         if(støttes) {
             val beriketMelding = berik(melding)
-            if (eventName != "inntektsmelding"){
-                onBeriketMelding(beriketMelding)
-            }
+            onBeriketMelding(beriketMelding)
         }
         else {
             sikkerLogg.info("Personen støttes ikke $aktørId")
         }
-        lagre(berikelseDao, eventName)
     }
 
     internal fun lagre(berikelseDao: BerikelseDao, eventName: String) {
