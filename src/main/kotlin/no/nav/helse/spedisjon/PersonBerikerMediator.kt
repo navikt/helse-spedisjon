@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.helse.rapids_rivers.MessageContext
-import no.nav.helse.spedisjon.Personidentifikator.Companion.fødselsdatoOrNull
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 
@@ -38,9 +37,7 @@ internal class PersonBerikerMediator(
 
     fun onPersoninfoBerikelse(
         duplikatkontroll: String,
-        fødselsdato: LocalDate,
-        aktørId: String,
-        støttes: Boolean,
+        berikelse: Berikelse,
         context: MessageContext
     ) {
         val melding = meldingDao.hent(duplikatkontroll)
@@ -52,19 +49,8 @@ internal class PersonBerikerMediator(
             logg.info("Behov er allerede besvart for duplikatkontroll=$duplikatkontroll")
             return
         }
-        val eventName = melding.type
-        if (fødselsdato != melding.fødselsnummer().fødselsdatoOrNull()) {
-            sikkerLogg.info("Mottok personInfoBerikelse på $eventName for ${melding.fødselsnummer()} hvor fødselsdato ($fødselsdato) ikke kan utledes fra personidentifikator")
+        berikelse.behandle(melding, berikelseDao) {
+                beriketMelding -> meldingMediator.onPersoninfoBerikelse(context, melding.fødselsnummer(), beriketMelding)
         }
-        val beriketMelding = berik(melding, fødselsdato, aktørId)
-        if(støttes) {
-            if (eventName != "inntektsmelding"){
-                meldingMediator.onPersoninfoBerikelse(context, melding.fødselsnummer(), beriketMelding)
-            }
-        }
-        else {
-            sikkerLogg.info("Personen støttes ikke $aktørId")
-        }
-        berikelseDao.behovBesvart(duplikatkontroll, løsningJson(eventName, fødselsdato, aktørId))
     }
 }
