@@ -15,7 +15,6 @@ internal class Puls(
 ) : River.PacketListener {
 
     private companion object {
-        private val log = LoggerFactory.getLogger(Puls::class.java)
         private val secureLogger = LoggerFactory.getLogger("tjenestekall")
     }
 
@@ -30,12 +29,12 @@ internal class Puls(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         if (!påminnelseSchedule(lastReportTime)) return
-        publiserInntektsmeldinger(context)
+        ekspederInntektsmeldinger(context)
         lastReportTime = LocalDateTime.now()
     }
 
-    private fun publiserInntektsmeldinger(context: MessageContext) {
-        secureLogger.info("henter inntektsmeldinger som potensielt skal publiseres")
-        inntektsmeldingsMediator.republiser(context)
+    private fun ekspederInntektsmeldinger(context: MessageContext) {
+        secureLogger.info("henter inntektsmeldinger som potensielt skal ekspederes")
+        inntektsmeldingsMediator.ekspeder(context)
     }
 }

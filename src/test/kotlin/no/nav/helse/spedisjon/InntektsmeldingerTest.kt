@@ -168,6 +168,6 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 
     private fun manipulerTimeoutOgPubliser(){
         manipulerTimeoutInntektsmelding(FØDSELSNUMMER)
-        InntektsmeldingMediator(dataSource).republiser(testRapid)
+        InntektsmeldingMediator(dataSource).ekspeder(testRapid)
     }
 }

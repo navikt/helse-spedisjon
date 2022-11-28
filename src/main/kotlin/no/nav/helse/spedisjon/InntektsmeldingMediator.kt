@@ -25,7 +25,7 @@ internal class InntektsmeldingMediator (
         if (!inntektsmeldingDao.leggInn(inntektsmelding, LocalDateTime.now().plusMinutes(inntektsmeldingTimeoutMinutter))) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
     }
 
-    fun republiser(messageContext: MessageContext){
+    fun ekspeder(messageContext: MessageContext){
         val sendeklareInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger().sorter()
         sikkerlogg.info("Hentet ${sendeklareInntektsmeldinger.size} fra databasen")
         logg.info("Hentet ${sendeklareInntektsmeldinger.size} fra databasen")

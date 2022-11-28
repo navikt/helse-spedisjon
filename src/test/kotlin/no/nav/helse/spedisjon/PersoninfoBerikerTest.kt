@@ -24,7 +24,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         sendBerikelse(FØDSELSNUMMER)
         manipulerTimeoutInntektsmelding(FØDSELSNUMMER)
-        InntektsmeldingMediator(dataSource).republiser(testRapid)
+        InntektsmeldingMediator(dataSource).ekspeder(testRapid)
         assertBeriket("inntektsmelding", harBeriket = true)
     }
 
