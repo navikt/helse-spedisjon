@@ -20,29 +20,24 @@ internal class SendeklarInntektsmelding(
         internal fun List<SendeklarInntektsmelding>.sorter() = sortedBy { it.mottatt }
     }
 
-    fun json(inntektsmeldingDao: InntektsmeldingDao, inntektsmeldingTimeoutMinutter: Long) = json(
-        inntektsmeldingDao.tellInntektsmeldinger(
-            fnr,
-            orgnummer,
-            mottatt.minusMinutes(inntektsmeldingTimeoutMinutter)
-        )
-    )
     fun send(
         inntektsmeldingDao: InntektsmeldingDao,
         messageContext: MessageContext,
         inntektsmeldingTimeoutMinutter: Long
     ) {
-        berikelse.behandle(originalMelding) {
+        berikelse.behandle(originalMelding) { beriketMelding ->
             sikkerlogg.info("Publiserer inntektsmelding med fødselsnummer: $fnr og orgnummer: $orgnummer")
-            val antall = inntektsmeldingDao.tellInntektsmeldinger(fnr, orgnummer, mottatt.minusMinutes(inntektsmeldingTimeoutMinutter))
-            val json = (it as ObjectNode).put("harFlereInntektsmeldinger", antall > 1)
+            val json = json((beriketMelding as ObjectNode), tell(inntektsmeldingDao, inntektsmeldingTimeoutMinutter))
             messageContext.publish(jacksonObjectMapper().writeValueAsString(json))
         }
 
         inntektsmeldingDao.markerSomEkspedert(originalMelding)
     }
 
-    fun json(antallInntektsmeldinger: Int): JsonNode =
-        berikelse.berik(originalMelding).put("harFlereInntektsmeldinger", antallInntektsmeldinger > 1)
+    private fun tell(inntektsmeldingDao: InntektsmeldingDao, inntektsmeldingTimeoutMinutter: Long) =
+        inntektsmeldingDao.tellInntektsmeldinger(fnr, orgnummer, mottatt.minusMinutes(inntektsmeldingTimeoutMinutter))
+
+    fun json(beriketMelding: ObjectNode, antallInntektsmeldinger: Int): JsonNode =
+        beriketMelding.put("harFlereInntektsmeldinger", antallInntektsmeldinger > 1)
 
 }

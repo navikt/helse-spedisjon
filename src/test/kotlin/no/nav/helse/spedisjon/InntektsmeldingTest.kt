@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.databind.node.ObjectNode
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -13,13 +14,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
-    fun `tar imot inntektsmelding`(){
+    fun `tar imot inntektsmelding`() {
         val mediator = InntektsmeldingMediator(dataSource)
         val im = Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a"))
         mediator.lagreInntektsmelding(im, TestRapid())
@@ -28,7 +28,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     }
 
     @Test
-    fun `lagrer inntektsmelding bare en gang`(){
+    fun `lagrer inntektsmelding bare en gang`() {
         val mediator = InntektsmeldingMediator(dataSource)
         val im = Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a"))
         mediator.lagreInntektsmelding(im, TestRapid())
@@ -38,7 +38,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     }
 
     @Test
-    fun `henter opp bare inntektsmeldinger som er timet ut og beriket`(){
+    fun `henter opp bare inntektsmeldinger som er timet ut og beriket`() {
         val b = lagreMeldingSendBehov(arkivreferanse = "b", timeout = LocalDateTime.now().minusMinutes(1))
         lagreMeldingSendBehov(arkivreferanse = "a", timeout = LocalDateTime.now().plusMinutes(1))
         lagreMeldingSendBehov(arkivreferanse = "c", timeout = LocalDateTime.now().minusMinutes(1))
@@ -52,7 +52,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     }
 
     @Test
-    fun `teller en inntektsmelding`(){
+    fun `teller en inntektsmelding`() {
         val inntektsmeldingDao = InntektsmeldingDao(dataSource)
         val mottatt = LocalDateTime.of(2022, 11, 3, 3, 3)
         inntektsmeldingDao.leggInn(
@@ -68,7 +68,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     }
 
     @Test
-    fun `teller flere inntektsmeldinger`(){
+    fun `teller flere inntektsmeldinger`() {
         val inntektsmeldingDao = InntektsmeldingDao(dataSource)
         val mottatt = LocalDateTime.of(2022, 11, 3, 3, 3)
         inntektsmeldingDao.leggInn(Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a")), mottatt.plusMinutes(5), mottatt)
@@ -78,7 +78,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     }
 
     @Test
-    fun `lager json som inneholder berikelsesfelter og forventet flagg`(){
+    fun `lager json som inneholder berikelsesfelter og forventet flagg`() {
         val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "a", true, "a")
         val sendeklarInntektsmelding = SendeklarInntektsmelding(
             "",
@@ -87,25 +87,31 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             berikelse,
             LocalDateTime.now()
         )
-        val payload = sendeklarInntektsmelding.json(1)
-        assertEquals(FØDSELSNUMMER, payload["arbeidstakerFnr"].asText())
-        assertEquals(ORGNUMMER, payload["virksomhetsnummer"].asText())
-        assertEquals("a", payload["arbeidstakerAktorId"].asText())
-        assertEquals("2022-01-01", payload["fødselsdato"].asText())
-        assertEquals("false", payload["harFlereInntektsmeldinger"].asText())
-        val payload2 = sendeklarInntektsmelding.json(0)
-        val payload3 = sendeklarInntektsmelding.json(2)
-        assertEquals("false", payload2["harFlereInntektsmeldinger"].asText())
-        assertEquals("true", payload3["harFlereInntektsmeldinger"].asText())
+        berikelse.behandle(sendeklarInntektsmelding.originalMelding) {
+            val payload = sendeklarInntektsmelding.json(it as ObjectNode, 1)
+            assertEquals(FØDSELSNUMMER, payload["arbeidstakerFnr"].asText())
+            assertEquals(ORGNUMMER, payload["virksomhetsnummer"].asText())
+            assertEquals("a", payload["arbeidstakerAktorId"].asText())
+            assertEquals("2022-01-01", payload["fødselsdato"].asText())
+            assertEquals("false", payload["harFlereInntektsmeldinger"].asText())
+        }
+        berikelse.behandle(sendeklarInntektsmelding.originalMelding) {
+            val payload = sendeklarInntektsmelding.json(it as ObjectNode, 0)
+            assertEquals("false", payload["harFlereInntektsmeldinger"].asText())
+        }
+        berikelse.behandle(sendeklarInntektsmelding.originalMelding) {
+            val payload = sendeklarInntektsmelding.json(it as ObjectNode, 2)
+            assertEquals("true", payload["harFlereInntektsmeldinger"].asText())
+        }
     }
 
     @Test
-    fun `sendeklar inntektsmelding sorteringstest`(){
+    fun `sendeklar inntektsmelding sorteringstest`() {
         val sendeKlareInntektsmeldinger = listOf(
             genererSendeklarInntektsmelding("andre", LocalDateTime.now()),
             genererSendeklarInntektsmelding("første", LocalDateTime.now().minusMinutes(1)),
             genererSendeklarInntektsmelding("tredje", LocalDateTime.now().plusMinutes(1))
-            ).sorter()
+        ).sorter()
 
         assertEquals(listOf("første", "andre", "tredje").map { it.sha512() }, sendeKlareInntektsmeldinger.map { it.originalMelding.duplikatkontroll() })
     }
