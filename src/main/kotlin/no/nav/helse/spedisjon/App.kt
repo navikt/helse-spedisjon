@@ -32,7 +32,7 @@ fun main() {
         Inntektsmeldinger(this, inntektsmeldingMediator)
         PersoninfoBeriker(this, personBerikerMediator)
         PersoninfoBerikerRetry(this, meldingMediator)
-        Puls(this, Duration.ofMinutes(1), inntektsmeldingMediator)
+        Puls(this, Duration.ofSeconds(env["PULS_TID"]?.toLong() ?: 60), inntektsmeldingMediator)
     }.apply {
         register(object : RapidsConnection.StatusListener {
             override fun onStartup(rapidsConnection: RapidsConnection) {

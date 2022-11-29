@@ -14,10 +14,6 @@ internal class Puls(
     private val inntektsmeldingsMediator: InntektsmeldingMediator
 ) : River.PacketListener {
 
-    private companion object {
-        private val secureLogger = LoggerFactory.getLogger("tjenestekall")
-    }
-
     private var lastReportTime = LocalDateTime.MIN
     private val påminnelseSchedule = { lastReportTime: LocalDateTime ->
         lastReportTime < LocalDateTime.now().minusSeconds(schedule.toSeconds())
@@ -34,7 +30,6 @@ internal class Puls(
     }
 
     private fun ekspederInntektsmeldinger(context: MessageContext) {
-        secureLogger.info("henter inntektsmeldinger som potensielt skal ekspederes")
         inntektsmeldingsMediator.ekspeder(context)
     }
 }
