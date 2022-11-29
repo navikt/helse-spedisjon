@@ -21,7 +21,7 @@ fun main() {
         inntektsmeldingDao,
         berikelseDao,
         meldingMediator,
-        inntektsmeldingTimeoutMinutter = 5
+        inntektsmeldingTimeoutSekunder = env["KARANTENE_TID"]?.toLong() ?: 1
     )
 
     LogWrapper(RapidApplication.create(env), meldingMediator).apply {
