@@ -51,8 +51,8 @@ spec:
   - name: KAFKA_EXTRA_TOPIC
     value: flex.sykepengesoknad,helsearbeidsgiver.privat-sykepenger-inntektsmelding
   - name: KARANTENE_TID
-    value: 1
+    value: "1"
   - name: PULS_TID
-    value: 10
+    value: "10"
 
 
