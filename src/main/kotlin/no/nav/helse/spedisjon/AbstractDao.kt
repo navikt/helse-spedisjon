@@ -5,7 +5,7 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import javax.sql.DataSource
 
-abstract class AbstractDao(private val dataSource: DataSource) {
+abstract class AbstractDao(protected val dataSource: DataSource) {
     protected fun String.update(argMap: Map<String, Any?>) =
         sessionOf(dataSource).use { it.run(queryOf(this, argMap).asUpdate) }
 

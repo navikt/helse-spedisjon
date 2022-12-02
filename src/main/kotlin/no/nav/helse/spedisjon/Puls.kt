@@ -1,19 +1,16 @@
 package no.nav.helse.spedisjon
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
-import java.net.InetAddress
 import java.time.Duration
 import java.time.LocalDateTime
 
 internal class Puls(
     rapidsConnection: RapidsConnection,
     schedule: Duration,
-    private val inntektsmeldingsMediator: InntektsmeldingMediator,
-    private val electectorPath: String?
+    private val inntektsmeldingsMediator: InntektsmeldingMediator
 ) : River.PacketListener {
 
     private var lastReportTime = LocalDateTime.MIN
@@ -27,16 +24,8 @@ internal class Puls(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         if (!påminnelseSchedule(lastReportTime)) return
-        if (isLeader()) {
-            ekspederInntektsmeldinger(context)
-            lastReportTime = LocalDateTime.now()
-        }
-    }
-
-    private fun isLeader(): Boolean {
-        val leaderHost = jacksonObjectMapper().readTree(electectorPath)["name"].asText()
-        val host = InetAddress.getLocalHost().hostName
-        return leaderHost == host
+        ekspederInntektsmeldinger(context)
+        lastReportTime = LocalDateTime.now()
     }
 
     private fun ekspederInntektsmeldinger(context: MessageContext) {

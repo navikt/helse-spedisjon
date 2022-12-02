@@ -26,11 +26,13 @@ internal class InntektsmeldingMediator (
     }
 
     fun ekspeder(messageContext: MessageContext){
-        val sendeklareInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger().sorter()
-        sikkerlogg.info("Ekspederer ${sendeklareInntektsmeldinger.size} fra databasen")
-        logg.info("Ekspederer ${sendeklareInntektsmeldinger.size} fra databasen")
-        sendeklareInntektsmeldinger.forEach {
-            it.send(inntektsmeldingDao, messageContext, inntektsmeldingTimeoutSekunder)
+        inntektsmeldingDao.transactionally {
+            val sendeklareInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger().sorter()
+            sikkerlogg.info("Ekspederer ${sendeklareInntektsmeldinger.size} fra databasen")
+            logg.info("Ekspederer ${sendeklareInntektsmeldinger.size} fra databasen")
+            sendeklareInntektsmeldinger.forEach {
+                it.send(inntektsmeldingDao, messageContext, inntektsmeldingTimeoutSekunder)
+            }
         }
     }
 

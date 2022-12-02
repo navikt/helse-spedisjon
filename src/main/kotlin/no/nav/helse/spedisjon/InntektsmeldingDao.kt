@@ -1,6 +1,7 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import kotliquery.sessionOf
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
@@ -27,11 +28,13 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
     }
 
     fun hentSendeklareMeldinger(): List<SendeklarInntektsmelding> {
-        return """SELECT i.fnr, i.orgnummer, i.mottatt, m.data, b.løsning, b.duplikatkontroll 
+        return """SELECT i.fnr, i.orgnummer, i.mottatt, m.data, b.løsning, b.duplikatkontroll
             FROM inntektsmelding i 
             JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
             JOIN berikelse b ON i.duplikatkontroll = b.duplikatkontroll
-            WHERE i.ekspedert IS NULL AND i.timeout < :timeout AND b.løsning IS NOT NULL""".trimMargin()
+            WHERE i.ekspedert IS NULL AND i.timeout < :timeout AND b.løsning IS NOT NULL
+            FOR UPDATE
+            SKIP LOCKED""".trimMargin()
             .listQuery(mapOf("timeout" to LocalDateTime.now()))
             { row -> SendeklarInntektsmelding(
                 row.string("fnr"),
@@ -57,5 +60,11 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
                             "mottatt" to mottatt,
                             "timeout" to ønsketPublisert,
                             "duplikatkontroll" to melding.duplikatkontroll())) == 1
+
+    fun transactionally(f: () -> Unit) {
+        sessionOf(dataSource).use {
+            it.transaction { f() }
+        }
+    }
 
 }
