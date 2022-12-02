@@ -10,6 +10,7 @@ spec:
   port: 8080
   strategy:
     type: Recreate
+  leaderElection: true
   liveness:
     path: isalive
     initialDelay: 5

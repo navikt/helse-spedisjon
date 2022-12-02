@@ -27,8 +27,8 @@ internal class InntektsmeldingMediator (
 
     fun ekspeder(messageContext: MessageContext){
         val sendeklareInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger().sorter()
-        sikkerlogg.info("Hentet ${sendeklareInntektsmeldinger.size} fra databasen")
-        logg.info("Hentet ${sendeklareInntektsmeldinger.size} fra databasen")
+        sikkerlogg.info("Ekspederer ${sendeklareInntektsmeldinger.size} fra databasen")
+        logg.info("Ekspederer ${sendeklareInntektsmeldinger.size} fra databasen")
         sendeklareInntektsmeldinger.forEach {
             it.send(inntektsmeldingDao, messageContext, inntektsmeldingTimeoutSekunder)
         }
