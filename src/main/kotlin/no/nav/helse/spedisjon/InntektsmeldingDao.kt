@@ -1,6 +1,7 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import kotliquery.TransactionalSession
 import kotliquery.sessionOf
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import org.slf4j.LoggerFactory
@@ -21,13 +22,13 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
         }
     }
 
-    fun markerSomEkspedert(melding: Melding.Inntektsmelding) {
+    fun markerSomEkspedert(melding: Melding.Inntektsmelding, session: TransactionalSession) {
         log.info("markerer inntektsmelding med duplikatkontroll ${melding.duplikatkontroll()} som ekspedert")
         """UPDATE inntektsmelding SET ekspedert = :ekspedert WHERE duplikatkontroll = :duplikatkontroll"""
-            .update(mapOf("ekspedert" to LocalDateTime.now(), "duplikatkontroll" to melding.duplikatkontroll()))
+            .update(session, mapOf("ekspedert" to LocalDateTime.now(), "duplikatkontroll" to melding.duplikatkontroll()))
     }
 
-    fun hentSendeklareMeldinger(): List<SendeklarInntektsmelding> {
+    fun hentSendeklareMeldinger(session: TransactionalSession): List<SendeklarInntektsmelding> {
         return """SELECT i.fnr, i.orgnummer, i.mottatt, m.data, b.løsning, b.duplikatkontroll
             FROM inntektsmelding i 
             JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
@@ -35,7 +36,7 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
             WHERE i.ekspedert IS NULL AND i.timeout < :timeout AND b.løsning IS NOT NULL
             FOR UPDATE
             SKIP LOCKED""".trimMargin()
-            .listQuery(mapOf("timeout" to LocalDateTime.now()))
+            .listQuery(session, mapOf("timeout" to LocalDateTime.now()))
             { row -> SendeklarInntektsmelding(
                 row.string("fnr"),
                 row.string("orgnummer"),
@@ -61,9 +62,9 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
                             "timeout" to ønsketPublisert,
                             "duplikatkontroll" to melding.duplikatkontroll())) == 1
 
-    fun transactionally(f: () -> Unit) {
+    fun transactionally(f: TransactionalSession.() -> Unit) {
         sessionOf(dataSource).use {
-            it.transaction { f() }
+            it.transaction { f(it) }
         }
     }
 

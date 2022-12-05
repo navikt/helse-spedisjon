@@ -56,7 +56,11 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         val inntektsmeldingDao = InntektsmeldingDao(dataSource)
         val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "b", true, b)
         berikelse.lagre(berikelsesDao, "inntektsmelding")
-        val metaInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger()
+        val metaInntektsmeldinger = sessionOf(dataSource).use {
+            it.transaction{
+                inntektsmeldingDao.hentSendeklareMeldinger(it)
+            }
+        }
         assertEquals(1, metaInntektsmeldinger.size)
         assertEquals(b, metaInntektsmeldinger.first().originalMelding.duplikatkontroll())
     }

@@ -3,6 +3,7 @@ package no.nav.helse.spedisjon
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import kotliquery.TransactionalSession
 import no.nav.helse.rapids_rivers.MessageContext
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
@@ -23,7 +24,8 @@ internal class SendeklarInntektsmelding(
     fun send(
         inntektsmeldingDao: InntektsmeldingDao,
         messageContext: MessageContext,
-        inntektsmeldingTimeoutSekunder: Long
+        inntektsmeldingTimeoutSekunder: Long,
+        session: TransactionalSession
     ) {
         berikelse.behandle(originalMelding) { beriketMelding ->
             sikkerlogg.info("Ekspederer inntektsmelding med fødselsnummer: $fnr og orgnummer: $orgnummer")
@@ -31,7 +33,7 @@ internal class SendeklarInntektsmelding(
             messageContext.publish(fnr, jacksonObjectMapper().writeValueAsString(json))
         }
 
-        inntektsmeldingDao.markerSomEkspedert(originalMelding)
+        inntektsmeldingDao.markerSomEkspedert(originalMelding, session)
     }
 
     private fun tell(inntektsmeldingDao: InntektsmeldingDao, inntektsmeldingTimeoutMinutter: Long) =
