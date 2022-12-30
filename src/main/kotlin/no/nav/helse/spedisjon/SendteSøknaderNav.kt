@@ -21,6 +21,7 @@ internal class SendteSøknaderNav(
                 it.require("sendtNav", JsonNode::asLocalDateTime)
                 it.interestedIn("aktorId")
                 it.rejectValue("sendTilGosys", true)
+                it.rejectValue("utenlandskSykmelding", true)
             }
         }.register(this)
     }

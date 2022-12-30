@@ -42,6 +42,30 @@ internal class SendteSøknaderNavTest : AbstractRiverTest() {
         assertSendteEvents()
     }
 
+    @Test
+    fun `leser sendte søknader hvor utenlandskSykmelding=false`() {
+        testRapid.sendTestMessage(SØKNAD.json { it.put("utenlandskSykmelding", false) })
+        sendBerikelse()
+        assertEquals(1, antallMeldinger())
+        assertSendteEvents("behov", "sendt_søknad_nav")
+    }
+
+    @Test
+    fun `leser sendte søknader hvor utenlandskSykmelding=null`() {
+        testRapid.sendTestMessage(SØKNAD.json { it.putNull("utenlandskSykmelding") })
+        sendBerikelse()
+        assertEquals(1, antallMeldinger())
+        assertSendteEvents("behov", "sendt_søknad_nav")
+    }
+
+    @Test
+    fun `ignorer sendte søknader hvor utenlandskSykmelding=true`() {
+        testRapid.sendTestMessage(SØKNAD.json { it.put("utenlandskSykmelding", true) })
+        assertEquals(0, antallMeldinger())
+        assertSendteEvents()
+    }
+
+
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
         val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
