@@ -31,7 +31,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
     fun `ikke callback på ustøttede personer`() {
-        Berikelse(LocalDate.now(), "a", false, "a")
+        Berikelse(LocalDate.now(), "a", false, emptyList(), "a")
             .behandle(Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a"))) {
             fail { "Skulle aldri kalt callback på ikke-støttede meldinger." }
         }
@@ -54,7 +54,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         lagreMeldingSendBehov(arkivreferanse = "c", timeout = LocalDateTime.now().minusMinutes(1))
         val berikelsesDao = BerikelseDao(dataSource)
         val inntektsmeldingDao = InntektsmeldingDao(dataSource)
-        val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "b", true, b)
+        val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "b", true, emptyList(), b)
         berikelse.lagre(berikelsesDao, "inntektsmelding")
         val metaInntektsmeldinger = sessionOf(dataSource).use {
             it.transaction{
@@ -93,7 +93,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
     fun `lager json som inneholder berikelsesfelter og forventet flagg`() {
-        val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "a", true, "a")
+        val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "a", true, emptyList(), "a")
         val sendeklarInntektsmelding = SendeklarInntektsmelding(
             "",
             "",
@@ -138,7 +138,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         }
 
     private fun genererSendeklarInntektsmelding(arkivreferanse: String, mottatt: LocalDateTime): SendeklarInntektsmelding {
-        val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "a", true, "a".sha512())
+        val berikelse = Berikelse(LocalDate.parse("2022-01-01"), "a", true, emptyList(), "a".sha512())
         return SendeklarInntektsmelding(FØDSELSNUMMER, ORGNUMMER, Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = arkivreferanse)), berikelse, mottatt)
     }
 

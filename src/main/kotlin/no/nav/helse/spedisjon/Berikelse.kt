@@ -11,6 +11,7 @@ internal class Berikelse(
     private val fødselsdato: LocalDate,
     private val aktørId: String,
     private val støttes: Boolean,
+    private val historiskeFolkeregisteridenter: List<String>,
     private val duplikatkontroll: String
 ) {
 
@@ -23,6 +24,7 @@ internal class Berikelse(
                 fødselsdato = jsonNode["fødselsdato"].asLocalDate(),
                 aktørId = jsonNode["aktorId"]?.asText()?: jsonNode["arbeidstakerAktorId"].asText(),
                 støttes = jsonNode["støttes"].asBoolean(true),
+                historiskeFolkeregisteridenter = jsonNode.path("historiskeFolkeregisteridenter").map(JsonNode::asText),
                 duplikatkontroll = duplikatkontroll
             )
         }
@@ -55,7 +57,11 @@ internal class Berikelse(
 
     private fun løsningJson(eventName: String) =
         objectMapper.createObjectNode().put("fødselsdato", fødselsdato.toString()).put(
-            aktørIdFeltnavn(eventName), aktørId)
+            aktørIdFeltnavn(eventName), aktørId).apply {
+            val historiskeFolkeregisteridenterLøsning = withArray("historiskeFolkeregisteridenter")
+            historiskeFolkeregisteridenter.forEach {ident ->
+                historiskeFolkeregisteridenterLøsning.add(ident)
+            } }
 
     internal fun aktørIdFeltnavn(eventName: String) = if (eventName == "inntektsmelding") "arbeidstakerAktorId" else "aktorId"
 

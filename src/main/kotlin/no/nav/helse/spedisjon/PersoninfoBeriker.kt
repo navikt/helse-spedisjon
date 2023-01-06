@@ -19,7 +19,7 @@ internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val
                 it.requireKey("spedisjonMeldingId", "HentPersoninfoV3.ident")
                 it.requireKey("@løsning.HentPersoninfoV3.aktørId")
                 it.require("@løsning.HentPersoninfoV3.fødselsdato") { JsonNode::asLocalDate }
-                it.interestedIn("@løsning.HentPersoninfoV3.støttes")
+                it.interestedIn("@løsning.HentPersoninfoV3.støttes", "@løsning.HentPersoninfoV3.historiskeFolkeregisteridenter")
              }
         }.register(this)
     }
@@ -31,10 +31,11 @@ internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val
             is MissingNode -> true
             else -> packet["@løsning.HentPersoninfoV3.støttes"].asBoolean()
         }
+        val historiskeFolkeregisteridenter = packet["@løsning.HentPersoninfoV3.historiskeFolkeregisteridenter"].map(JsonNode::asText)
         val ident = packet["HentPersoninfoV3.ident"].asText()
         val spedisjonMeldingId = packet["spedisjonMeldingId"].asText()
         tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og spedisjonMeldingId=$spedisjonMeldingId")
-        val berikelse = Berikelse(fødselsdato, aktørId, støttes, spedisjonMeldingId)
+        val berikelse = Berikelse(fødselsdato, aktørId, støttes, historiskeFolkeregisteridenter, spedisjonMeldingId)
         personBerikerMediator.onPersoninfoBerikelse(spedisjonMeldingId, berikelse, context)
     }
 }

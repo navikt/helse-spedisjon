@@ -42,7 +42,7 @@ internal class MeldingMediator(
         messageRecognized = true
         meldingsteller.labels(melding.type).inc()
         if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
-        sendBehovÈnGang(melding.fødselsnummer(), listOf("aktørId", "fødselsdato", "støttes"), melding.duplikatkontroll(), context)
+        sendBehovÈnGang(melding.fødselsnummer(), listOf("aktørId", "fødselsdato", "støttes", "historiskeFolkeregisteridenter"), melding.duplikatkontroll(), context)
         unikteller.labels(melding.type).inc()
         sendtteller.labels(melding.type).inc()
     }
