@@ -38,8 +38,9 @@ internal class SendteSøknaderNavTest : AbstractRiverTest() {
     @Test
     fun `ignorer sendte søknader hvor sendTilGosys=true`() {
         testRapid.sendTestMessage(SØKNAD.json { it.put("sendTilGosys", true) })
-        assertEquals(0, antallMeldinger())
-        assertSendteEvents()
+        sendBerikelse()
+        assertEquals(1, antallMeldinger())
+        assertSendteEvents("behov", "sendt_søknad_nav")
     }
 
     @Test

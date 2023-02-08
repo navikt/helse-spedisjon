@@ -20,8 +20,7 @@ internal class SendteSøknaderArbeidsgiver(
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fom", "tom", "egenmeldinger", "fravar")
                 it.require("sendtArbeidsgiver", JsonNode::asLocalDateTime)
-                it.interestedIn("aktorId", "utenlandskSykmelding")
-                it.rejectValue("sendTilGosys", true)
+                it.interestedIn("aktorId", "utenlandskSykmelding", "sendTilGosys")
             }
         }.register(this)
     }

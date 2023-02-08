@@ -19,8 +19,7 @@ internal class SendteSøknaderNav(
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fnr", "fom", "tom", "egenmeldinger", "fravar")
                 it.require("sendtNav", JsonNode::asLocalDateTime)
-                it.interestedIn("aktorId", "utenlandskSykmelding")
-                it.rejectValue("sendTilGosys", true)
+                it.interestedIn("aktorId", "utenlandskSykmelding", "sendTilGosys")
             }
         }.register(this)
     }
