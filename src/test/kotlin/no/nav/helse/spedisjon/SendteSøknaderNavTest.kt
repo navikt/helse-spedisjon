@@ -59,10 +59,11 @@ internal class SendteSøknaderNavTest : AbstractRiverTest() {
     }
 
     @Test
-    fun `ignorer sendte søknader hvor utenlandskSykmelding=true`() {
+    fun `leser sendte søknader hvor utenlandskSykmelding=true`() {
         testRapid.sendTestMessage(SØKNAD.json { it.put("utenlandskSykmelding", true) })
-        assertEquals(0, antallMeldinger())
-        assertSendteEvents()
+        sendBerikelse()
+        assertEquals(1, antallMeldinger())
+        assertSendteEvents("behov", "sendt_søknad_nav")
     }
 
 
