@@ -49,15 +49,16 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
     fun tellInntektsmeldinger(fnr: String, orgnummer: String, tattImotEtter: LocalDateTime): Int {
         return """SELECT COUNT (1)
             FROM inntektsmelding 
-            WHERE mottatt >= :tattImotEtter AND fnr = :fnr AND orgnummer = :orgnummer
+            WHERE mottatt >= :tattImotEtter AND fnr = :fnr AND orgnummer = :orgnummer AND arbeidsforhold_id IS NOT NULL
         """.trimMargin().singleQuery(mapOf("tattImotEtter" to tattImotEtter, "fnr" to fnr, "orgnummer" to orgnummer))
         { row -> row.int("count") }!!
     }
 
     private fun leggInnUtenDuplikat(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime) =
-        """INSERT INTO inntektsmelding (fnr, orgnummer, mottatt, timeout, duplikatkontroll) VALUES (:fnr, :orgnummer, :mottatt, :timeout, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""
+        """INSERT INTO inntektsmelding (fnr, orgnummer, arbeidsforhold_id, mottatt, timeout, duplikatkontroll) VALUES (:fnr, :orgnummer, :arbeidsforhold_id, :mottatt, :timeout, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""
             .update(mapOf(  "fnr" to melding.fødselsnummer(),
                             "orgnummer" to melding.orgnummer(),
+                            "arbeidsforhold_id" to melding.arbeidsforholdId(),
                             "mottatt" to mottatt,
                             "timeout" to ønsketPublisert,
                             "duplikatkontroll" to melding.duplikatkontroll())) == 1

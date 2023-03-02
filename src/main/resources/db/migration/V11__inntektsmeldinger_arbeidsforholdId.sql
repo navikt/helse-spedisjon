@@ -1,0 +1,1 @@
+ALTER TABLE inntektsmelding ADD COLUMN arbeidsforhold_id VARCHAR DEFAULT NULL;

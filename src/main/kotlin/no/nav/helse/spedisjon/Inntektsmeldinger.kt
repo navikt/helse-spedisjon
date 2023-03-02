@@ -31,7 +31,7 @@ internal class Inntektsmeldinger(
                 it.interestedIn("foersteFravaersdag", JsonNode::asLocalDate)
                 it.interestedIn("refusjon.opphoersdato", JsonNode::asLocalDate)
                 it.require("mottattDato", JsonNode::asLocalDateTime)
-                it.interestedIn("refusjon.beloepPrMnd", "arbeidstakerAktorId")
+                it.interestedIn("refusjon.beloepPrMnd", "arbeidstakerAktorId", "arbeidsforholdId")
             }
         }.register(this)
     }

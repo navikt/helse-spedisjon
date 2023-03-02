@@ -3,8 +3,7 @@ package no.nav.helse.spedisjon
 import com.fasterxml.jackson.databind.JsonNode
 import io.mockk.clearAllMocks
 import no.nav.helse.rapids_rivers.RapidsConnection
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -97,9 +96,9 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
     fun `flere inntektsmeldinger - begge er beriket`() {
-        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse") )
+        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse", "noe") )
         sendBerikelse()
-        testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2") )
+        testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2", "noeAnnet") )
         sendBerikelse()
         manipulerTimeoutOgPubliser()
         assertSendteEvents("behov", "behov", "inntektsmelding", "inntektsmelding")
@@ -110,9 +109,9 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
     fun `flere inntektsmeldinger - en er beriket`() {
-        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse") )
+        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse", "noe") )
         sendBerikelse()
-        testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2") )
+        testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2", "noe_annet") )
         manipulerTimeoutOgPubliser()
         assertSendteEvents("behov", "behov", "inntektsmelding")
         assertEquals(1, inntektsmeldinger().size)
@@ -129,12 +128,14 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         }
     }
 
-    private fun inntektsmelding(id: String, virksomhetsnummer: String, arkivreferanse: String) : String{
+    private fun inntektsmelding(id: String, virksomhetsnummer: String, arkivreferanse: String, arbeidsforholdId: String? = null) : String {
+        val arbeidsforholdIdJson = if (arbeidsforholdId == null) "" else """ "arbeidsforholdId": "$arbeidsforholdId", """
         return """
 {
     "inntektsmeldingId": "$id",
     "arbeidstakerFnr": "$FØDSELSNUMMER",
     "arbeidstakerAktorId": "$AKTØR",
+    $arbeidsforholdIdJson
     "virksomhetsnummer": "$virksomhetsnummer",
     "arbeidsgivertype": "BEDRIFT",
     "beregnetInntekt": "1000",

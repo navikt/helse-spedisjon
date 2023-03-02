@@ -107,6 +107,8 @@ abstract class Melding(protected val packet: JsonMessage) {
         override fun duplikatnøkkel(): String = packet["arkivreferanse"].asText()
         fun orgnummer(): String = packet["virksomhetsnummer"].asText()
 
+        fun arbeidsforholdId(): String? = packet["arbeidsforholdId"].takeIf(JsonNode::isTextual)?.asText()
+
         companion object {
             fun lagInntektsmelding(data: String) : Inntektsmelding {
                 val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
