@@ -24,7 +24,7 @@ internal class Berikelse(
         fun les(jsonNode: JsonNode, duplikatkontroll: String): Berikelse{
             return Berikelse(
                 fødselsdato = jsonNode["fødselsdato"].asLocalDate(),
-                dødsdato = jsonNode["dødsdato"].asOptionalLocalDate(),
+                dødsdato = jsonNode.path("dødsdato").asOptionalLocalDate(),
                 aktørId = jsonNode["aktorId"]?.asText()?: jsonNode["arbeidstakerAktorId"].asText(),
                 støttes = jsonNode["støttes"].asBoolean(true),
                 historiskeFolkeregisteridenter = jsonNode.path("historiskeFolkeregisteridenter").map(JsonNode::asText),
