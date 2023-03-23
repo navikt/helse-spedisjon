@@ -25,6 +25,10 @@ internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val
         }.register(this)
     }
 
+    override fun onError(problems: MessageProblems, context: MessageContext) {
+        tjenestekallLog.info("Forstod ikke personinfoberikelse: ${problems.toExtendedReport()}")
+    }
+
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val aktørId = packet["@løsning.HentPersoninfoV3.aktørId"].asText()
         val fødselsdato = packet["@løsning.HentPersoninfoV3.fødselsdato"].asLocalDate()
@@ -36,7 +40,7 @@ internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val
         val historiskeFolkeregisteridenter = packet["@løsning.HentPersoninfoV3.historiskeFolkeregisteridenter"].map(JsonNode::asText)
         val ident = packet["HentPersoninfoV3.ident"].asText()
         val spedisjonMeldingId = packet["spedisjonMeldingId"].asText()
-        tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og spedisjonMeldingId=$spedisjonMeldingId")
+        tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og spedisjonMeldingId=$spedisjonMeldingId\n${packet.toJson()}")
         val berikelse = Berikelse(fødselsdato, dødsdato, aktørId, støttes, historiskeFolkeregisteridenter, spedisjonMeldingId)
         personBerikerMediator.onPersoninfoBerikelse(spedisjonMeldingId, berikelse, context)
     }
