@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.helse.rapids_rivers.asLocalDate
+import no.nav.helse.rapids_rivers.asOptionalLocalDate
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 
 internal class Berikelse(
     private val fødselsdato: LocalDate,
+    private val dødsdato: LocalDate?,
     private val aktørId: String,
     private val støttes: Boolean,
     private val historiskeFolkeregisteridenter: List<String>,
@@ -22,6 +24,7 @@ internal class Berikelse(
         fun les(jsonNode: JsonNode, duplikatkontroll: String): Berikelse{
             return Berikelse(
                 fødselsdato = jsonNode["fødselsdato"].asLocalDate(),
+                dødsdato = jsonNode["dødsdato"].asOptionalLocalDate(),
                 aktørId = jsonNode["aktorId"]?.asText()?: jsonNode["arbeidstakerAktorId"].asText(),
                 støttes = jsonNode["støttes"].asBoolean(true),
                 historiskeFolkeregisteridenter = jsonNode.path("historiskeFolkeregisteridenter").map(JsonNode::asText),
@@ -56,12 +59,18 @@ internal class Berikelse(
         løsningJson(eventName).put("støttes", støttes)
 
     private fun løsningJson(eventName: String) =
-        objectMapper.createObjectNode().put("fødselsdato", fødselsdato.toString()).put(
-            aktørIdFeltnavn(eventName), aktørId).apply {
-            val historiskeFolkeregisteridenterLøsning = withArray("historiskeFolkeregisteridenter")
-            historiskeFolkeregisteridenter.forEach {ident ->
-                historiskeFolkeregisteridenterLøsning.add(ident)
-            } }
+        objectMapper.createObjectNode()
+            .put("fødselsdato", fødselsdato.toString())
+            .apply {
+                if (dødsdato == null) putNull("dødsdato")
+                else put("dødsdato", "$dødsdato")
+            }
+            .put(aktørIdFeltnavn(eventName), aktørId).apply {
+                val historiskeFolkeregisteridenterLøsning = withArray("historiskeFolkeregisteridenter")
+                historiskeFolkeregisteridenter.forEach {ident ->
+                    historiskeFolkeregisteridenterLøsning.add(ident)
+                }
+            }
 
     internal fun aktørIdFeltnavn(eventName: String) = if (eventName == "inntektsmelding") "arbeidstakerAktorId" else "aktorId"
 

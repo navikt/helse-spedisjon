@@ -8,14 +8,16 @@ import java.time.LocalDateTime
 class MeldingBerikerTest {
 
     @Test
-    fun `skal putte på fødselsdato og aktørId`() {
+    fun `skal putte på fødselsdato og aktørId og dødsdato`() {
         val json = Melding.les("ny_søknad", nySøknad)!!
         val beriketJson = PersonBerikerMediator.berik(
             json,
             LocalDate.of(2012, 12, 31),
-            "12345"
+            "12345",
+            LocalDate.of(2023, 1, 2)
         )
         assertEquals("2012-12-31", beriketJson.path("fødselsdato").asText())
+        assertEquals("2023-01-02", beriketJson.path("dødsdato").asText())
         assertEquals("12345", beriketJson.path("aktorId").asText())
         assertEquals("ny_søknad", beriketJson.path("@event_name").asText())
     }

@@ -37,13 +37,15 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
             FOR UPDATE
             SKIP LOCKED""".trimMargin()
             .listQuery(session, mapOf("timeout" to LocalDateTime.now()))
-            { row -> SendeklarInntektsmelding(
-                row.string("fnr"),
-                row.string("orgnummer"),
-                Melding.les("inntektsmelding", row.string("data")) as Melding.Inntektsmelding,
-                Berikelse.les(objectMapper.readTree(row.string("løsning")), row.string("duplikatkontroll")),
-                row.localDateTime("mottatt")
-            ) }
+            { row ->
+                SendeklarInntektsmelding(
+                    fnr = row.string("fnr"),
+                    orgnummer = row.string("orgnummer"),
+                    originalMelding = Melding.les("inntektsmelding", row.string("data")) as Melding.Inntektsmelding,
+                    berikelse = Berikelse.les(objectMapper.readTree(row.string("løsning")), row.string("duplikatkontroll")),
+                    mottatt = row.localDateTime("mottatt")
+                )
+            }
     }
 
     fun tellInntektsmeldinger(fnr: String, orgnummer: String, tattImotEtter: LocalDateTime): Int {

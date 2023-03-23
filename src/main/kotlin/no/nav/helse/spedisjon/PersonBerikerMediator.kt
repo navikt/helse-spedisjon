@@ -18,18 +18,22 @@ internal class PersonBerikerMediator(
         private val sikkerLogg = LoggerFactory.getLogger("tjenestekall")
         private val objectMapper = jacksonObjectMapper()
 
-        internal fun berik(melding: Melding, fødselsdato: LocalDate, aktørId: String): JsonNode {
+        internal fun berik(melding: Melding, fødselsdato: LocalDate, aktørId: String, dødsdato: LocalDate? = null): JsonNode {
             val json = melding.jsonNode()
             json as ObjectNode
             val eventName = json["@event_name"].asText()
-            json.setAll<ObjectNode>(løsningJson(eventName, fødselsdato, aktørId))
+            json.setAll<ObjectNode>(løsningJson(eventName, fødselsdato, aktørId, dødsdato))
             sikkerLogg.info("publiserer $eventName for ${melding.fødselsnummer()}: \n$json")
             return json
         }
 
-        private fun løsningJson(eventName: String, fødselsdato: LocalDate, aktørId: String) =
-            objectMapper.createObjectNode().put("fødselsdato", fødselsdato.toString()).put(
-                aktørIdFeltnavn(eventName), aktørId)
+        private fun løsningJson(eventName: String, fødselsdato: LocalDate, aktørId: String, dødsdato: LocalDate?) =
+            objectMapper.createObjectNode()
+                .put("fødselsdato", fødselsdato.toString())
+                .apply {
+                    if (dødsdato == null) putNull("dødsdato")
+                    else put("dødsdato", "$dødsdato") }
+                .put(aktørIdFeltnavn(eventName), aktørId)
 
         internal fun aktørIdFeltnavn(eventName: String) = if (eventName == "inntektsmelding") "arbeidstakerAktorId" else "aktorId"
 
