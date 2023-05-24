@@ -53,6 +53,6 @@ spec:
   - name: KARANTENE_TID
     value: "1"
   - name: PULS_TID
-    value: "10"
+    value: "1"
 
 
