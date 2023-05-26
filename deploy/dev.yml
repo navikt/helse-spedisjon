@@ -18,15 +18,14 @@ spec:
     initialDelay: 5
   resources:
     limits:
-      cpu: 2000m
       memory: 512Mi
     requests:
       cpu: 50m
       memory: 128Mi
   replicas:
-    min: 1
+    min: 2
     max: 3
-    cpuThresholdPercentage: 90
+    cpuThresholdPercentage: 75
   kafka:
     pool: nav-dev
   prometheus:
