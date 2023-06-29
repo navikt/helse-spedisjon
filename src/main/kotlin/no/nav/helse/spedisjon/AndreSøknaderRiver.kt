@@ -21,17 +21,22 @@ internal class AndreSøknaderRiver(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        tjenestekall.info("Mottok søknad vi _ikke_ behandler med {}, {}, {} for {}:\n\t${packet.toJson().utenSpørsmål}",
-            keyValue("søknadstype", packet["type"].asText()),
-            keyValue("søknadsstatus", packet["status"].asText()),
-            keyValue("søknadId", packet["id"].asText()),
-            keyValue("fødselsnummer", packet["fnr"].asText())
-        )
+        try {
+            tjenestekall.info("Mottok søknad vi _ikke_ behandler med {}, {}, {} for {}:\n\n\t${packet.toJson().utenStøy}",
+                keyValue("søknadstype", packet["type"].asText()),
+                keyValue("søknadsstatus", packet["status"].asText()),
+                keyValue("søknadId", packet["id"].asText()),
+                keyValue("fødselsnummer", packet["fnr"].asText())
+            )
+        } catch (ex: Exception) {
+            tjenestekall.info("Feil ved logging av søknad vi ikke behandler", ex)
+        }
     }
 
     private companion object {
         private val objectmapper = jacksonObjectMapper()
         private val tjenestekall = LoggerFactory.getLogger("tjenestekall")
-        private val String.utenSpørsmål get() = (objectmapper.readTree(this) as ObjectNode).without<ObjectNode>("sporsmal")
+        private val støy = setOf("sporsmal", "system_participating_services", "system_read_count", "@opprettet", "@id")
+        private val String.utenStøy get() = (objectmapper.readTree(this) as ObjectNode).without<ObjectNode>(støy)
     }
 }
