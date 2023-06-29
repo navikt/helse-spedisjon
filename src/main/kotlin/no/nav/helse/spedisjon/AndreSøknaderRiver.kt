@@ -1,5 +1,7 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.nav.helse.rapids_rivers.*
 import org.slf4j.LoggerFactory
@@ -19,7 +21,7 @@ internal class AndreSøknaderRiver(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        tjenestekall.info("Mottok søknad vi _ikke_ behandler med {}, {}, {} for {}:\n\t${packet.toJson()}",
+        tjenestekall.info("Mottok søknad vi _ikke_ behandler med {}, {}, {} for {}:\n\t${packet.toJson().utenSpørsmål}",
             keyValue("søknadstype", packet["type"].asText()),
             keyValue("søknadsstatus", packet["Status"].asText()),
             keyValue("søknadId", packet["id"].asText()),
@@ -28,6 +30,8 @@ internal class AndreSøknaderRiver(
     }
 
     private companion object {
+        private val objectmapper = jacksonObjectMapper()
         private val tjenestekall = LoggerFactory.getLogger("tjenestekall")
+        private val String.utenSpørsmål get() = (objectmapper.readTree(this) as ObjectNode).without<ObjectNode>("sporsmal")
     }
 }
