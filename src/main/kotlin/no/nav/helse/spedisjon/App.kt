@@ -29,6 +29,7 @@ fun main() {
         FremtidigSøknaderRiver(this, meldingMediator)
         SendteSøknaderArbeidsgiver(this, meldingMediator)
         SendteSøknaderNav(this, meldingMediator)
+        AndreSøknaderRiver(this)
         Inntektsmeldinger(this, inntektsmeldingMediator)
         PersoninfoBeriker(this, personBerikerMediator)
         PersoninfoBerikerRetry(this, meldingMediator)
