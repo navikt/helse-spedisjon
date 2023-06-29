@@ -23,7 +23,7 @@ internal class AndreSøknaderRiver(
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         tjenestekall.info("Mottok søknad vi _ikke_ behandler med {}, {}, {} for {}:\n\t${packet.toJson().utenSpørsmål}",
             keyValue("søknadstype", packet["type"].asText()),
-            keyValue("søknadsstatus", packet["Status"].asText()),
+            keyValue("søknadsstatus", packet["status"].asText()),
             keyValue("søknadId", packet["id"].asText()),
             keyValue("fødselsnummer", packet["fnr"].asText())
         )
