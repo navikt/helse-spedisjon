@@ -16,17 +16,20 @@ internal class AndreSøknaderRiver(
                 it.rejectKey("@event_name", "inntektsmeldingId")
                 it.rejectValue("type", "ARBEIDSTAKERE")
                 it.requireKey("id", "fnr", "status")
+                it.interestedIn("arbeidssituasjon", "arbeidsgiver.orgnummer")
             }
         }.register(this)
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         try {
-            tjenestekall.info("Mottok søknad vi _ikke_ behandler med {}, {}, {} for {}:\n\n\t${packet.toJson().utenStøy}",
+            tjenestekall.info("Mottok søknad vi _ikke_ behandler med {}, {}, {}, {} for {} {}:\n\n\t${packet.toJson().utenStøy}",
                 keyValue("søknadstype", packet["type"].asText()),
                 keyValue("søknadsstatus", packet["status"].asText()),
+                keyValue("arbeidssituasjon", packet["arbeidssituasjon"].asText("IKKE_SATT")),
                 keyValue("søknadId", packet["id"].asText()),
-                keyValue("fødselsnummer", packet["fnr"].asText())
+                keyValue("fødselsnummer", packet["fnr"].asText()),
+                keyValue("orgnummer", packet["arbeidsgiver.orgnummer"].asText("IKKE_SATT")),
             )
         } catch (ex: Exception) {
             tjenestekall.info("Feil ved logging av søknad vi ikke behandler", ex)
