@@ -22,6 +22,8 @@ internal class AndreSøknaderRiver(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
+        if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp" && packet["arbeidssituasjon"].asText() == "FRILANSER")
+            return // vi støtter frilans i dev
         try {
             tjenestekall.info("Mottok søknad vi _ikke_ behandler med {}, {}, {}, {} for {} {}:\n\n\t${packet.toJson().utenStøy}",
                 keyValue("søknadstype", packet["type"].asText()),
