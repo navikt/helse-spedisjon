@@ -37,8 +37,10 @@ abstract class Melding(protected val packet: JsonMessage) {
         fun les(type: String, data: String): Melding? = when (type) {
             "inntektsmelding" -> Inntektsmelding.lagInntektsmelding(data)
             "ny_søknad" -> NySøknad.lagNySøknad(data)
+            "ny_frilans_søknad" -> NyFrilansSøknad.lagNyFrilansSøknad(data)
             "sendt_søknad_arbeidsgiver" -> SendtSøknadArbeidsgiver.lagSendtSøknadArbeidsgiver(data)
             "sendt_søknad_nav" -> SendtSøknadNav.lagSendtSøknadNav(data)
+            "sendt_søknad_frilans" -> SendtFrilansSøknad.lagSendtFrilansSøknad(data)
             else -> null
         }
     }
@@ -58,6 +60,24 @@ abstract class Melding(protected val packet: JsonMessage) {
                     it.interestedIn("status")
                 }
                 return NySøknad(jsonMessage)
+            }
+        }
+    }
+    class NyFrilansSøknad(packet: JsonMessage) : Melding(packet) {
+        override val type = "ny_frilans_søknad"
+        override fun fødselsnummer(): String = packet["fnr"].asText()
+        override fun rapportertDato() = packet["opprettet"].asLocalDateTime()
+        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
+
+        companion object {
+            fun lagNyFrilansSøknad(data: String) : NyFrilansSøknad {
+                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                    it.interestedIn("fnr")
+                    it.interestedIn("opprettet")
+                    it.interestedIn("id")
+                    it.interestedIn("status")
+                }
+                return NyFrilansSøknad(jsonMessage)
             }
         }
     }
@@ -96,6 +116,25 @@ abstract class Melding(protected val packet: JsonMessage) {
                     it.interestedIn("status")
                 }
                 return SendtSøknadNav(jsonMessage)
+            }
+        }
+    }
+
+    class SendtFrilansSøknad(packet: JsonMessage) : Melding(packet) {
+        override val type = "sendt_søknad_frilans"
+        override fun fødselsnummer(): String = packet["fnr"].asText()
+        override fun rapportertDato() = packet["sendtNav"].asLocalDateTime()
+        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
+
+        companion object {
+            fun lagSendtFrilansSøknad(data: String): SendtFrilansSøknad {
+                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                    it.interestedIn("fnr")
+                    it.interestedIn("sendtNav")
+                    it.interestedIn("id")
+                    it.interestedIn("status")
+                }
+                return SendtFrilansSøknad(jsonMessage)
             }
         }
     }

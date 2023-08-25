@@ -7,6 +7,7 @@ import java.time.Duration
 
 fun main() {
     val env = System.getenv()
+    val erUtvikling = env["NAIS_CLUSTER_NAME"] == "dev-gcp"
     val dataSourceBuilder = DataSourceBuilder(env)
     val dataSource = dataSourceBuilder.getDataSource()
     val meldingDao = MeldingDao(dataSource)
@@ -26,9 +27,12 @@ fun main() {
 
     LogWrapper(RapidApplication.create(env), meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
+        if (erUtvikling) NyeFrilansSøknader(this, meldingMediator)
         FremtidigSøknaderRiver(this, meldingMediator)
+        if (erUtvikling) FremtidigFrilansSøknaderRiver(this, meldingMediator)
         SendteSøknaderArbeidsgiver(this, meldingMediator)
         SendteSøknaderNav(this, meldingMediator)
+        if (erUtvikling) SendteFrilansSøknader(this, meldingMediator)
         AndreSøknaderRiver(this)
         Inntektsmeldinger(this, inntektsmeldingMediator)
         PersoninfoBeriker(this, personBerikerMediator)
