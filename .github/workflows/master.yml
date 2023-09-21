@@ -3,7 +3,7 @@ name: Bygg og deploy
 on:
   push:
     paths-ignore:
-      - 'opprydding-dev/**'
+      - 'spedisjon-opprydding-dev/**'
       - 'workflows/spedisjon-opprydding-dev.yml'
       - '.idea/**'
       - 'README.md'
