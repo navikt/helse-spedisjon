@@ -5,7 +5,7 @@ metadata:
   namespace: tbd
   labels:
     team: tbd
-    db: spedisjon
+    db_policy_user: spedisjonbruker
 spec:
   image: {{image}}
   port: 8080
