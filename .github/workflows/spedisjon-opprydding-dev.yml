@@ -3,6 +3,7 @@ name: Spedisjon opprydding dev
 on:
   push:
     paths:
+      - 'Dockerfile-opprydding-dev'
       - 'spedisjon-opprydding-dev/**'
       - '.github/workflows/spedisjon-opprydding-dev.yml'
       - 'deploy/spedisjon-opprydding-dev.yml'
