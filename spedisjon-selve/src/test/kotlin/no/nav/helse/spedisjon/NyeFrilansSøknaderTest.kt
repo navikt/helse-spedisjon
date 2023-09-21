@@ -5,7 +5,6 @@ import no.nav.helse.rapids_rivers.RapidsConnection
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 import javax.sql.DataSource
 
 internal class NyeFrilansSøknaderTest : AbstractRiverTest() {

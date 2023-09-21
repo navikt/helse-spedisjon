@@ -13,7 +13,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.Duration
 import java.time.LocalDateTime
-import java.util.*
 import javax.sql.DataSource
 
 abstract class AbstractDatabaseTest {
