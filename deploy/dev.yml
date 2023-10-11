@@ -40,6 +40,8 @@ spec:
         databases:
           - name: spedisjon
             envVarPrefix: DATABASE
+            users:
+              - name: spedisjon-opprydding-dev
   secureLogs:
     enabled: true
   env:
