@@ -39,8 +39,8 @@ spec:
           kind: Project
           name: tbd-dev-7ff9
         role: roles/cloudsql.client
-#  envFrom:
-#    - secret: trenger vi dette?
+  envFrom:
+    - secret: google-sql-spedisjon-spedisjon-spedisjon-opprydding-de-31466522
   secureLogs:
     enabled: true
   env:
