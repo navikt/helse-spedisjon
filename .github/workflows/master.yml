@@ -5,6 +5,7 @@ on:
     paths-ignore:
       - 'spedisjon-opprydding-dev/**'
       - 'workflows/spedisjon-opprydding-dev.yml'
+      - 'deploy/spedisjon-opprydding-dev.yml'
       - '.idea/**'
       - 'README.md'
       - 'LICENSE'
