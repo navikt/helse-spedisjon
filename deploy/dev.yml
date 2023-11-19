@@ -23,9 +23,13 @@ spec:
       cpu: 50m
       memory: 128Mi
   replicas:
-    min: 2
-    max: 3
-    cpuThresholdPercentage: 75
+    min: 1
+    max: 2
+    scalingStrategy:
+      kafka:
+        topic: flex.sykepengesoknad
+        consumerGroup: spedisjon-v1
+        threshold: 200
   kafka:
     pool: nav-dev
   prometheus:
