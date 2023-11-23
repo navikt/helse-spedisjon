@@ -15,6 +15,10 @@ internal class AndreSøknaderRiver(
             validate {
                 it.rejectKey("@event_name", "inntektsmeldingId")
                 it.rejectValue("type", "ARBEIDSTAKERE")
+                if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp") {
+                    // vi støtter frilans og selvstendig i dev
+                    it.rejectValue("type", "SELVSTENDIGE_OG_FRILANSERE")
+                }
                 it.requireKey("id", "fnr", "status")
                 it.interestedIn("arbeidssituasjon", "arbeidsgiver.orgnummer")
             }
@@ -22,8 +26,6 @@ internal class AndreSøknaderRiver(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp" && packet["arbeidssituasjon"].asText() == "FRILANSER")
-            return // vi støtter frilans i dev
         try {
             tjenestekall.info("Mottok søknad vi _ikke_ behandler med {}, {}, {}, {} for {} {}:\n\n\t${packet.toJson().utenStøy}",
                 keyValue("søknadstype", packet["type"].asText()),

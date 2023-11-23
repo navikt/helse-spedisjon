@@ -81,6 +81,24 @@ abstract class Melding(protected val packet: JsonMessage) {
             }
         }
     }
+    class NySelvstendigSøknad(packet: JsonMessage) : Melding(packet) {
+        override val type = "ny_søknad_selvstendig"
+        override fun fødselsnummer(): String = packet["fnr"].asText()
+        override fun rapportertDato() = packet["opprettet"].asLocalDateTime()
+        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
+
+        companion object {
+            fun lagNySelvstendigSøknad(data: String) : NySelvstendigSøknad {
+                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                    it.interestedIn("fnr")
+                    it.interestedIn("opprettet")
+                    it.interestedIn("id")
+                    it.interestedIn("status")
+                }
+                return NySelvstendigSøknad(jsonMessage)
+            }
+        }
+    }
 
     class SendtSøknadArbeidsgiver(packet: JsonMessage) : Melding(packet) {
         override val type = "sendt_søknad_arbeidsgiver"
@@ -135,6 +153,25 @@ abstract class Melding(protected val packet: JsonMessage) {
                     it.interestedIn("status")
                 }
                 return SendtFrilansSøknad(jsonMessage)
+            }
+        }
+    }
+
+    class SendtSelvstendigSøknad(packet: JsonMessage) : Melding(packet) {
+        override val type = "sendt_søknad_selvstendig"
+        override fun fødselsnummer(): String = packet["fnr"].asText()
+        override fun rapportertDato() = packet["sendtNav"].asLocalDateTime()
+        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
+
+        companion object {
+            fun lagSendtSelvstendigSøknad(data: String): SendtSelvstendigSøknad {
+                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                    it.interestedIn("fnr")
+                    it.interestedIn("sendtNav")
+                    it.interestedIn("id")
+                    it.interestedIn("status")
+                }
+                return SendtSelvstendigSøknad(jsonMessage)
             }
         }
     }
