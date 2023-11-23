@@ -37,7 +37,7 @@ abstract class Melding(protected val packet: JsonMessage) {
         fun les(type: String, data: String): Melding? = when (type) {
             "inntektsmelding" -> Inntektsmelding.lagInntektsmelding(data)
             "ny_søknad" -> NySøknad.lagNySøknad(data)
-            "ny_frilans_søknad" -> NyFrilansSøknad.lagNyFrilansSøknad(data)
+            "ny_søknad_frilans" -> NyFrilansSøknad.lagNyFrilansSøknad(data)
             "sendt_søknad_arbeidsgiver" -> SendtSøknadArbeidsgiver.lagSendtSøknadArbeidsgiver(data)
             "sendt_søknad_nav" -> SendtSøknadNav.lagSendtSøknadNav(data)
             "sendt_søknad_frilans" -> SendtFrilansSøknad.lagSendtFrilansSøknad(data)
@@ -64,7 +64,7 @@ abstract class Melding(protected val packet: JsonMessage) {
         }
     }
     class NyFrilansSøknad(packet: JsonMessage) : Melding(packet) {
-        override val type = "ny_frilans_søknad"
+        override val type = "ny_søknad_frilans"
         override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["opprettet"].asLocalDateTime()
         override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()

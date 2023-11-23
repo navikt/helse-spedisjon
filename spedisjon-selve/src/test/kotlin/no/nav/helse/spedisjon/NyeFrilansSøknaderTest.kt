@@ -69,7 +69,7 @@ internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
 }""")
         sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov", "ny_frilans_søknad")
+        assertSendteEvents("behov", "ny_søknad_frilans")
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
