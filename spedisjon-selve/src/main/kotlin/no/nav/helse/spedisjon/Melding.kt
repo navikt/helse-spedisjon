@@ -38,9 +38,13 @@ abstract class Melding(protected val packet: JsonMessage) {
             "inntektsmelding" -> Inntektsmelding.lagInntektsmelding(data)
             "ny_søknad" -> NySøknad.lagNySøknad(data)
             "ny_søknad_frilans" -> NyFrilansSøknad.lagNyFrilansSøknad(data)
+            "ny_søknad_selvstendig" -> NySelvstendigSøknad.lagNySelvstendigSøknad(data)
+            "ny_søknad_arbeidsledig" -> NyArbeidsledigSøknad.lagNyArbeidsledigSøknad(data)
             "sendt_søknad_arbeidsgiver" -> SendtSøknadArbeidsgiver.lagSendtSøknadArbeidsgiver(data)
             "sendt_søknad_nav" -> SendtSøknadNav.lagSendtSøknadNav(data)
             "sendt_søknad_frilans" -> SendtFrilansSøknad.lagSendtFrilansSøknad(data)
+            "sendt_søknad_selvstendig" -> SendtSelvstendigSøknad.lagSendtSelvstendigSøknad(data)
+            "sendt_søknad_arbeidsledig" -> SendtArbeidsledigSøknad.lagSendtArbeidsledigSøknad(data)
             else -> null
         }
     }
@@ -96,6 +100,24 @@ abstract class Melding(protected val packet: JsonMessage) {
                     it.interestedIn("status")
                 }
                 return NySelvstendigSøknad(jsonMessage)
+            }
+        }
+    }
+    class NyArbeidsledigSøknad(packet: JsonMessage) : Melding(packet) {
+        override val type = "ny_søknad_arbeidsledig"
+        override fun fødselsnummer(): String = packet["fnr"].asText()
+        override fun rapportertDato() = packet["opprettet"].asLocalDateTime()
+        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
+
+        companion object {
+            fun lagNyArbeidsledigSøknad(data: String) : NyArbeidsledigSøknad {
+                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                    it.interestedIn("fnr")
+                    it.interestedIn("opprettet")
+                    it.interestedIn("id")
+                    it.interestedIn("status")
+                }
+                return NyArbeidsledigSøknad(jsonMessage)
             }
         }
     }
@@ -172,6 +194,26 @@ abstract class Melding(protected val packet: JsonMessage) {
                     it.interestedIn("status")
                 }
                 return SendtSelvstendigSøknad(jsonMessage)
+            }
+        }
+    }
+
+
+    class SendtArbeidsledigSøknad(packet: JsonMessage) : Melding(packet) {
+        override val type = "sendt_søknad_arbeidsledig"
+        override fun fødselsnummer(): String = packet["fnr"].asText()
+        override fun rapportertDato() = packet["sendtNav"].asLocalDateTime()
+        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
+
+        companion object {
+            fun lagSendtArbeidsledigSøknad(data: String): SendtArbeidsledigSøknad {
+                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                    it.interestedIn("fnr")
+                    it.interestedIn("sendtNav")
+                    it.interestedIn("id")
+                    it.interestedIn("status")
+                }
+                return SendtArbeidsledigSøknad(jsonMessage)
             }
         }
     }
