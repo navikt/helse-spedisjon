@@ -47,14 +47,18 @@ internal class PersonBerikerMediator(
         val melding = meldingDao.hent(duplikatkontroll)
         if (melding == null) {
             logg.warn("Mottok personinfoberikelse med duplikatkontroll=$duplikatkontroll som vi ikke fant i databasen")
+            sikkerLogg.warn("Mottok personinfoberikelse med duplikatkontroll=$duplikatkontroll som vi ikke fant i databasen")
             return
         }
         if (berikelseDao.behovErBesvart(duplikatkontroll)) {
             logg.info("Behov er allerede besvart for duplikatkontroll=$duplikatkontroll")
+            sikkerLogg.info("Behov er allerede besvart for duplikatkontroll=$duplikatkontroll")
             return
         }
 
         if (melding.type != "inntektsmelding"){
+            logg.info("Behandler berikelse for duplikatkontroll=$duplikatkontroll")
+            sikkerLogg.info("Behandler berikelse for duplikatkontroll=$duplikatkontroll")
             berikelse.behandle(melding) {
                     beriketMelding -> meldingMediator.onPersoninfoBerikelse(context, melding.fødselsnummer(), beriketMelding)
             }

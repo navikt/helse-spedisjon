@@ -80,6 +80,7 @@ internal class MeldingMediator(
         logg.info("Er ${ubesvarteBehov.size} ubesvarte behov som er opprettet før $opprettetFør")
         ubesvarteBehov.forEach { ubesvartBehov ->
             ubesvartBehov.logg(logg)
+            ubesvartBehov.logg(sikkerLogg)
             sendBehov(ubesvartBehov.fnr, ubesvartBehov.behov, ubesvartBehov.duplikatkontroll, context)
         }
     }
