@@ -56,13 +56,13 @@ internal class PersonBerikerMediator(
             return
         }
 
-        if (melding.type != "inntektsmelding"){
+        berikelse.lagre(berikelseDao, melding.type) {
+            if (melding.type == "inntektsmelding") return@lagre
             logg.info("Behandler berikelse for duplikatkontroll=$duplikatkontroll")
             sikkerLogg.info("Behandler berikelse for duplikatkontroll=$duplikatkontroll")
             berikelse.behandle(melding) {
                     beriketMelding -> meldingMediator.onPersoninfoBerikelse(context, melding.fødselsnummer(), beriketMelding)
             }
         }
-        berikelse.lagre(berikelseDao, melding.type)
     }
 }

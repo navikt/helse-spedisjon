@@ -43,8 +43,8 @@ internal class Berikelse(
         }
     }
 
-    internal fun lagre(berikelseDao: BerikelseDao, eventName: String) {
-        berikelseDao.behovBesvart(duplikatkontroll, lagringsJson(eventName))
+    internal fun lagre(berikelseDao: BerikelseDao, eventName: String, handling: () -> Unit) {
+        berikelseDao.behovBesvart(duplikatkontroll, lagringsJson(eventName), handling)
     }
 
     internal fun berik(melding: Melding): ObjectNode {

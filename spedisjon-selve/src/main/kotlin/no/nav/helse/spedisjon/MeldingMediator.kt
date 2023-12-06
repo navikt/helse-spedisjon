@@ -58,13 +58,13 @@ internal class MeldingMediator(
     }
 
     private fun sendBehov(fødselsnummer: String, behov: List<String>, duplikatkontroll: String, context: MessageContext) {
+        berikelseDao.behovEtterspurt(fødselsnummer, duplikatkontroll, behov, LocalDateTime.now())
         context.publish(fødselsnummer,
             JsonMessage.newNeed(behov = listOf("HentPersoninfoV3"),
                 map = mapOf("HentPersoninfoV3" to mapOf(
                     "ident" to fødselsnummer,
                     "attributter" to behov,
                 ), "spedisjonMeldingId" to duplikatkontroll)).toJson())
-        berikelseDao.behovEtterspurt(fødselsnummer, duplikatkontroll, behov, LocalDateTime.now())
     }
 
     fun onPersoninfoBerikelse(

@@ -55,7 +55,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         val berikelsesDao = BerikelseDao(dataSource)
         val inntektsmeldingDao = InntektsmeldingDao(dataSource)
         val berikelse = Berikelse(LocalDate.parse("2022-01-01"), null,"b", true, emptyList(), b)
-        berikelse.lagre(berikelsesDao, "inntektsmelding")
+        berikelse.lagre(berikelsesDao, "inntektsmelding") {}
         val metaInntektsmeldinger = sessionOf(dataSource).use {
             it.transaction{
                 inntektsmeldingDao.hentSendeklareMeldinger(it)

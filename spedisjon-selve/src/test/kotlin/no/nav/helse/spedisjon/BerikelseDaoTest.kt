@@ -15,7 +15,7 @@ internal class BerikelseDaoTest: AbstractRiverTest() {
     fun `ikke finn ting som er beriket`() {
         val dao = BerikelseDao(dataSource)
         dao.behovEtterspurt("fnr", "duplikatkontroll", listOf("aktørId", "fødselsdato"), LocalDateTime.now())
-        dao.behovBesvart("duplikatkontroll", enLøsning)
+        dao.behovBesvart("duplikatkontroll", enLøsning) {}
         assertEquals(0, dao.ubesvarteBehov(LocalDateTime.now()).size)
     }
 
@@ -47,7 +47,7 @@ internal class BerikelseDaoTest: AbstractRiverTest() {
         val dao = BerikelseDao(dataSource)
         dao.behovEtterspurt("fnr", duplikatkontroll, listOf("aktørId", "fødselsdato"), LocalDateTime.now())
         assertFalse(dao.behovErBesvart(duplikatkontroll))
-        dao.behovBesvart(duplikatkontroll, enLøsning)
+        dao.behovBesvart(duplikatkontroll, enLøsning) {}
         assertTrue(dao.behovErBesvart(duplikatkontroll))
     }
 
@@ -60,7 +60,7 @@ internal class BerikelseDaoTest: AbstractRiverTest() {
         dao.behovEtterspurt("fnr", duplikatkontroll, listOf("foo"), LocalDateTime.now())
         assertTrue(dao.behovErEtterspurt(duplikatkontroll))
         assertFalse(dao.behovErBesvart(duplikatkontroll))
-        dao.behovBesvart(duplikatkontroll, enLøsning)
+        dao.behovBesvart(duplikatkontroll, enLøsning) {}
         assertTrue(dao.behovErEtterspurt(duplikatkontroll))
         assertTrue(dao.behovErBesvart(duplikatkontroll))
     }

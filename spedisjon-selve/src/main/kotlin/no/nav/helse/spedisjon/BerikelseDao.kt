@@ -1,6 +1,7 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
+import kotliquery.sessionOf
 import org.slf4j.Logger
 import java.time.Duration
 import java.time.LocalDateTime
@@ -18,9 +19,16 @@ internal class BerikelseDao(dataSource: DataSource) : AbstractDao(dataSource) {
                 "opprettet" to opprettet))
     }
 
-    fun behovBesvart(duplikatkontroll: String, løsning: JsonNode) {
-        """UPDATE berikelse SET løsning = :losning::json WHERE duplikatkontroll = :duplikatkontroll AND løsning is null"""
-            .update(mapOf("losning" to løsning.toString(), "duplikatkontroll" to duplikatkontroll))
+    fun behovBesvart(duplikatkontroll: String, løsning: JsonNode, handling: () -> Unit) {
+        sessionOf(dataSource).use {
+            it.transaction { txSession ->
+                check(1 == """UPDATE berikelse SET løsning = :losning::json WHERE duplikatkontroll = :duplikatkontroll AND løsning is null"""
+                    .update(txSession, mapOf("losning" to løsning.toString(), "duplikatkontroll" to duplikatkontroll))) {
+                    "forventer å oppdatere berikelse, men ingen rad fantes!"
+                }
+                handling()
+            }
+        }
     }
 
     fun ubesvarteBehov(opprettetFør: LocalDateTime): List<UbesvartBehov> =
