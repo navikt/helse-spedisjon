@@ -4,14 +4,10 @@ private val postgresqlVersion = "42.6.0"
 private val hikariVersion = "5.0.1"
 private val kotliqueryVersion = "1.9.0"
 private val flywayVersion = "9.3.0"
-private val junitVersion = "5.9.0"
-private val rapidsAndRiversVersion = "2023050308441683096263.f5a276d7bd28"
+
+val rapidsAndRiversVersion: String by project
 
 val mainClass = "no.nav.helse.opprydding.AppKt"
-
-plugins {
-    kotlin("jvm") apply true
-}
 
 dependencies {
     api("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
@@ -26,17 +22,9 @@ dependencies {
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion") {
         exclude("com.fasterxml.jackson.core")
     }
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-    implementation(kotlin("stdlib-jdk8"))
 }
 
 tasks {
-
-    test {
-        useJUnitPlatform()
-    }
-
     named<Jar>("jar") {
         archiveBaseName.set("app")
 
@@ -49,7 +37,7 @@ tasks {
 
         doLast {
             configurations.runtimeClasspath.get().forEach {
-                val file = File("$buildDir/libs/${it.name}")
+                val file = File("${layout.buildDirectory.get()}/libs/${it.name}")
                 if (!file.exists())
                     it.copyTo(file)
             }

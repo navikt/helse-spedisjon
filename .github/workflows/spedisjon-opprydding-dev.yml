@@ -14,9 +14,7 @@ on:
 jobs:
   build:
     permissions:
-      contents: "read"
-      id-token: "write"
-      packages: "write"
+      id-token: write
     name: build docker image
     runs-on: ubuntu-latest
     steps:
@@ -24,19 +22,18 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17.x'
+          java-version: '21.x'
           cache: 'gradle'
       - name: test and build
+        run: ./gradlew :spedisjon-opprydding-dev:build
         env:
-          ORG_GRADLE_PROJECT_githubUser: x-access-token
           ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :spedisjon-opprydding-dev:test :spedisjon-opprydding-dev:build
       - uses: nais/docker-build-push@v0
         id: docker-build-push
         with:
           team: 'tbd'
-          dockerfile: Dockerfile-opprydding-dev
           image_suffix: opprydding-dev
+          docker_context: spedisjon-opprydding-dev
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
     outputs:

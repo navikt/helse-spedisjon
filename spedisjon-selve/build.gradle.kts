@@ -1,23 +1,11 @@
-val junitJupiterVersion = "5.9.1"
 val testcontainersVersion = "1.17.5"
 val flywayCoreVersion = "9.7.0"
-val rapidsAndRiversVersion = "2022092314391663936769.9d5d33074875"
 val hikariCPVersion = "5.0.1"
 val postgresqlVersion = "42.5.0"
 val kotliqueryVersion = "1.9.0"
-val mockkVersion = "1.13.2"
+val mockkVersion = "1.13.9"
 val wiremockJre8Version = "2.34.0"
-
-
-repositories {
-    mavenCentral()
-    // Needed for com.github.navikt:rapids-and-rivers
-    maven("https://jitpack.io")
-}
-
-plugins {
-    kotlin("jvm") apply true
-}
+val rapidsAndRiversVersion: String by project
 
 dependencies {
     implementation("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
@@ -31,9 +19,6 @@ dependencies {
         exclude(group = "com.github.jknack.handlebars.java")
         exclude(group = "junit")
     }
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
 
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
     testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
@@ -41,13 +26,6 @@ dependencies {
 }
 
 tasks {
-    compileKotlin {
-        kotlinOptions.jvmTarget = "17"
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "17"
-    }
-
     named<Jar>("jar") {
         archiveBaseName.set("app")
 
@@ -60,17 +38,10 @@ tasks {
 
         doLast {
             configurations.runtimeClasspath.get().forEach {
-                val file = File("$buildDir/libs/${it.name}")
+                val file = File("${layout.buildDirectory.get()}/libs/${it.name}")
                 if (!file.exists())
                     it.copyTo(file)
             }
-        }
-    }
-
-    withType<Test> {
-        useJUnitPlatform()
-        testLogging {
-            events("passed", "skipped", "failed")
         }
     }
 }
