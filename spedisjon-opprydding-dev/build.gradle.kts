@@ -1,9 +1,8 @@
-private val testcontainersVersion = "1.18.3"
-private val cloudSqlVersion = "1.11.2"
-private val postgresqlVersion = "42.6.0"
-private val hikariVersion = "5.0.1"
+private val testcontainersVersion = "1.19.3"
+private val cloudSqlVersion = "1.15.2"
+private val postgresqlVersion = "42.7.1"
+private val hikariVersion = "5.1.0"
 private val kotliqueryVersion = "1.9.0"
-private val flywayVersion = "9.3.0"
 
 val rapidsAndRiversVersion: String by project
 
@@ -18,7 +17,6 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikariVersion")
 
     testImplementation(project(":spedisjon-selve")) // for å få  tilgang på db/migrations-filene
-    testImplementation("org.flywaydb:flyway-core:$flywayVersion")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion") {
         exclude("com.fasterxml.jackson.core")
     }
