@@ -1,5 +1,5 @@
 val junitJupiterVersion = "5.10.1"
-val rapidsAndRiversVersion = "2024010209171704183456.6d035b91ffb4"
+val rapidsAndRiversVersion = "2024020421191707077994.337b557194f1"
 
 plugins {
     base
