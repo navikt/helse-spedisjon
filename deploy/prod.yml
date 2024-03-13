@@ -63,6 +63,4 @@ spec:
     value: flex.sykepengesoknad,helsearbeidsgiver.privat-sykepenger-inntektsmelding
   - name: KARANTENE_TID
     value: "1800"
-  - name: PULS_TID
-    value: "60"
 
