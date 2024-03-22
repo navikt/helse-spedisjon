@@ -48,10 +48,6 @@ spec:
               - name: spedisjon-opprydding-dev
   secureLogs:
     enabled: true
-  observability:
-    autoInstrumentation:
-      enabled: true
-      runtime: java
   env:
   - name: KAFKA_CONSUMER_GROUP_ID
     value: spedisjon-v1
