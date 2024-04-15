@@ -1,0 +1,1 @@
+create index if not exists berikelse_ubesvart on berikelse(løsning) where løsning is null;
