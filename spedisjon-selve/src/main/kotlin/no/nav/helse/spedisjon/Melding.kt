@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageProblems
+import no.nav.helse.rapids_rivers.asLocalDate
 import no.nav.helse.rapids_rivers.asLocalDateTime
 import java.security.MessageDigest
 import java.time.LocalDateTime
@@ -224,7 +225,7 @@ abstract class Melding(protected val packet: JsonMessage) {
         override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["opprettet"].asLocalDateTime()
         override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
-        override fun toString(): String = "${fødselsnummer()}, ${packet["arbeidsgiver.orgnummer"].asText()}"
+        override fun toString(): String = "${fødselsnummer()}, ${packet["arbeidsgiver.orgnummer"].asText()}, ${packet["fom"].asLocalDate()} til ${packet["tom"].asLocalDate()}"
 
         companion object {
             fun lagAvbruttSøknad(data: String) : AvbruttSøknad {
