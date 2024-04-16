@@ -224,6 +224,7 @@ abstract class Melding(protected val packet: JsonMessage) {
         override fun fødselsnummer(): String = packet["fnr"].asText()
         override fun rapportertDato() = packet["opprettet"].asLocalDateTime()
         override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
+        override fun toString(): String = "${fødselsnummer()}, ${packet["arbeidsgiver.orgnummer"].asText()}"
 
         companion object {
             fun lagAvbruttSøknad(data: String) : AvbruttSøknad {
