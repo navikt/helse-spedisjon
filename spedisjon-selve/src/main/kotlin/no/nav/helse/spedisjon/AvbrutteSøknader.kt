@@ -25,7 +25,7 @@ internal class AvbrutteSøknader(
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val avbruttSøknadMelding = Melding.AvbruttSøknad(packet)
         meldingMediator.onMelding(avbruttSøknadMelding, context)
-        sikkerlogg.info("Mottatt avbrutt søknad \n" + avbruttSøknadMelding)
+        sikkerlogg.info("Mottatt avbrutt søknad \n" + avbruttSøknadMelding.json())
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {
