@@ -44,6 +44,7 @@ fun main() {
         PersoninfoBeriker(this, personBerikerMediator)
         PersoninfoBerikerRetry(this, meldingMediator)
         Puls(this, inntektsmeldingMediator)
+        AvbrutteSøknader(this, meldingMediator)
     }.apply {
         register(object : RapidsConnection.StatusListener {
             override fun onStartup(rapidsConnection: RapidsConnection) {

@@ -2,6 +2,7 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.helse.rapids_rivers.*
+import org.slf4j.LoggerFactory
 
 internal class AvbrutteSøknader(
     rapidsConnection: RapidsConnection,
@@ -24,9 +25,15 @@ internal class AvbrutteSøknader(
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val avbruttSøknadMelding = Melding.AvbruttSøknad(packet)
         meldingMediator.onMelding(avbruttSøknadMelding, context)
+        sikkerlogg.info("Mottatt avbrutt søknad \n" + avbruttSøknadMelding)
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne Avbrutt søknad:\n$problems")
     }
+
+    private companion object {
+        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
+    }
+
 }
