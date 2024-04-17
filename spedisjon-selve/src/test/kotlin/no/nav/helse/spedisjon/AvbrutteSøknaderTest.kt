@@ -1,4 +1,4 @@
-package no.nav.helse.spedisjon;
+package no.nav.helse.spedisjon
 
 import io.mockk.clearAllMocks
 import no.nav.helse.rapids_rivers.RapidsConnection
@@ -17,6 +17,10 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator
         )
+        AvbrutteArbeidsledigSøknader(
+            rapidsConnection = rapidsConnection,
+            meldingMediator = meldingMediator
+        )
         PersoninfoBeriker(rapidsConnection, personBerikerMediator)
     }
 
@@ -26,6 +30,13 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         sendBerikelse()
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("behov", "avbrutt_søknad")
+    }
+    @Test
+    fun `Leser, beriker, videresender avbrutte arbeidsledig-søknader`() {
+        testRapid.sendTestMessage(AVBRUTT_ARBEIDSLEDIG_SØKNAD)
+        sendBerikelse()
+        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("behov", "avbrutt_arbeidsledig_søknad")
     }
 
     @BeforeEach
@@ -50,6 +61,23 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
             "fravar": [],
             "status": "AVBRUTT",
             "type": "ARBEIDSTAKERE",
+            "sykmeldingId": "id",
+            "fom": "2020-01-01",
+            "tom": "2020-01-01"
+        }"""
+
+        private val AVBRUTT_ARBEIDSLEDIG_SØKNAD = """
+        {
+            "id": "id",
+            "fnr": "$FØDSELSNUMMER",
+            "aktorId": "$AKTØR",
+            "opprettet": "${LocalDateTime.now()}",
+            "sendtNav": "${LocalDateTime.now()}",
+            "soknadsperioder": [],
+            "egenmeldinger": [],
+            "fravar": [],
+            "status": "AVBRUTT",
+            "type": "ARBEIDSLEDIG",
             "sykmeldingId": "id",
             "fom": "2020-01-01",
             "tom": "2020-01-01"
