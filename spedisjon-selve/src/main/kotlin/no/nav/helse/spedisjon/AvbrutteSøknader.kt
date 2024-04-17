@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode
 import no.nav.helse.rapids_rivers.*
 import org.slf4j.LoggerFactory
 
+/**
+ * En avbrutt søknad er en søknad bruker velger aktivt å ikke bruke.
+ *
+ * Til sammenlikning er en utgått søknad en søknad bruker ikke har brukt innen fristen (som er på 10mnd?)
+ */
 internal class AvbrutteSøknader(
     rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator
@@ -13,7 +18,7 @@ internal class AvbrutteSøknader(
         River(rapidsConnection).apply {
             validate {
                 it.rejectKey("@event_name")
-                it.demandValue("status", "AVBRUTT")
+                it.demandAny("status", listOf("AVBRUTT", "UTGATT"))
                 it.demandValue("type", "ARBEIDSTAKERE")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fnr", "fom", "tom", "arbeidsgiver.orgnummer")
