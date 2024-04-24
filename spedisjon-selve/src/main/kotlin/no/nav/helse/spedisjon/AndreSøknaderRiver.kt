@@ -15,16 +15,16 @@ internal class AndreSøknaderRiver(
             validate {
                 it.rejectKey("@event_name", "inntektsmeldingId")
                 it.rejectValue("type", "ARBEIDSTAKERE")
+                it.rejectValue("type", "ARBEIDSLEDIG")
                 if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp") {
-                    // vi støtter frilans, selvstendig og arbeidsledig i dev
+                    // vi støtter selvstendig og arbeidsledig i dev
                     it.rejectValue("type", "SELVSTENDIGE_OG_FRILANSERE")
-                    it.rejectValue("type", "ARBEIDSLEDIG")
                 }
                 it.requireKey("id", "fnr", "status")
                 it.interestedIn("arbeidssituasjon", "arbeidsgiver.orgnummer")
             }
         }.register(this)
-    }
+}
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         try {
