@@ -88,7 +88,8 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
             "ferieperioder": [],
             "status": "GYLDIG",
             "arkivreferanse": "arkivref",
-            "foersteFravaersdag": "2020-01-01"
+            "foersteFravaersdag": "2020-01-01",
+            "matcherSpleis": true
         }
         """
         )

@@ -12,6 +12,7 @@ internal class Inntektsmeldinger(
             validate {
                 it.rejectKey("@event_name")
                 it.demandKey("inntektsmeldingId")
+                it.demandValue("matcherSpleis", true)
                 it.requireKey(
                     "inntektsmeldingId", "virksomhetsnummer",
                     "arbeidsgivertype", "beregnetInntekt",

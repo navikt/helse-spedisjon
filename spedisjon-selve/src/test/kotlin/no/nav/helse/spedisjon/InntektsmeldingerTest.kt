@@ -27,7 +27,8 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "arkivref",
-    "foersteFravaersdag": "2020-01-01"
+    "foersteFravaersdag": "2020-01-01",
+    "matcherSpleis": true
 }""")
         sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
@@ -50,7 +51,8 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "arkivref",
-    "foersteFravaersdag": "2020-01-01"
+    "foersteFravaersdag": "2020-01-01",
+    "matcherSpleis": true
 }"""
         )
         assertEquals(0, antallMeldinger(FØDSELSNUMMER))
@@ -73,7 +75,8 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "arkivref",
-    "foersteFravaersdag": null
+    "foersteFravaersdag": null, 
+    "matcherSpleis": true
 }"""
         )
         sendBerikelse()
@@ -119,6 +122,13 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         assertTrue(inntektsmeldinger().single().path("harFlereInntektsmeldinger").asBoolean())
     }
 
+    @Test
+    fun `leser ikke inn inntektsmeldinger hvis matcherSpleis er false`() {
+        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse", "noe", matcherSpleis = false) )
+        assertEquals(0, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents()
+    }
+
 
     private fun inntektsmeldinger() : List<JsonNode> {
         return (0 until testRapid.inspektør.size).mapNotNull {
@@ -128,7 +138,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         }
     }
 
-    private fun inntektsmelding(id: String, virksomhetsnummer: String, arkivreferanse: String, arbeidsforholdId: String? = null) : String {
+    private fun inntektsmelding(id: String, virksomhetsnummer: String, arkivreferanse: String, arbeidsforholdId: String? = null, matcherSpleis: Boolean = true) : String {
         val arbeidsforholdIdJson = if (arbeidsforholdId == null) "" else """ "arbeidsforholdId": "$arbeidsforholdId", """
         return """
 {
@@ -145,7 +155,8 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "$arkivreferanse",
-    "foersteFravaersdag": null
+    "foersteFravaersdag": null,
+    "matcherSpleis": $matcherSpleis
 }"""
     }
 

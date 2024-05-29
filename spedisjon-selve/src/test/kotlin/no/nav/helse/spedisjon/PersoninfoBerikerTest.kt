@@ -20,7 +20,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
 
     @Test
     fun `Beriker inntektsmelding`() {
-        testRapid.sendTestMessage(inntektmelding(FØDSELSNUMMER))
+        testRapid.sendTestMessage(inntektsmelding(FØDSELSNUMMER))
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         sendBerikelse(FØDSELSNUMMER)
         manipulerTimeoutInntektsmelding(FØDSELSNUMMER)
@@ -76,7 +76,7 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
         assertions(beriket)
     }
 
-    private fun inntektmelding(fnr: String = FØDSELSNUMMER) =
+    private fun inntektsmelding(fnr: String = FØDSELSNUMMER) =
         """
         {
             "inntektsmeldingId": "id",
@@ -91,7 +91,8 @@ internal class PersoninfoBerikerTest : AbstractRiverTest() {
             "ferieperioder": [],
             "status": "GYLDIG",
             "arkivreferanse": "arkivref",
-            "foersteFravaersdag": "2020-01-01"
+            "foersteFravaersdag": "2020-01-01", 
+            "matcherSpleis": true
         }
         """
 
