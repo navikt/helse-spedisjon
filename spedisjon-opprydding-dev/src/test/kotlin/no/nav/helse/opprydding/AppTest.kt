@@ -7,12 +7,10 @@ import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class AppTest: DataSourceBuilderTest() {
     private lateinit var testRapid: TestRapid
     private lateinit var personRepository: PersonRepository
@@ -20,7 +18,7 @@ internal class AppTest: DataSourceBuilderTest() {
     @BeforeEach
     fun beforeEach() {
         testRapid = TestRapid()
-        personRepository = PersonRepository(dataSource)
+        personRepository = PersonRepository(testDataSource.ds)
         SlettPersonRiver(testRapid, personRepository)
     }
 
@@ -64,20 +62,20 @@ internal class AppTest: DataSourceBuilderTest() {
         assertEquals(1, finnInntektsmeldinger(fødselsnummer))
     }
     private fun finnMeldinger(fødselsnummer: String): Int {
-        return sessionOf(dataSource).use { session ->
+        return sessionOf(testDataSource.ds).use { session ->
             session.run(queryOf("SELECT COUNT(1) FROM melding WHERE fnr = ?", fødselsnummer).map { it.int(1) }.asSingle)
         } ?: 0
     }
 
     private fun finnBerikelser(fødselsnummer: String): Int {
-        return sessionOf(dataSource).use { session ->
+        return sessionOf(testDataSource.ds).use { session ->
             session.run(queryOf("SELECT COUNT(1) FROM berikelse WHERE fnr = ?", fødselsnummer).map { it.int(1) }.asSingle)
         } ?: 0
     }
 
 
     private fun finnInntektsmeldinger(fødselsnummer: String): Int {
-        return sessionOf(dataSource).use { session ->
+        return sessionOf(testDataSource.ds).use { session ->
             session.run(queryOf("SELECT COUNT(1) FROM inntektsmelding WHERE fnr = ?", fødselsnummer).map { it.int(1) }.asSingle)
         } ?: 0
     }
@@ -91,7 +89,7 @@ internal class AppTest: DataSourceBuilderTest() {
             "rapportert" to LocalDateTime.now(),
             "duplikatkontroll" to "${UUID.randomUUID()}"
         )
-        sessionOf(dataSource).use { it.run(queryOf(query, params).asUpdate)}
+        sessionOf(testDataSource.ds).use { it.run(queryOf(query, params).asUpdate)}
     }
 
     private fun opprettBerikelse(fødselsnummer: String) {
@@ -102,7 +100,7 @@ internal class AppTest: DataSourceBuilderTest() {
             "behov" to "{}",
             "opprettet" to LocalDate.EPOCH.atStartOfDay()
         )
-        sessionOf(dataSource).use { it.run(queryOf(query, params).asUpdate)}
+        sessionOf(testDataSource.ds).use { it.run(queryOf(query, params).asUpdate)}
     }
 
     private fun opprettInntektsmelding(fødselsnummer: String) {
@@ -116,6 +114,6 @@ internal class AppTest: DataSourceBuilderTest() {
                 "duplikatkontroll" to "${UUID.randomUUID()}"
         )
 
-        sessionOf(dataSource).use { it.run(queryOf(query, params).asUpdate)}
+        sessionOf(testDataSource.ds).use { it.run(queryOf(query, params).asUpdate)}
     }
 }

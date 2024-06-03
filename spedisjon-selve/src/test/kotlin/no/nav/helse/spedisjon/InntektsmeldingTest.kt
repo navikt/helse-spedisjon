@@ -11,12 +11,10 @@ import no.nav.helse.spedisjon.Melding.Companion.sha512
 import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.fail
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test

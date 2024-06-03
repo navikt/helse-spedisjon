@@ -1,52 +1,31 @@
 package no.nav.helse.spedisjon
 
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
+import com.github.navikt.tbd_libs.test_support.TestDataSource
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageProblems
-import org.flywaydb.core.Flyway
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.testcontainers.containers.PostgreSQLContainer
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class DuplikateMeldingerTest {
 
-    private val postgres = PostgreSQLContainer<Nothing>("postgres:13")
-
-    private lateinit var hikariConfig: HikariConfig
-    private lateinit var dataSource: HikariDataSource
     private lateinit var meldingDao: MeldingDao
+    private lateinit var testDataSource: TestDataSource
 
-    @BeforeAll
-    fun `start postgres`() {
-        postgres.start()
-
-        hikariConfig = HikariConfig().apply {
-            jdbcUrl = postgres.jdbcUrl
-            username = postgres.username
-            password = postgres.password
-            maximumPoolSize = 3
-            minimumIdle = 1
-            initializationFailTimeout = 5000
-            idleTimeout = 10001
-            connectionTimeout = 5000
-            maxLifetime = 30001
-        }
-
-        dataSource = HikariDataSource(hikariConfig)
-        runMigration(dataSource)
-        meldingDao = MeldingDao(dataSource)
+    @BeforeEach
+    fun setup() {
+        testDataSource = databaseContainer.nyTilkobling()
+        meldingDao = MeldingDao(testDataSource.ds)
     }
 
-    private fun runMigration(dataSource: HikariDataSource) =
-        Flyway.configure()
-            .dataSource(dataSource)
-            .load()
-            .migrate()
+    @AfterEach
+    fun tearDown() {
+        databaseContainer.droppTilkobling(testDataSource)
+    }
 
     @Test
     fun `duplikat inntektsmelding slipper ikke igjennom`() {
@@ -57,7 +36,8 @@ internal class DuplikateMeldingerTest {
                     "arbeidstakerFnr": "123",
                     "mottattDato": "${LocalDateTime.now()}"
                 }
-            """, MessageProblems("")).apply {
+            """, MessageProblems("")
+        ).apply {
             requireKey("arkivreferanse", "arbeidstakerFnr", "mottattDato")
         }
 
@@ -75,7 +55,8 @@ internal class DuplikateMeldingerTest {
                     "sendtNav": "${LocalDateTime.now()}",
                     "status": "SENDT"
                 }
-            """, MessageProblems("")).apply {
+            """, MessageProblems("")
+        ).apply {
             requireKey("id", "fnr", "sendtNav", "status")
         }
 
@@ -93,7 +74,8 @@ internal class DuplikateMeldingerTest {
                     "sendtArbeidsgiver": "${LocalDateTime.now()}",
                     "status": "SENDT"
                 }
-            """, MessageProblems("")).apply {
+            """, MessageProblems("")
+        ).apply {
             requireKey("id", "fnr", "sendtArbeidsgiver", "status")
         }
 
@@ -113,7 +95,8 @@ internal class DuplikateMeldingerTest {
                     "sendtNav": null,
                     "status": "SENDT"
                 }
-            """, MessageProblems("")).apply {
+            """, MessageProblems("")
+        ).apply {
             requireKey("id", "fnr", "sendtArbeidsgiver", "status")
         }
         val andreInnsending = JsonMessage(
@@ -125,7 +108,8 @@ internal class DuplikateMeldingerTest {
                     "sendtNav": "${LocalDateTime.now().minusDays(1)}",
                     "status": "SENDT"
                 }
-            """, MessageProblems("")).apply {
+            """, MessageProblems("")
+        ).apply {
             requireKey("id", "fnr", "sendtArbeidsgiver", "sendtNav", "status")
         }
 
@@ -143,7 +127,8 @@ internal class DuplikateMeldingerTest {
                     "opprettet": "${LocalDateTime.now()}",
                     "status": "NY"
                 }
-            """, MessageProblems("")).apply {
+            """, MessageProblems("")
+        ).apply {
             requireKey("id", "fnr", "opprettet", "status")
         }
 

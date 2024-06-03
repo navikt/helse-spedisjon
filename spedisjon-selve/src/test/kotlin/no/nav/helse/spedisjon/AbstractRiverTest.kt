@@ -6,11 +6,11 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import javax.sql.DataSource
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
     protected val testRapid = TestRapid()
 
@@ -25,7 +25,7 @@ internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
         testRapid.reset()
     }
 
-    @BeforeAll
+    @BeforeEach
     fun `create river`() {
         createRiver(testRapid, dataSource)
     }

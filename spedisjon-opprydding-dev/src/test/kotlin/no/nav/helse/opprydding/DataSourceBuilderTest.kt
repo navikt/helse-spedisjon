@@ -1,51 +1,24 @@
 package no.nav.helse.opprydding
 
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
-import javax.sql.DataSource
-import org.flywaydb.core.Flyway
+import com.github.navikt.tbd_libs.test_support.CleanupStrategy
+import com.github.navikt.tbd_libs.test_support.DatabaseContainers
+import com.github.navikt.tbd_libs.test_support.TestDataSource
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.testcontainers.containers.PostgreSQLContainer
+
+val databaseContainer = DatabaseContainers.container("spedisjon-opprydding", CleanupStrategy.tables("inntektsmelding,berikelse,melding"))
+
 
 internal abstract class DataSourceBuilderTest {
-    protected lateinit var dataSource: DataSource
-    companion object {
-        private val psqlContainer = PostgreSQLContainer<Nothing>("postgres:14").apply {
-            withCreateContainerCmdModifier { command -> command.withName("spleis-spedisjon-dev") }
-            withReuse(true)
-            withLabel("app-navn", "spedisjon-opprydding-dev")
-            start()
-        }
-    }
+    protected lateinit var testDataSource: TestDataSource
 
     @BeforeEach
-    fun setupDB() {
-        dataSource = runMigration(psqlContainer)
+    fun setup() {
+        testDataSource = databaseContainer.nyTilkobling()
     }
 
-    private fun runMigration(psql: PostgreSQLContainer<Nothing>): DataSource {
-        val dataSource = HikariDataSource(createHikariConfig(psql))
-        Flyway.configure()
-            .cleanDisabled(false)
-            .dataSource(dataSource)
-            .locations("classpath:db/migration")
-            .load()
-            .also { it.clean() }
-            .migrate()
-        return dataSource
+    @AfterEach
+    fun teardown() {
+        databaseContainer.droppTilkobling(testDataSource)
     }
-
-
-    private fun createHikariConfig(psql: PostgreSQLContainer<Nothing>) =
-        HikariConfig().apply {
-            this.jdbcUrl = psql.jdbcUrl
-            this.username = psql.username
-            this.password = psql.password
-            maximumPoolSize = 3
-            minimumIdle = 1
-            idleTimeout = 10001
-            connectionTimeout = 1000
-            initializationFailTimeout = 5000
-            maxLifetime = 30001
-        }
 }

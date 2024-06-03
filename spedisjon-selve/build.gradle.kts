@@ -1,4 +1,3 @@
-val testcontainersVersion = "1.19.5"
 val flywayCoreVersion = "10.6.0"
 val hikariCPVersion = "5.1.0"
 val postgresqlVersion = "42.7.2"
@@ -20,10 +19,6 @@ dependencies {
         exclude(group = "com.github.jknack.handlebars.java")
         exclude(group = "junit")
     }
-
-    testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
-    testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
-    testImplementation("org.testcontainers:junit-jupiter:$testcontainersVersion")
 }
 
 tasks {

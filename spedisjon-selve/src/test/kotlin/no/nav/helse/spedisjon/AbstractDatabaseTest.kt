@@ -1,23 +1,22 @@
 package no.nav.helse.spedisjon
 
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
+import com.github.navikt.tbd_libs.test_support.CleanupStrategy
+import com.github.navikt.tbd_libs.test_support.DatabaseContainers
+import com.github.navikt.tbd_libs.test_support.TestDataSource
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
-import org.flywaydb.core.Flyway
 import org.intellij.lang.annotations.Language
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.testcontainers.containers.PostgreSQLContainer
 import java.time.Duration
 import java.time.LocalDateTime
-import javax.sql.DataSource
+
+val databaseContainer = DatabaseContainers.container("spedisjon", CleanupStrategy.tables("inntektsmelding,berikelse,melding"))
 
 abstract class AbstractDatabaseTest {
-    private val postgres = PostgreSQLContainer<Nothing>("postgres:13")
-    protected lateinit var dataSource: DataSource
+    private lateinit var testDataSource: TestDataSource
+    protected val dataSource get() = testDataSource.ds
 
     protected companion object {
         const val FØDSELSNUMMER = "fnr"
@@ -28,33 +27,13 @@ abstract class AbstractDatabaseTest {
 
     @BeforeEach
     fun setup() {
-        Flyway.configure()
-            .dataSource(dataSource)
-            .cleanDisabled(false)
-            .load()
-            .also { it.clean() }
-            .migrate()
+        testDataSource = databaseContainer.nyTilkobling()
+        testDataSource.ds
     }
 
-    @BeforeAll
-    fun `start postgres`() {
-        postgres.start()
-        dataSource = HikariDataSource(HikariConfig().apply {
-            jdbcUrl = postgres.jdbcUrl
-            username = postgres.username
-            password = postgres.password
-            maximumPoolSize = 3
-            minimumIdle = 1
-            initializationFailTimeout = 5000
-            idleTimeout = 10001
-            connectionTimeout = 1000
-            maxLifetime = 30001
-        })
-    }
-
-    @AfterAll
+    @AfterEach
     fun `stop postgres`() {
-        postgres.stop()
+        databaseContainer.droppTilkobling(testDataSource)
     }
 
 

@@ -1,5 +1,6 @@
 val junitJupiterVersion = "5.10.2"
 val rapidsAndRiversVersion = "2024020507581707116327.1c34df474331"
+val tbdLibsVersion = "2024.05.31-08.02-2c3441c1"
 
 plugins {
     base
@@ -32,6 +33,7 @@ subprojects {
     val testRuntimeOnly by configurations
     dependencies {
         testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
+        testImplementation("com.github.navikt.tbd-libs:postgres-testdatabaser:$tbdLibsVersion")
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
 
