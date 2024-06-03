@@ -95,7 +95,6 @@ internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
             "opprettet": "${LocalDateTime.now()}",
             "sendtArbeidsgiver": "${LocalDateTime.now()}",
             "soknadsperioder": [],
-            "egenmeldinger": [],
             "fravar": [],
             "status": "SENDT",
             "type": "ARBEIDSTAKERE",

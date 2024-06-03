@@ -94,7 +94,6 @@ internal class SendteFrilansSøknaderTest : AbstractRiverTest() {
             "opprettet": "${LocalDateTime.now()}",
             "sendtNav": "${LocalDateTime.now()}",
             "soknadsperioder": [],
-            "egenmeldinger": null,
             "fravar": null,
             "status": "SENDT",
             "type": "SELVSTENDIGE_OG_FRILANSERE",

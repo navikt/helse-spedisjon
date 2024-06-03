@@ -35,7 +35,6 @@ internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
   "opprinneligSendt": null,
   "sendtNav": null,
   "sendtArbeidsgiver": null,
-  "egenmeldinger": null,
   "fravarForSykmeldingen": null,
   "papirsykmeldinger": null,
   "fravar": null,

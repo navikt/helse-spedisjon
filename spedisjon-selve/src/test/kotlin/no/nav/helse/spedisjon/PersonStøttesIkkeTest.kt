@@ -45,7 +45,6 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
             søknad(
                 status = "SENDT", ekstralinjer = listOf(
                     """"sendtNav": "${LocalDateTime.now()}"""",
-                    """"egenmeldinger": []""",
                     """"fravar": []"""
                 )
             )
@@ -61,7 +60,6 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
             søknad(
                 status = "SENDT", ekstralinjer = listOf(
                     """"sendtArbeidsgiver": "${LocalDateTime.now()}"""",
-                    """"egenmeldinger": []""",
                     """"fravar": []"""
                 )
             )

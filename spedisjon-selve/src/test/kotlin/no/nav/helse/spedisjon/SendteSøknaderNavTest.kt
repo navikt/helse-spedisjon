@@ -96,7 +96,6 @@ internal class SendteSøknaderNavTest : AbstractRiverTest() {
             "opprettet": "${LocalDateTime.now()}",
             "sendtNav": "${LocalDateTime.now()}",
             "soknadsperioder": [],
-            "egenmeldinger": [],
             "fravar": [],
             "status": "SENDT",
             "type": "ARBEIDSTAKERE",
