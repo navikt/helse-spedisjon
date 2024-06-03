@@ -13,7 +13,7 @@ internal class InntektsmeldingMediator (
     private val berikelseDao: BerikelseDao = BerikelseDao(dataSource),
     private val meldingMediator: MeldingMediator = MeldingMediator(meldingDao, berikelseDao),
     private val inntektsmeldingTimeoutSekunder: Long = 1
-    ) {
+) {
 
     private companion object {
         private val logg = LoggerFactory.getLogger(Puls::class.java)
@@ -21,8 +21,9 @@ internal class InntektsmeldingMediator (
     }
 
     fun lagreInntektsmelding(inntektsmelding: Melding.Inntektsmelding, messageContext: MessageContext) {
+        val ønsketPublisert = LocalDateTime.now().plusSeconds(inntektsmeldingTimeoutSekunder)
         meldingMediator.onMelding(inntektsmelding, messageContext)
-        if (!inntektsmeldingDao.leggInn(inntektsmelding, LocalDateTime.now().plusSeconds(inntektsmeldingTimeoutSekunder))) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
+        if (!inntektsmeldingDao.leggInn(inntektsmelding, ønsketPublisert)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
     }
 
     fun ekspeder(messageContext: MessageContext){

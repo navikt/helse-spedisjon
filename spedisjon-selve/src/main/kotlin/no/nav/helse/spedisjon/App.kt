@@ -3,6 +3,7 @@ package no.nav.helse.spedisjon
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
+import org.slf4j.LoggerFactory
 
 fun main() {
     val env = System.getenv()
@@ -15,13 +16,18 @@ fun main() {
 
     val meldingMediator = MeldingMediator(meldingDao, berikelseDao)
     val personBerikerMediator = PersonBerikerMediator(meldingDao, berikelseDao, meldingMediator)
+    val inntektsmeldingTimeoutSekunder = env["KARANTENE_TID"]?.toLong() ?: 0L.also {
+        val loggtekst = "KARANTENE_TID er tom; defaulter til ingen karantene"
+        LoggerFactory.getLogger(::main.javaClass).info(loggtekst)
+        LoggerFactory.getLogger("tjenestekall").info(loggtekst)
+    }
     val inntektsmeldingMediator = InntektsmeldingMediator(
         dataSource,
         meldingDao,
         inntektsmeldingDao,
         berikelseDao,
         meldingMediator,
-        inntektsmeldingTimeoutSekunder = env["KARANTENE_TID"]?.toLong() ?: 1
+        inntektsmeldingTimeoutSekunder = inntektsmeldingTimeoutSekunder
     )
 
     LogWrapper(RapidApplication.create(env), meldingMediator).apply {
