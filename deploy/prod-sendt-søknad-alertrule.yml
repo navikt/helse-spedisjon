@@ -10,7 +10,7 @@ spec:
     - name: sendt-soknad-alert
       rules:
         - alert: Alert på at vi ikke har mottatt søknader
-          expr: sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) > 0 and hour() >= 5 <= 15
+          expr: sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) == 0 and hour() >= 5 <= 15
           for: 1m
           annotations:
             consequence: "_*{{ $labels.container }}*_ has a working set of {{ $value }} bytes, there is no consequence"
