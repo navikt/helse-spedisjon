@@ -1,0 +1,24 @@
+apiVersion: "monitoring.coreos.com/v1"
+kind: PrometheusRule
+metadata:
+  labels:
+    team: tbd
+  name: sendt-soknad-alert
+  namespace: tbd
+spec:
+  groups:
+    - name: sendt-soknad-alert
+      rules:
+        - alert: Alert på at vi ikke har mottatt søknader
+          expr: sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) > 0 and hour() >= 5 <= 15
+          for: 1m
+          annotations:
+            consequence: "_*{{ $labels.container }}*_ has a working set of {{ $value }} bytes, there is no consequence"
+            action: "no need to do _anything_"
+            documentation: "https://prometheus.io/docs/prometheus/latest/querying/basics/"
+            summary: "Container _*{{ $labels.container }}*_ has a working set of {{ $value }} bytes."
+            sla: "no need to respond"
+          labels:
+            severity: "error"
+            team-spleiselaget-alerts: slack
+            alert_type: custom
