@@ -9,12 +9,11 @@ spec:
   groups:
     - name: sendt-soknad-alert
       rules:
-        - alert: Alert på at vi ikke har mottatt søknader
-          expr: sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) > 0 and hour() >= 5 <= 15
+        - alert: Det er mottatt mistenkelig få søknader
+          expr: sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) < 0.01 and hour() >= 5 <= 15
           for: 1m
           annotations:
-            navn: "Ikke mottatt noen søknader siste 10 minuttene"
-            beskrivelse: "Det er ikke registrert noen sendte søknader i Spedisjon. Hør med Flex om det er noe krøll"
+            beskrivelse: "Det er ikke registrert noen/veldig få sendte søknader i Spedisjon. Hør med Flex om det er noe krøll"
             detaljer: "Sjekk om du ser noe rart på <https://grafana.nav.cloud.nais.io/d/H8jR8MFGk/flex-kafka-lag?orgId=1&refresh=5m&viewPanel=28|grafana> eller <https://logs.adeo.no/app/r/s/NGiJM|kibana> da vel"
           labels:
             severity: "error"
