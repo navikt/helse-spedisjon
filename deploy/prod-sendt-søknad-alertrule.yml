@@ -20,5 +20,5 @@ spec:
             sla: "no need to respond"
           labels:
             severity: "error"
-            team-spleiselaget-alerts: slack
+            team_spleiselaget_alerts: slack
             alert_type: custom
