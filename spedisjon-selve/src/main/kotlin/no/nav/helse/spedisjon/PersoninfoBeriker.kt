@@ -5,7 +5,11 @@ import com.fasterxml.jackson.databind.node.MissingNode
 import no.nav.helse.rapids_rivers.*
 import org.slf4j.LoggerFactory
 
-internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val personBerikerMediator: PersonBerikerMediator): River.PacketListener {
+internal class PersoninfoBeriker(
+    rapidsConnection: RapidsConnection,
+    private val personBerikerMediator: PersonBerikerMediator,
+    private val inntektsmeldingMediator: InntektsmeldingMediator? = null
+): River.PacketListener {
 
     companion object {
         private val tjenestekallLog = LoggerFactory.getLogger("tjenestekall")
@@ -43,5 +47,8 @@ internal class PersoninfoBeriker(rapidsConnection: RapidsConnection, private val
         tjenestekallLog.info("Mottok personinfoberikelse for aktørId=$aktørId med ident=$ident, fødselsdato=$fødselsdato og spedisjonMeldingId=$spedisjonMeldingId\n${packet.toJson()}")
         val berikelse = Berikelse(fødselsdato, dødsdato, aktørId, støttes, historiskeFolkeregisteridenter, spedisjonMeldingId)
         personBerikerMediator.onPersoninfoBerikelse(spedisjonMeldingId, berikelse, context)
+
+        val erDev = System.getenv()["NAIS_CLUSTER_NAME"] == "dev-gcp"
+        if (erDev) inntektsmeldingMediator?.ekspeder(context) // ikke vent på puls
     }
 }

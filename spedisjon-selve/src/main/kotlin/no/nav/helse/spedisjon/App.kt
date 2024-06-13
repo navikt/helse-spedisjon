@@ -46,7 +46,7 @@ fun main() {
         SendteArbeidsledigSøknader(this, meldingMediator)
         AndreSøknaderRiver(this)
         Inntektsmeldinger(this, inntektsmeldingMediator)
-        PersoninfoBeriker(this, personBerikerMediator)
+        PersoninfoBeriker(this, personBerikerMediator, inntektsmeldingMediator)
         PersoninfoBerikerRetry(this, meldingMediator)
         Puls(this, inntektsmeldingMediator)
         AvbrutteSøknader(this, meldingMediator)
