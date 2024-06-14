@@ -27,7 +27,7 @@ spec:
           for: 1h
           annotations:
             beskrivelse: "Antall mottatte søknader fra Flex ser bra ut den siste timen!"
-            detaljer: "Dette er en 'alt er ok' melding, så vi ikke bekymrer oss for at noe er galt"
+            detaljer: "Dette er en 'alt er ok' melding så vi ikke trenger å bekymre oss for at noe er galt"
           labels:
             severity: "info"
             team_spleiselaget_alerts: slack

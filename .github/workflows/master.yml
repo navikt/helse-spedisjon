@@ -12,6 +12,7 @@ on:
       - 'CODEOWNERS'
       - '.github/workflows/alerts.yml'
       - 'deploy/prod-sendt-søknad-alertrule.yml'
+      - 'deploy/prod-inntektsmelding-alertrule.yml'
     branches:
       - master
 
