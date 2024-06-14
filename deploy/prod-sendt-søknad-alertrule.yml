@@ -20,8 +20,6 @@ spec:
             team_spleiselaget_alerts: slack
             alert_type: custom
 
-    - name: send-soknad-ok-info
-      rules:
         - alert: Søknadstrømmen ser bra ut
           expr: sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) > 0.01 and day() == 5
           for: 1h
