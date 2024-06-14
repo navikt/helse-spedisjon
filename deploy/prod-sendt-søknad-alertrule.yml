@@ -21,7 +21,7 @@ spec:
             alert_type: custom
 
         - alert: Søknadstrømmen ser bra ut
-          expr: sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) > 0.01 and day() == 5
+          expr: sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) > 0.01 and day_of_week() == 5
           for: 1h
           annotations:
             beskrivelse: "Antall mottatte søknader fra Flex ser bra ut den siste timen!"
