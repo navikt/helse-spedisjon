@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/alerts.yml'
       - 'deploy/prod-sendt-søknad-alertrule.yml'
+      - 'deploy/prod-inntektsmelding-alertrule.yml'
 
 jobs:
   apply-alerts:
@@ -16,4 +17,4 @@ jobs:
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
           CLUSTER: prod-gcp
-          RESOURCE: deploy/prod-sendt-søknad-alertrule.yml
+          RESOURCE: deploy/prod-sendt-søknad-alertrule.yml, deploy/prod-inntektsmelding-alertrule.yml
