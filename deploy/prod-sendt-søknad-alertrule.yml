@@ -10,7 +10,7 @@ spec:
     - name: sendt-soknad-alert
       rules:
         - alert: Det er mottatt mistenkelig få søknader
-          expr: (day_of_week() < 6 and hour() >= 6 <= 12) and (sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) < 0.01)
+          expr: (day_of_week() >= 1 <= 5 and hour() >= 6 <= 12) and (sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) < 0.01)
           for: 1m
           annotations:
             beskrivelse: "Det er ikke registrert noen/veldig få sendte søknader i Spedisjon. Hør med Flex om det er noe krøll"
