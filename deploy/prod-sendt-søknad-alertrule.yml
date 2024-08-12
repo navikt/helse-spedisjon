@@ -11,7 +11,7 @@ spec:
       rules:
         - alert: Det er mottatt mistenkelig få søknader
           expr: (day_of_week() >= 1 <= 5 and hour() >= 6 <= 12) and (sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[10m])) < 0.01)
-          for: 1m
+          for: 3m
           annotations:
             beskrivelse: "Det er ikke registrert noen/veldig få sendte søknader i Spedisjon. Hør med Flex om det er noe krøll"
             detaljer: "Sjekk om du ser noe rart på <https://grafana.nav.cloud.nais.io/d/H8jR8MFGk/flex-kafka-lag?orgId=1&refresh=5m&viewPanel=28|grafana> eller <https://logs.adeo.no/app/r/s/NGiJM|kibana> da vel"
