@@ -1,7 +1,10 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
-import io.prometheus.client.Counter
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import org.slf4j.LoggerFactory
@@ -12,18 +15,9 @@ internal class MeldingMediator(
     private val berikelseDao: BerikelseDao,
 ) {
     internal companion object {
+        private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
         private val logg = LoggerFactory.getLogger(MeldingMediator::class.java)
         private val sikkerLogg = LoggerFactory.getLogger("tjenestekall")
-        private val meldingsteller = Counter.build("melding_totals", "Antall meldinger mottatt")
-            .labelNames("type")
-            .register()
-        private val unikteller = Counter.build("melding_unik_totals", "Antall unike meldinger mottatt")
-            .labelNames("type")
-            .register()
-        private val sendtteller = Counter.build("melding_sendt_totals", "Antall meldinger sendt")
-            .labelNames("type")
-            .register()
-
     }
 
     private var messageRecognized = false
@@ -40,11 +34,27 @@ internal class MeldingMediator(
 
     fun onMelding(melding: Melding, context: MessageContext) {
         messageRecognized = true
-        meldingsteller.labels(melding.type).inc()
+
+        Counter.builder("melding_totals")
+            .description("Antall meldinger mottatt")
+            .tag("type", melding.type)
+            .register(registry)
+            .increment()
+
         if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
         sendBehovÈnGang(melding.fødselsnummer(), listOf("aktørId", "fødselsdato", "støttes", "dødsdato", "historiskeFolkeregisteridenter"), melding.duplikatkontroll(), context)
-        unikteller.labels(melding.type).inc()
-        sendtteller.labels(melding.type).inc()
+
+        Counter.builder("melding_unik_totals")
+            .description("Antall unike meldinger mottatt")
+            .tag("type", melding.type)
+            .register(registry)
+            .increment()
+
+        Counter.builder("melding_sendt_totals")
+            .description("Antall meldinger sendt")
+            .tag("type", melding.type)
+            .register(registry)
+            .increment()
     }
 
     fun afterMessage(message: String) {

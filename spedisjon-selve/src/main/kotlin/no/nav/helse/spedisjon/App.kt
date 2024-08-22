@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import io.micrometer.core.instrument.MeterRegistry
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
@@ -70,9 +71,9 @@ internal class LogWrapper(
         rapidsConnection.register(this as StatusListener)
     }
 
-    override fun onMessage(message: String, context: MessageContext) {
+    override fun onMessage(message: String, context: MessageContext, metrics: MeterRegistry) {
         meldingMediator.beforeMessage()
-        notifyMessage(message, this)
+        notifyMessage(message, this, metrics)
         meldingMediator.afterMessage(message)
     }
 

@@ -2,6 +2,8 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageProblems
 import no.nav.helse.rapids_rivers.asLocalDate
@@ -28,6 +30,7 @@ abstract class Melding(protected val packet: JsonMessage) {
     fun jsonNode(): JsonNode = jacksonObjectMapper().readTree(json())
 
     internal companion object {
+        private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
         internal fun String.sha512(): String {
             return MessageDigest
                 .getInstance("SHA-512")
@@ -60,7 +63,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagNySøknad(data: String) : NySøknad {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("opprettet")
                     it.interestedIn("id")
@@ -78,7 +81,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagNyFrilansSøknad(data: String) : NyFrilansSøknad {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("opprettet")
                     it.interestedIn("id")
@@ -96,7 +99,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagNySelvstendigSøknad(data: String) : NySelvstendigSøknad {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("opprettet")
                     it.interestedIn("id")
@@ -114,7 +117,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagNyArbeidsledigSøknad(data: String) : NyArbeidsledigSøknad {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("opprettet")
                     it.interestedIn("id")
@@ -133,7 +136,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagSendtSøknadArbeidsgiver(data: String) : SendtSøknadArbeidsgiver {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("sendtArbeidsgiver")
                     it.interestedIn("id")
@@ -152,7 +155,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagSendtSøknadNav(data: String): SendtSøknadNav {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("sendtNav")
                     it.interestedIn("id")
@@ -171,7 +174,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagSendtFrilansSøknad(data: String): SendtFrilansSøknad {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("sendtNav")
                     it.interestedIn("id")
@@ -190,7 +193,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagSendtSelvstendigSøknad(data: String): SendtSelvstendigSøknad {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("sendtNav")
                     it.interestedIn("id")
@@ -210,7 +213,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagSendtArbeidsledigSøknad(data: String): SendtArbeidsledigSøknad {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("sendtNav")
                     it.interestedIn("id")
@@ -230,7 +233,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagAvbruttSøknad(data: String) : AvbruttSøknad {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("opprettet")
                     it.interestedIn("id")
@@ -250,7 +253,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagAvbruttSøknad(data: String) : AvbruttArbeidsledigSøknad {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("fnr")
                     it.interestedIn("opprettet")
                     it.interestedIn("id")
@@ -273,7 +276,7 @@ abstract class Melding(protected val packet: JsonMessage) {
 
         companion object {
             fun lagInntektsmelding(data: String) : Inntektsmelding {
-                val jsonMessage = JsonMessage(data, MessageProblems(data)).also {
+                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
                     it.interestedIn("arbeidstakerFnr")
                     it.interestedIn("virksomhetsnummer")
                     it.interestedIn("mottattDato")

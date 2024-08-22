@@ -1,6 +1,8 @@
 package no.nav.helse.spedisjon
 
 import com.github.navikt.tbd_libs.test_support.TestDataSource
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageProblems
 import org.junit.jupiter.api.AfterEach
@@ -29,15 +31,14 @@ internal class DuplikateMeldingerTest {
 
     @Test
     fun `duplikat inntektsmelding slipper ikke igjennom`() {
-        val packet = JsonMessage(
+        val packet = lagMelding(
             """
                 {
                     "arkivreferanse": "1",
                     "arbeidstakerFnr": "123",
                     "mottattDato": "${LocalDateTime.now()}"
                 }
-            """, MessageProblems("")
-        ).apply {
+            """).apply {
             requireKey("arkivreferanse", "arbeidstakerFnr", "mottattDato")
         }
 
@@ -47,7 +48,7 @@ internal class DuplikateMeldingerTest {
 
     @Test
     fun `duplikat sendt søknad til nav slipper ikke igjennom`() {
-        val packet = JsonMessage(
+        val packet = lagMelding(
             """
                 {
                     "id": "${UUID.randomUUID()}",
@@ -55,7 +56,7 @@ internal class DuplikateMeldingerTest {
                     "sendtNav": "${LocalDateTime.now()}",
                     "status": "SENDT"
                 }
-            """, MessageProblems("")
+            """
         ).apply {
             requireKey("id", "fnr", "sendtNav", "status")
         }
@@ -66,7 +67,7 @@ internal class DuplikateMeldingerTest {
 
     @Test
     fun `duplikat sendt søknad til arbeidsgiver slipper ikke igjennom`() {
-        val packet = JsonMessage(
+        val packet = lagMelding(
             """
                 {
                     "id": "${UUID.randomUUID()}",
@@ -74,7 +75,7 @@ internal class DuplikateMeldingerTest {
                     "sendtArbeidsgiver": "${LocalDateTime.now()}",
                     "status": "SENDT"
                 }
-            """, MessageProblems("")
+            """
         ).apply {
             requireKey("id", "fnr", "sendtArbeidsgiver", "status")
         }
@@ -86,7 +87,7 @@ internal class DuplikateMeldingerTest {
     @Test
     fun `duplikat sendt søknad til arbeidsgiver (ettersending) slipper ikke igjennom`() {
         val id = UUID.randomUUID()
-        val førsteInnsending = JsonMessage(
+        val førsteInnsending = lagMelding(
             """
                 {
                     "id": "$id",
@@ -95,11 +96,11 @@ internal class DuplikateMeldingerTest {
                     "sendtNav": null,
                     "status": "SENDT"
                 }
-            """, MessageProblems("")
+            """
         ).apply {
             requireKey("id", "fnr", "sendtArbeidsgiver", "status")
         }
-        val andreInnsending = JsonMessage(
+        val andreInnsending = lagMelding(
             """
                 {
                     "id": "$id",
@@ -108,7 +109,7 @@ internal class DuplikateMeldingerTest {
                     "sendtNav": "${LocalDateTime.now().minusDays(1)}",
                     "status": "SENDT"
                 }
-            """, MessageProblems("")
+            """
         ).apply {
             requireKey("id", "fnr", "sendtArbeidsgiver", "sendtNav", "status")
         }
@@ -119,7 +120,7 @@ internal class DuplikateMeldingerTest {
 
     @Test
     fun `duplikat ny søknad slipper ikke igjennom`() {
-        val packet = JsonMessage(
+        val packet = lagMelding(
             """
                 {
                     "id": "${UUID.randomUUID()}",
@@ -127,12 +128,14 @@ internal class DuplikateMeldingerTest {
                     "opprettet": "${LocalDateTime.now()}",
                     "status": "NY"
                 }
-            """, MessageProblems("")
-        ).apply {
+            """).apply {
             requireKey("id", "fnr", "opprettet", "status")
         }
 
         assertTrue(meldingDao.leggInn(Melding.NySøknad(packet)))
         assertFalse(meldingDao.leggInn(Melding.NySøknad(packet)))
     }
+
+    private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+    private fun lagMelding(json: String) = JsonMessage(json, MessageProblems(json), registry)
 }

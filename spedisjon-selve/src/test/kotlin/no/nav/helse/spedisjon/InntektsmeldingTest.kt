@@ -1,6 +1,7 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
@@ -140,6 +141,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         return SendeklarInntektsmelding(FØDSELSNUMMER, ORGNUMMER, Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = arkivreferanse)), berikelse, mottatt)
     }
 
+    private val registry = SimpleMeterRegistry()
     private fun genererInntektsmelding(fnr: String = FØDSELSNUMMER, orgnummer: String = ORGNUMMER, arbeidsforholdId: String? = null, arkivreferanse: String): JsonMessage {
         val arbeidsforholdIdJson = if (arbeidsforholdId == null) "" else """ "arbeidsforholdId": "$arbeidsforholdId", """
         val inntektsmelding = """{
@@ -150,7 +152,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         "arkivreferanse": "$arkivreferanse"
         }"""
 
-        return JsonMessage(inntektsmelding, MessageProblems(inntektsmelding)).also {
+        return JsonMessage(inntektsmelding, MessageProblems(inntektsmelding), registry).also {
             it.interestedIn("arbeidstakerFnr")
             it.interestedIn("virksomhetsnummer")
             it.interestedIn("mottattDato")

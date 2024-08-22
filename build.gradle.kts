@@ -1,10 +1,10 @@
-val junitJupiterVersion = "5.10.2"
-val rapidsAndRiversVersion = "2024020507581707116327.1c34df474331"
-val tbdLibsVersion = "2024.05.31-08.02-2c3441c1"
+val junitJupiterVersion = "5.11.0"
+val rapidsAndRiversVersion = "2024082209261724311613.5baa691b9e0a"
+val tbdLibsVersion = "2024.08.22-09.21-bd982a56"
 
 plugins {
     base
-    kotlin("jvm") version "1.9.22" apply false
+    kotlin("jvm") version "2.0.10" apply false
 }
 
 subprojects {
