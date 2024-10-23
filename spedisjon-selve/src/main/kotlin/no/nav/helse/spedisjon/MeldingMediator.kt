@@ -2,7 +2,6 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
 import io.micrometer.core.instrument.Counter
-import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.helse.rapids_rivers.JsonMessage
@@ -42,7 +41,7 @@ internal class MeldingMediator(
             .increment()
 
         if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
-        sendBehovÈnGang(melding.fødselsnummer(), listOf("aktørId", "fødselsdato", "støttes", "dødsdato", "historiskeFolkeregisteridenter"), melding.duplikatkontroll(), context)
+        sendBehovÉnGang(melding.fødselsnummer(), listOf("aktørId", "fødselsdato", "støttes", "dødsdato", "historiskeFolkeregisteridenter"), melding.duplikatkontroll(), context)
 
         Counter.builder("melding_unik_totals")
             .description("Antall unike meldinger mottatt")
@@ -62,7 +61,7 @@ internal class MeldingMediator(
         sikkerLogg.warn("kunne ikke gjenkjenne melding:\n\t$message\n\nProblemer:\n${riverErrors.joinToString(separator = "\n")}")
     }
 
-    private fun sendBehovÈnGang(fødselsnummer: String, behov: List<String>, duplikatkontroll: String, context: MessageContext) {
+    private fun sendBehovÉnGang(fødselsnummer: String, behov: List<String>, duplikatkontroll: String, context: MessageContext) {
         if (berikelseDao.behovErEtterspurt(duplikatkontroll)) return // Om om vi allerede har etterspurt behov gjør vi det ikke på ny
         sendBehov(fødselsnummer, behov, duplikatkontroll, context)
     }
