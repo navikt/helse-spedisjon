@@ -4,6 +4,7 @@ import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.River
+import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 
 internal class SlettPersonRiver(
@@ -26,7 +27,17 @@ internal class SlettPersonRiver(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val fødselsnummer = packet["fødselsnummer"].asText()
-        personRepository.slett(fødselsnummer)
         sikkerlogg.info("Sletter dokumenter knyttet til person med fødselsnummer: $fødselsnummer")
+        personRepository.slett(fødselsnummer)
+        sikkerlogg.info("Dokumenter knyttet til person med fødselsnummer $fødselsnummer er slettet, sender kvittering")
+        context.publish(fødselsnummer, lagPersonSlettet(fødselsnummer))
     }
+
+    @Language("JSON")
+    private fun lagPersonSlettet(fødselsnummer: String) = """
+        {
+            "@event_name": "person_slettet",
+            "fødselsnummer": $fødselsnummer
+        }  
+    """.trimIndent()
 }
