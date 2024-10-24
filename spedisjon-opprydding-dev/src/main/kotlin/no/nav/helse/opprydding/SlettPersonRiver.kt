@@ -37,7 +37,7 @@ internal class SlettPersonRiver(
     private fun lagPersonSlettet(fødselsnummer: String) = """
         {
             "@event_name": "person_slettet",
-            "fødselsnummer": $fødselsnummer
+            "fødselsnummer": "$fødselsnummer"
         }  
     """.trimIndent()
 }
