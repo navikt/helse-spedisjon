@@ -1,17 +1,19 @@
 package no.nav.helse.spedisjon
 
-import com.fasterxml.jackson.databind.JsonNode
+import com.github.navikt.tbd_libs.retry.retryBlocking
+import com.github.navikt.tbd_libs.speed.PersonResponse.Adressebeskyttelse
+import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.Counter
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
-import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
+import no.nav.helse.rapids_rivers.withMDC
 import org.slf4j.LoggerFactory
-import java.time.LocalDateTime
+import java.util.UUID
 
 internal class MeldingMediator(
     private val meldingDao: MeldingDao,
-    private val berikelseDao: BerikelseDao,
+    private val speedClient: SpeedClient
 ) {
     internal companion object {
         private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
@@ -41,7 +43,8 @@ internal class MeldingMediator(
             .increment()
 
         if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
-        sendBehovÉnGang(melding.fødselsnummer(), listOf("aktørId", "fødselsdato", "støttes", "dødsdato", "historiskeFolkeregisteridenter"), melding.duplikatkontroll(), context)
+
+        berikOgSendVidere(melding, context)
 
         Counter.builder("melding_unik_totals")
             .description("Antall unike meldinger mottatt")
@@ -61,36 +64,31 @@ internal class MeldingMediator(
         sikkerLogg.warn("kunne ikke gjenkjenne melding:\n\t$message\n\nProblemer:\n${riverErrors.joinToString(separator = "\n")}")
     }
 
-    private fun sendBehovÉnGang(fødselsnummer: String, behov: List<String>, duplikatkontroll: String, context: MessageContext) {
-        if (berikelseDao.behovErEtterspurt(duplikatkontroll)) return // Om om vi allerede har etterspurt behov gjør vi det ikke på ny
-        sendBehov(fødselsnummer, behov, duplikatkontroll, context)
-    }
+    private fun berikOgSendVidere(melding: Melding, context: MessageContext) {
+        // vi sender ikke inntektsmelding  videre. her er vi avhengig av puls!
+        if (melding is Melding.Inntektsmelding) return
 
-    private fun sendBehov(fødselsnummer: String, behov: List<String>, duplikatkontroll: String, context: MessageContext) {
-        berikelseDao.behovEtterspurt(fødselsnummer, duplikatkontroll, behov, LocalDateTime.now())
-        context.publish(fødselsnummer,
-            JsonMessage.newNeed(behov = listOf("HentPersoninfoV3"),
-                map = mapOf("HentPersoninfoV3" to mapOf(
-                    "ident" to fødselsnummer,
-                    "attributter" to behov,
-                ), "spedisjonMeldingId" to duplikatkontroll)).toJson())
-    }
+        val callId = UUID.randomUUID().toString()
+        withMDC("callId" to callId) {
+            val personinfo = retryBlocking { speedClient.hentPersoninfo(melding.fødselsnummer(), callId) }
+            val historiskeIdenter = retryBlocking { speedClient.hentHistoriskeFødselsnumre(melding.fødselsnummer(), callId) }
+            val identer = retryBlocking { speedClient.hentFødselsnummerOgAktørId(melding.fødselsnummer(), callId) }
 
-    fun onPersoninfoBerikelse(
-        context: MessageContext,
-        fødselsnummer: String,
-        beriketMelding: JsonNode
-    ) {
-        context.publish(fødselsnummer, beriketMelding.toString())
-    }
+            val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
+            if (!støttes) {
+                sikkerLogg.info("Personen støttes ikke ${identer.aktørId}")
+            } else {
+                val berikelse = Berikelse(
+                    fødselsdato = personinfo.fødselsdato,
+                    dødsdato = personinfo.dødsdato,
+                    aktørId = identer.aktørId,
+                    historiskeFolkeregisteridenter = historiskeIdenter.fødselsnumre
+                )
 
-    fun retryBehov(opprettetFør: LocalDateTime, context:MessageContext) {
-        val ubesvarteBehov = berikelseDao.ubesvarteBehov(opprettetFør)
-        logg.info("Er ${ubesvarteBehov.size} ubesvarte behov som er opprettet før $opprettetFør")
-        ubesvarteBehov.forEach { ubesvartBehov ->
-            ubesvartBehov.logg(logg)
-            ubesvartBehov.logg(sikkerLogg)
-            sendBehov(ubesvartBehov.fnr, ubesvartBehov.behov, ubesvartBehov.duplikatkontroll, context)
+                val beriketMelding = berikelse.berik(melding)
+
+                context.publish(identer.fødselsnummer, beriketMelding.toString())
+            }
         }
     }
 }

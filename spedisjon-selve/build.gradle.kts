@@ -5,6 +5,7 @@ val kotliqueryVersion = "1.9.0"
 val mockkVersion = "1.13.9"
 val wiremockJre8Version = "2.34.0"
 val rapidsAndRiversVersion: String by project
+val tbdLibsVersion = "2024.10.30-15.07-552e6d3b"
 
 dependencies {
     implementation("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
@@ -13,6 +14,10 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+
+    api("com.github.navikt.tbd-libs:azure-token-client-default:$tbdLibsVersion")
+    api("com.github.navikt.tbd-libs:retry:$tbdLibsVersion")
+    api("com.github.navikt.tbd-libs:speed-client:$tbdLibsVersion")
 
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("com.github.tomakehurst:wiremock-jre8:$wiremockJre8Version") {

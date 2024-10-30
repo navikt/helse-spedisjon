@@ -1,42 +1,26 @@
 package no.nav.helse.spedisjon
 
-import io.mockk.clearAllMocks
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
 internal class PersonStøttesIkkeTest : AbstractRiverTest() {
 
-    @BeforeEach
-    fun clear() {
-        clearAllMocks()
-    }
-
-    @Test
-    fun `Ber om attributt støttes i berikelse av person`() {
-        testRapid.sendTestMessage(søknad(status = "FREMTIDIG"))
-        val personInfoBerikelseBehov = testRapid.inspektør.message(0)
-        assertTrue(personInfoBerikelseBehov.get("HentPersoninfoV3").get("attributter").map { it.asText() }.toList().contains("støttes"))
-    }
-
     @Test
     fun `fremtidig_søknad til person som ikke støttes lagres, men sendes ikke videre`() {
         testRapid.sendTestMessage(søknad(status = "FREMTIDIG"))
-        sendBerikelse(støttes = false)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov")
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents()
     }
 
     @Test
     fun `ny_søknad til person som ikke støttes lagres, men sendes ikke videre`() {
         testRapid.sendTestMessage(søknad(status = "NY"))
-        sendBerikelse(støttes = false)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov")
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents()
     }
 
     @Test
@@ -49,9 +33,8 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
                 )
             )
         )
-        sendBerikelse(støttes = false)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov")
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents()
     }
 
     @Test
@@ -64,9 +47,8 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
                 )
             )
         )
-        sendBerikelse(støttes = false)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov")
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents()
     }
 
     @Test
@@ -91,15 +73,14 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
         }
         """
         )
-        sendBerikelse(støttes = false)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov")
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents()
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
-        val inntektsmeldingMediator = InntektsmeldingMediator(dataSource)
-        val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
+        val speedClient = mockSpeed(støttes = false)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient)
+        val inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, meldingMediator = meldingMediator)
         LogWrapper(testRapid, meldingMediator = meldingMediator).apply {
             Inntektsmeldinger(rapidsConnection = this, inntektsmeldingMediator = inntektsmeldingMediator)
             NyeSøknader(this, meldingMediator)
@@ -107,7 +88,6 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
             SendteSøknaderArbeidsgiver(this, meldingMediator)
             SendteSøknaderNav(this, meldingMediator)
         }
-        PersoninfoBeriker(testRapid, personBerikerMediator)
     }
 
     private fun søknad(

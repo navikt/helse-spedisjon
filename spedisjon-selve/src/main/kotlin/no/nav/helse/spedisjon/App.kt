@@ -1,22 +1,30 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.github.navikt.tbd_libs.azure.createAzureTokenClientFromEnvironment
+import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.MeterRegistry
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidApplication
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.slf4j.LoggerFactory
+import java.net.http.HttpClient
 
 fun main() {
     val env = System.getenv()
     val erUtvikling = env["NAIS_CLUSTER_NAME"] == "dev-gcp"
+
+    val httpClient = HttpClient.newHttpClient()
+    val azure = createAzureTokenClientFromEnvironment(env)
+    val speedClient = SpeedClient(httpClient, jacksonObjectMapper().registerModule(JavaTimeModule()), azure)
+
     val dataSourceBuilder = DataSourceBuilder(env)
     val dataSource = dataSourceBuilder.getDataSource()
     val meldingDao = MeldingDao(dataSource)
     val inntektsmeldingDao = InntektsmeldingDao(dataSource)
-    val berikelseDao = BerikelseDao(dataSource)
 
-    val meldingMediator = MeldingMediator(meldingDao, berikelseDao)
-    val personBerikerMediator = PersonBerikerMediator(meldingDao, berikelseDao, meldingMediator)
+    val meldingMediator = MeldingMediator(meldingDao, speedClient)
     val inntektsmeldingTimeoutSekunder = env["KARANTENE_TID"]?.toLong() ?: 0L.also {
         val loggtekst = "KARANTENE_TID er tom; defaulter til ingen karantene"
         LoggerFactory.getLogger(::main.javaClass).info(loggtekst)
@@ -24,9 +32,8 @@ fun main() {
     }
     val inntektsmeldingMediator = InntektsmeldingMediator(
         dataSource,
-        meldingDao,
+        speedClient,
         inntektsmeldingDao,
-        berikelseDao,
         meldingMediator,
         inntektsmeldingTimeoutSekunder = inntektsmeldingTimeoutSekunder
     )
@@ -47,8 +54,6 @@ fun main() {
         SendteArbeidsledigSøknader(this, meldingMediator)
         AndreSøknaderRiver(this)
         Inntektsmeldinger(this, inntektsmeldingMediator)
-        PersoninfoBeriker(this, personBerikerMediator, inntektsmeldingMediator)
-        PersoninfoBerikerRetry(this, meldingMediator)
         Puls(this, inntektsmeldingMediator)
         AvbrutteSøknader(this, meldingMediator)
         AvbrutteArbeidsledigSøknader(this, meldingMediator)

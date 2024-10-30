@@ -10,26 +10,23 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
     @Test
     fun `tar inn fremtidig søknad`() {
         testRapid.sendTestMessage(søknad())
-        sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov", "ny_søknad")
-        assertEquals("NY", testRapid.inspektør.message(1)["status"].textValue())
-        assertEquals(true, testRapid.inspektør.message(1)["fremtidig_søknad"].booleanValue())
+        assertSendteEvents("ny_søknad")
+        assertEquals("NY", testRapid.inspektør.message(0)["status"].textValue())
+        assertEquals(true, testRapid.inspektør.message(0)["fremtidig_søknad"].booleanValue())
     }
 
     @Test
     fun `ignorerer ny søknad om vi har en fremtidig`() {
         testRapid.sendTestMessage(søknad("FREMTIDIG"))
         testRapid.sendTestMessage(søknad("NY"))
-        sendBerikelse()
-        sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov", "ny_søknad")
+        assertSendteEvents("ny_søknad")
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
-        val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
+        val speedClient = mockSpeed()
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient)
         FremtidigSøknaderRiver(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator
@@ -37,10 +34,6 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         NyeSøknader(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator
-        )
-        PersoninfoBeriker(
-            rapidsConnection = rapidsConnection,
-            personBerikerMediator = personBerikerMediator
         )
     }
 

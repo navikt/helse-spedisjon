@@ -17,12 +17,6 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
         }
     }
 
-    fun hent(duplikatkontroll: String): Melding? {
-        return """SELECT type, data FROM melding WHERE duplikatkontroll = :duplikatkontroll"""
-            .singleQuery(mapOf("duplikatkontroll" to duplikatkontroll))
-            { row -> Melding.les(row.string("type"), row.string("data")) }
-    }
-
     private fun leggInnUtenDuplikat(melding: Melding) =
         """INSERT INTO melding (type, fnr, data, opprettet, duplikatkontroll) VALUES (:type, :fnr, :json::json, :rapportert, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""
             .update(mapOf( "type" to melding.type,

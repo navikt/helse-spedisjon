@@ -1,10 +1,8 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
-import io.mockk.clearAllMocks
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import javax.sql.DataSource
@@ -30,10 +28,9 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     "foersteFravaersdag": "2020-01-01",
     "matcherSpleis": true
 }""")
-        sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         manipulerTimeoutOgPubliser()
-        assertSendteEvents("behov", "inntektsmelding")
+        assertSendteEvents("inntektsmelding")
     }
 
     @Test
@@ -79,32 +76,27 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     "matcherSpleis": true
 }"""
         )
-        sendBerikelse()
         manipulerTimeoutOgPubliser()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov", "inntektsmelding")
+        assertSendteEvents("inntektsmelding")
     }
 
     @Test
     fun `flere inntektsmeldinger forskjellig duplikatkontroll`() {
         testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse") )
-        sendBerikelse()
         manipulerTimeoutOgPubliser()
         testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2") )
-        sendBerikelse()
         assertEquals(2, antallMeldinger(FØDSELSNUMMER))
         manipulerTimeoutOgPubliser()
-        assertSendteEvents("behov", "inntektsmelding", "behov", "inntektsmelding")
+        assertSendteEvents("inntektsmelding", "inntektsmelding")
     }
 
     @Test
     fun `flere inntektsmeldinger - begge er beriket`() {
         testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse", "noe") )
-        sendBerikelse()
         testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2", "noeAnnet") )
-        sendBerikelse()
         manipulerTimeoutOgPubliser()
-        assertSendteEvents("behov", "behov", "inntektsmelding", "inntektsmelding")
+        assertSendteEvents("inntektsmelding", "inntektsmelding")
         inntektsmeldinger() .forEach {
             assertTrue(it.path("harFlereInntektsmeldinger").asBoolean())
         }
@@ -113,13 +105,13 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     @Test
     fun `flere inntektsmeldinger - en er beriket`() {
         testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse", "noe") )
-        sendBerikelse()
         testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2", "noe_annet") )
         manipulerTimeoutOgPubliser()
-        assertSendteEvents("behov", "behov", "inntektsmelding")
-        assertEquals(1, inntektsmeldinger().size)
-        assertEquals("id", inntektsmeldinger().single().get("inntektsmeldingId").asText())
-        assertTrue(inntektsmeldinger().single().path("harFlereInntektsmeldinger").asBoolean())
+        assertSendteEvents("inntektsmelding", "inntektsmelding")
+        assertEquals(2, inntektsmeldinger().size)
+        assertEquals("id", inntektsmeldinger().first().get("inntektsmeldingId").asText())
+        assertTrue(inntektsmeldinger().first().path("harFlereInntektsmeldinger").asBoolean())
+        assertTrue(inntektsmeldinger().last().path("harFlereInntektsmeldinger").asBoolean())
     }
 
     @Test
@@ -160,26 +152,18 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 }"""
     }
 
+    private lateinit var inntektsmeldingMediator: InntektsmeldingMediator
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
-        val inntektsmeldingMediator = InntektsmeldingMediator(dataSource)
-        val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
+        val speedClient = mockSpeed()
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient)
+        inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, meldingMediator = meldingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
-            Inntektsmeldinger(
-                rapidsConnection = this,
-                inntektsmeldingMediator = inntektsmeldingMediator
-            )
+            Inntektsmeldinger(this, inntektsmeldingMediator)
         }
-        PersoninfoBeriker(testRapid, personBerikerMediator)
     }
 
-    @BeforeEach
-    fun clear() {
-        clearAllMocks()
-    }
-
-    private fun manipulerTimeoutOgPubliser(){
+    private fun manipulerTimeoutOgPubliser() {
         manipulerTimeoutInntektsmelding(FØDSELSNUMMER)
-        InntektsmeldingMediator(dataSource).ekspeder(testRapid)
+        inntektsmeldingMediator.ekspeder(testRapid)
     }
 }

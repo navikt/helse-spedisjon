@@ -1,9 +1,7 @@
 package no.nav.helse.spedisjon
 
-import io.mockk.clearAllMocks
 import no.nav.helse.rapids_rivers.RapidsConnection
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import javax.sql.DataSource
 
@@ -66,26 +64,16 @@ internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
   "sendTilGosys": null,
   "utenlandskSykmelding": false
 }""")
-        sendBerikelse()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("behov", "ny_søknad_frilans")
+        assertSendteEvents("ny_søknad_frilans")
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), BerikelseDao(dataSource))
-        val personBerikerMediator = PersonBerikerMediator(MeldingDao(dataSource), BerikelseDao(dataSource), meldingMediator)
+        val speedClient = mockSpeed()
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient)
         NyeFrilansSøknader(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator
         )
-        PersoninfoBeriker(
-            rapidsConnection = rapidsConnection,
-            personBerikerMediator = personBerikerMediator
-        )
-    }
-
-    @BeforeEach
-    fun clear() {
-        clearAllMocks()
     }
 }

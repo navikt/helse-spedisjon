@@ -27,12 +27,10 @@ internal class SendeklarInntektsmelding(
         inntektsmeldingTimeoutSekunder: Long,
         session: TransactionalSession
     ) {
-        berikelse.behandle(originalMelding) { beriketMelding ->
-            sikkerlogg.info("Ekspederer inntektsmelding med fødselsnummer: $fnr og orgnummer: $orgnummer")
-            val json = flaggFlereInntektsmeldinger((beriketMelding as ObjectNode), tell(inntektsmeldingDao, inntektsmeldingTimeoutSekunder))
-            messageContext.publish(fnr, jacksonObjectMapper().writeValueAsString(json))
-        }
-
+        val beriketMelding = berikelse.berik(originalMelding)
+        sikkerlogg.info("Ekspederer inntektsmelding med fødselsnummer: $fnr og orgnummer: $orgnummer")
+        val json = flaggFlereInntektsmeldinger((beriketMelding), tell(inntektsmeldingDao, inntektsmeldingTimeoutSekunder))
+        messageContext.publish(fnr, json.toString())
         inntektsmeldingDao.markerSomEkspedert(originalMelding, session)
     }
 

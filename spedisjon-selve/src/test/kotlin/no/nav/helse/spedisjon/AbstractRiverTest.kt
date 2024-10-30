@@ -2,13 +2,19 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import kotliquery.queryOf
-import kotliquery.sessionOf
+import com.github.navikt.tbd_libs.speed.HistoriskeIdenterResponse
+import com.github.navikt.tbd_libs.speed.IdentResponse
+import com.github.navikt.tbd_libs.speed.PersonResponse
+import com.github.navikt.tbd_libs.speed.SpeedClient
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.mockk
 import no.nav.helse.rapids_rivers.RapidsConnection
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
+import java.time.LocalDate
 import javax.sql.DataSource
 
 internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
@@ -23,26 +29,12 @@ internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
     @AfterEach
     internal fun `clear messages`() {
         testRapid.reset()
+        clearAllMocks()
     }
 
     @BeforeEach
     fun `create river`() {
         createRiver(testRapid, dataSource)
-    }
-
-    private fun hentSisteDuplikatkontroll(fnr: String = FØDSELSNUMMER): String? {
-        return sessionOf(dataSource).use {
-            it.run(
-                queryOf(
-                    """SELECT duplikatkontroll FROM melding WHERE fnr = ?
-                       ORDER BY opprettet DESC
-                    """.trimMargin(),
-                    fnr
-                ).map { row ->
-                    row.string("duplikatkontroll")
-                }.asSingle
-            )
-        }
     }
 
     protected fun assertSendteEvents(vararg events: String) {
@@ -57,33 +49,5 @@ internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
         val node = objectMapper.readTree(this) as ObjectNode
         block(node)
         return node.toString()
-    }
-
-    private fun personinfoV3Løsning(duplikatkontroll: String, fnr: String, støttes: Boolean) =
-        """
-        {
-            "@id": "514ae64c-a692-4d83-9a9a-7308a5453986",
-            "@behovId": "9a06d800-f6dd-423f-99bc-6dde4f017931",
-            "@behov": ["HentPersoninfoV3"],
-            "@final": true,
-            "HentPersoninfoV3": {
-                "ident": "$fnr",
-                "attributter": ["fødselsdato", "aktørId", "støttes"]
-            },
-            "@opprettet": "2022-06-27T15:01:43.756488972",
-            "spedisjonMeldingId": "$duplikatkontroll",
-            "@løsning": {
-                "HentPersoninfoV3": {
-                    "aktørId": "$AKTØR",
-                    "fødselsdato": "1950-10-27",
-                    "støttes": $støttes
-                }
-            }
-        }
-        """
-
-    protected fun sendBerikelse(fnr: String = FØDSELSNUMMER, støttes: Boolean = true) {
-        val sisteDuplikatkontroll = requireNotNull(hentSisteDuplikatkontroll(fnr)) { "Fant ikke duplikatkontroll for $fnr" }
-        testRapid.sendTestMessage(personinfoV3Løsning(sisteDuplikatkontroll, fnr, støttes))
     }
 }

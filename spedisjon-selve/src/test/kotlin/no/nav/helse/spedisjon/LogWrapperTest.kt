@@ -21,16 +21,13 @@ internal class LogWrapperTest {
         addAppender(appender)
     }
 
-    private val berikelsesMock:BerikelseDao = mockk()
     private val meldingMock:MeldingDao = mockk()
-    private val mediator = MeldingMediator(meldingMock, berikelsesMock)
+    private val mediator = MeldingMediator(meldingMock, mockk(relaxed = true))
 
     @BeforeEach
     fun setup() {
         appender.list.clear()
         rapid.reset()
-        every { berikelsesMock.behovEtterspurt(any(), any(), any(), any()) }.answers { }
-        every { berikelsesMock.behovErEtterspurt(any()) }.answers { false }
         every { meldingMock.leggInn(any()) }.answers { true }
     }
 

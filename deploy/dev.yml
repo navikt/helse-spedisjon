@@ -30,6 +30,14 @@ spec:
         topic: flex.sykepengesoknad
         consumerGroup: spedisjon-v1
         threshold: 200
+  azure:
+    application:
+      enabled: true
+      tenant: trygdeetaten.no
+  accessPolicy:
+    outbound:
+      rules:
+        - application: speed-api
   kafka:
     pool: nav-dev
   prometheus:

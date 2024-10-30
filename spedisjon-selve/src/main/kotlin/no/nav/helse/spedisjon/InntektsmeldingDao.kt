@@ -1,18 +1,22 @@
 package no.nav.helse.spedisjon
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.github.navikt.tbd_libs.retry.retryBlocking
+import com.github.navikt.tbd_libs.speed.PersonResponse.Adressebeskyttelse
+import com.github.navikt.tbd_libs.speed.SpeedClient
 import kotliquery.TransactionalSession
 import kotliquery.sessionOf
 import net.logstash.logback.argument.StructuredArguments.keyValue
+import no.nav.helse.rapids_rivers.withMDC
+import no.nav.helse.spedisjon.Melding.Inntektsmelding
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
+import java.util.UUID
 import javax.sql.DataSource
 
 internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
 
     private companion object {
         private val log = LoggerFactory.getLogger("tjenestekall")
-        private val objectMapper = jacksonObjectMapper()
     }
 
     fun leggInn(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime = LocalDateTime.now()): Boolean {
@@ -28,25 +32,59 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
             .update(session, mapOf("ekspedert" to LocalDateTime.now(), "duplikatkontroll" to melding.duplikatkontroll()))
     }
 
-    fun hentSendeklareMeldinger(session: TransactionalSession): List<SendeklarInntektsmelding> {
-        return """SELECT i.fnr, i.orgnummer, i.mottatt, m.data, b.løsning, b.duplikatkontroll
+    fun hentSendeklareMeldinger(session: TransactionalSession, speedClient: SpeedClient): List<SendeklarInntektsmelding> {
+        return """SELECT i.fnr, i.orgnummer, i.mottatt, m.data
             FROM inntektsmelding i 
             JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
-            JOIN berikelse b ON i.duplikatkontroll = b.duplikatkontroll
-            WHERE i.ekspedert IS NULL AND i.timeout < :timeout AND b.løsning IS NOT NULL
+            WHERE i.ekspedert IS NULL AND i.timeout < :timeout
             FOR UPDATE
             SKIP LOCKED""".trimMargin()
             .listQuery(session, mapOf("timeout" to LocalDateTime.now()))
             { row ->
-                SendeklarInntektsmelding(
+                InntektsmeldingFraDatabasen(
                     fnr = row.string("fnr"),
                     orgnummer = row.string("orgnummer"),
-                    originalMelding = Melding.les("inntektsmelding", row.string("data")) as Melding.Inntektsmelding,
-                    berikelse = Berikelse.les(objectMapper.readTree(row.string("løsning")), row.string("duplikatkontroll")),
+                    melding = Inntektsmelding.lagInntektsmelding(row.string("data")),
                     mottatt = row.localDateTime("mottatt")
                 )
+            }.mapNotNull {
+                val callId = UUID.randomUUID().toString()
+                withMDC("callId" to callId) {
+                    log.info("henter berikelse for inntektsmelding")
+                    val personinfo = retryBlocking { speedClient.hentPersoninfo(it.fnr, callId) }
+                    val historiskeIdenter = retryBlocking { speedClient.hentHistoriskeFødselsnumre(it.fnr, callId) }
+                    val identer = retryBlocking { speedClient.hentFødselsnummerOgAktørId(it.fnr, callId) }
+
+                    val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
+                    if (!støttes) {
+                        log.info("Personen støttes ikke ${identer.aktørId}")
+                        null
+                    } else {
+                        val berikelse = Berikelse(
+                            fødselsdato = personinfo.fødselsdato,
+                            dødsdato = personinfo.dødsdato,
+                            aktørId = identer.aktørId,
+                            historiskeFolkeregisteridenter = historiskeIdenter.fødselsnumre
+                        )
+
+                        SendeklarInntektsmelding(
+                            fnr = it.fnr,
+                            orgnummer = it.orgnummer,
+                            originalMelding = it.melding,
+                            berikelse = berikelse,
+                            mottatt = it.mottatt
+                        )
+                    }
+                }
             }
     }
+
+    private data class InntektsmeldingFraDatabasen(
+        val fnr: String,
+        val orgnummer: String,
+        val melding: Melding.Inntektsmelding,
+        val mottatt: LocalDateTime
+    )
 
     fun tellInntektsmeldinger(fnr: String, orgnummer: String, tattImotEtter: LocalDateTime): Int {
         return """SELECT COUNT (1)
