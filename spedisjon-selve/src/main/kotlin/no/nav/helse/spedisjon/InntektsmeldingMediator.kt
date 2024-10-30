@@ -25,7 +25,7 @@ internal class InntektsmeldingMediator (
         meldingMediator.onMelding(inntektsmelding, messageContext)
         if (!inntektsmeldingDao.leggInn(inntektsmelding, ønsketPublisert)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
 
-        if (System.getenv("NAIS_CLUSTER") == "dev-gcp") {
+        if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp") {
             logg.info("ekspederer inntektsmeldinger på direkten fordi vi er i dev")
             sikkerlogg.info("ekspederer inntektsmeldinger på direkten fordi vi er i dev")
             ekspeder(messageContext)
