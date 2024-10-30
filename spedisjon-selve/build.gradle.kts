@@ -5,7 +5,7 @@ val kotliqueryVersion = "1.9.0"
 val mockkVersion = "1.13.9"
 val wiremockJre8Version = "2.34.0"
 val rapidsAndRiversVersion: String by project
-val tbdLibsVersion = "2024.10.30-15.07-552e6d3b"
+val tbdLibsVersion = "2024.10.30-17.34-5369b7bf"
 
 dependencies {
     implementation("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
