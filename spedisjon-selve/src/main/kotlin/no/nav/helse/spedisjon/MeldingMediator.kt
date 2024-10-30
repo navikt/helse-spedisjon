@@ -6,6 +6,7 @@ import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.Counter
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
+import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.withMDC
 import org.slf4j.LoggerFactory
@@ -70,8 +71,11 @@ internal class MeldingMediator(
 
         val callId = UUID.randomUUID().toString()
         withMDC("callId" to callId) {
+            sikkerLogg.info("henter personinfo for inntektsmelding for {}", kv("fødselsnummer", melding.fødselsnummer()))
             val personinfo = retryBlocking { speedClient.hentPersoninfo(melding.fødselsnummer(), callId) }
+            sikkerLogg.info("henter historiske identer for inntektsmelding for {}", kv("fødselsnummer", melding.fødselsnummer()))
             val historiskeIdenter = retryBlocking { speedClient.hentHistoriskeFødselsnumre(melding.fødselsnummer(), callId) }
+            sikkerLogg.info("henter aktørId for inntektsmelding for {}", kv("fødselsnummer", melding.fødselsnummer()))
             val identer = retryBlocking { speedClient.hentFødselsnummerOgAktørId(melding.fødselsnummer(), callId) }
 
             val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)

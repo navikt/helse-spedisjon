@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.mockk
 import no.nav.helse.rapids_rivers.*
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -38,7 +39,7 @@ internal class LogWrapperTest {
             TestRiver(this, mediator) { validate { it.requireKey("a_key_not_set", "b_key_not_set") } }
         }
         rapid.sendTestMessage("{\"a_key\": \"foo\", \"b_key\": \"bar\"}")
-        assertTrue(appender.list.isEmpty())
+        assertTrue(appender.list.filter { it.formattedMessage.contains("kunne ikke gjenkjenne melding") }.isEmpty())
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.github.navikt.tbd_libs.speed.SpeedClient
 import kotliquery.TransactionalSession
 import kotliquery.sessionOf
 import net.logstash.logback.argument.StructuredArguments.keyValue
+import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.helse.rapids_rivers.withMDC
 import no.nav.helse.spedisjon.Melding.Inntektsmelding
 import org.slf4j.LoggerFactory
@@ -50,9 +51,11 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
             }.mapNotNull {
                 val callId = UUID.randomUUID().toString()
                 withMDC("callId" to callId) {
-                    log.info("henter berikelse for inntektsmelding")
+                    log.info("henter personinfo for inntektsmelding for {}", kv("fødselsnummer", it.fnr))
                     val personinfo = retryBlocking { speedClient.hentPersoninfo(it.fnr, callId) }
+                    log.info("henter historiske identer for inntektsmelding for {}", kv("fødselsnummer", it.fnr))
                     val historiskeIdenter = retryBlocking { speedClient.hentHistoriskeFødselsnumre(it.fnr, callId) }
+                    log.info("henter aktørId for inntektsmelding for {}", kv("fødselsnummer", it.fnr))
                     val identer = retryBlocking { speedClient.hentFødselsnummerOgAktørId(it.fnr, callId) }
 
                     val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
