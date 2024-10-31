@@ -27,7 +27,7 @@ spec:
       memory: 64Mi
   replicas:
     min: 2
-    max: 6
+    max: 3
     scalingStrategy:
       kafka:
         topic: flex.sykepengesoknad
