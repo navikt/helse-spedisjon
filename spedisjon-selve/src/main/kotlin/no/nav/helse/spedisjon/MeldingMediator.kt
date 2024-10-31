@@ -71,11 +71,11 @@ internal class MeldingMediator(
 
         val callId = UUID.randomUUID().toString()
         withMDC("callId" to callId) {
-            sikkerLogg.info("henter personinfo for inntektsmelding for {}", kv("fødselsnummer", melding.fødselsnummer()))
+            sikkerLogg.info("henter personinfo for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
             val personinfo = retryBlocking { speedClient.hentPersoninfo(melding.fødselsnummer(), callId) }
-            sikkerLogg.info("henter historiske identer for inntektsmelding for {}", kv("fødselsnummer", melding.fødselsnummer()))
+            sikkerLogg.info("henter historiske identer for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
             val historiskeIdenter = retryBlocking { speedClient.hentHistoriskeFødselsnumre(melding.fødselsnummer(), callId) }
-            sikkerLogg.info("henter aktørId for inntektsmelding for {}", kv("fødselsnummer", melding.fødselsnummer()))
+            sikkerLogg.info("henter aktørId for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
             val identer = retryBlocking { speedClient.hentFødselsnummerOgAktørId(melding.fødselsnummer(), callId) }
 
             val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
