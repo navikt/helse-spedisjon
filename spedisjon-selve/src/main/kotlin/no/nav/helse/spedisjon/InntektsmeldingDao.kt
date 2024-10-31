@@ -38,6 +38,7 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
             FROM inntektsmelding i 
             JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
             WHERE i.ekspedert IS NULL AND i.timeout < :timeout
+            LIMIT 500
             FOR UPDATE
             SKIP LOCKED""".trimMargin()
             .listQuery(session, mapOf("timeout" to LocalDateTime.now()))
