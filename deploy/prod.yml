@@ -51,7 +51,7 @@ spec:
       - type: POSTGRES_15
         diskAutoresize: true
         diskSize: 150
-        tier: db-custom-1-3840
+        tier: db-custom-64-65536
         name: spedisjon2
         databases:
           - name: spedisjon
