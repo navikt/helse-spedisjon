@@ -20,5 +20,8 @@ abstract class AbstractDao(protected val dataSource: DataSource) {
         session.run(queryOf(this, argMap).map { row -> resultMapping(row) }.asList)
 
     protected fun <A> String.singleQuery(argMap: Map<String, Any?>, resultMapping: (Row) -> A) =
-        sessionOf(dataSource).use { it.run(queryOf(this, argMap).map { row -> resultMapping(row) }.asSingle) }
+        sessionOf(dataSource).use { singleQuery(it, argMap, resultMapping) }
+
+    protected fun <A> String.singleQuery(session: Session, argMap: Map<String, Any?>, resultMapping: (Row) -> A) =
+        session.run(queryOf(this, argMap).map { row -> resultMapping(row) }.asSingle)
 }

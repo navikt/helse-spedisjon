@@ -1,10 +1,14 @@
 package no.nav.helse.spedisjon
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.github.navikt.tbd_libs.speed.PersonResponse.Adressebeskyttelse
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import no.nav.helse.rapids_rivers.MessageContext
-import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
+import no.nav.helse.rapids_rivers.withMDC
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
+import java.util.UUID
 import javax.sql.DataSource
 
 internal class InntektsmeldingMediator (
@@ -33,15 +37,37 @@ internal class InntektsmeldingMediator (
     }
 
     fun ekspeder(messageContext: MessageContext) {
-        inntektsmeldingDao.transactionally {
-            val sendeklareInntektsmeldinger = inntektsmeldingDao.hentSendeklareMeldinger(this, speedClient).sorter()
-            sikkerlogg.info("Ekspederer ${sendeklareInntektsmeldinger.size} fra databasen")
-            logg.info("Ekspederer ${sendeklareInntektsmeldinger.size} fra databasen")
-            sendeklareInntektsmeldinger.forEach {
-                it.send(inntektsmeldingDao, messageContext, inntektsmeldingTimeoutSekunder, this)
+        inntektsmeldingDao.hentSendeklareMeldinger(inntektsmeldingTimeoutSekunder) { inntektsmelding, antallInntektsmeldingerMottatt ->
+            val callId = UUID.randomUUID().toString()
+            withMDC("callId" to callId) {
+                val (personinfo, historiskeIdenter, identer) = Personinformasjon.innhent(speedClient, inntektsmelding.melding, callId)
+
+                val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
+                when (støttes) {
+                    true -> {
+                        val berikelse = Berikelse(
+                            fødselsdato = personinfo.fødselsdato,
+                            dødsdato = personinfo.dødsdato,
+                            aktørId = identer.aktørId,
+                            historiskeFolkeregisteridenter = historiskeIdenter.fødselsnumre
+                        )
+                        ekspederInntektsmelding(messageContext, berikelse, inntektsmelding, antallInntektsmeldingerMottatt)
+                    }
+                    false -> sikkerlogg.info("Personen støttes ikke ${identer.aktørId}")
+                }
             }
         }
     }
+
+    private fun ekspederInntektsmelding(messageContext: MessageContext, berikelse: Berikelse, inntektsmelding: SendeklarInntektsmelding, antallInntektsmeldingMottatt: Int) {
+        val beriketMelding = berikelse.berik(inntektsmelding.melding)
+        sikkerlogg.info("Ekspederer inntektsmelding med fødselsnummer: ${inntektsmelding.fnr} og orgnummer: ${inntektsmelding.orgnummer}")
+        val beriketMeldingMedFlagg = flaggFlereInntektsmeldinger(beriketMelding, antallInntektsmeldingMottatt)
+        messageContext.publish(inntektsmelding.fnr, beriketMeldingMedFlagg.toString())
+    }
+
+    private fun flaggFlereInntektsmeldinger(beriketMelding: ObjectNode, antallInntektsmeldinger: Int): JsonNode =
+        beriketMelding.put("harFlereInntektsmeldinger", antallInntektsmeldinger > 1)
 
     fun onRiverError(error: String) {
         meldingMediator.onRiverError(error)

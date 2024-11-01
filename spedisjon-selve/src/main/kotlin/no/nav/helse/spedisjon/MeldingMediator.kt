@@ -1,16 +1,10 @@
 package no.nav.helse.spedisjon
 
-import com.github.navikt.tbd_libs.retry.retry
-import com.github.navikt.tbd_libs.retry.retryBlocking
 import com.github.navikt.tbd_libs.speed.PersonResponse.Adressebeskyttelse
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.Counter
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
-import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.withMDC
 import org.slf4j.LoggerFactory
@@ -75,22 +69,7 @@ internal class MeldingMediator(
 
         val callId = UUID.randomUUID().toString()
         withMDC("callId" to callId) {
-            val (personinfo, historiskeIdenter, identer) = runBlocking {
-                val personinfoDeferred = async(Dispatchers.IO) {
-                    sikkerLogg.info("henter personinfo for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
-                    retry { speedClient.hentPersoninfo(melding.fødselsnummer(), callId) }
-                }
-                val historiskeIdenterDeferred = async(Dispatchers.IO) {
-                    sikkerLogg.info("henter historiske identer for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
-                    retry { speedClient.hentHistoriskeFødselsnumre(melding.fødselsnummer(), callId) }
-                }
-                val identerDeferred = async(Dispatchers.IO) {
-                    sikkerLogg.info("henter aktørId for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
-                    retry { speedClient.hentFødselsnummerOgAktørId(melding.fødselsnummer(), callId) }
-                }
-
-                Triple(personinfoDeferred.await(), historiskeIdenterDeferred.await(), identerDeferred.await())
-            }
+            val (personinfo, historiskeIdenter, identer) = Personinformasjon.innhent(speedClient, melding, callId)
 
             val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
             if (!støttes) {
