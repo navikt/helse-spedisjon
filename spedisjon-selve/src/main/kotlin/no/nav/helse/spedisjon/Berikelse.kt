@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.LocalDate
 
-internal class Berikelse(
+class Berikelse(
     private val fødselsdato: LocalDate,
     private val dødsdato: LocalDate?,
     private val aktørId: String,

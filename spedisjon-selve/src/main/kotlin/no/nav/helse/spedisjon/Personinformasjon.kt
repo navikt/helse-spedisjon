@@ -4,6 +4,7 @@ import com.github.navikt.tbd_libs.retry.retry
 import com.github.navikt.tbd_libs.speed.HistoriskeIdenterResponse
 import com.github.navikt.tbd_libs.speed.IdentResponse
 import com.github.navikt.tbd_libs.speed.PersonResponse
+import com.github.navikt.tbd_libs.speed.PersonResponse.Adressebeskyttelse
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -37,6 +38,23 @@ data class Personinformasjon(
                 }
 
                 Personinformasjon(personinfoDeferred.await(), historiskeIdenterDeferred.await(), identerDeferred.await())
+            }
+        }
+
+        fun berikMeldingOgBehandleDen(speedClient: SpeedClient, melding: Melding, callId: String, håndtering: (Berikelse) -> Unit) {
+            val (personinfo, historiskeIdenter, identer) = Personinformasjon.innhent(speedClient, melding, callId)
+            val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
+            when (støttes) {
+                true -> {
+                    val berikelse = Berikelse(
+                        fødselsdato = personinfo.fødselsdato,
+                        dødsdato = personinfo.dødsdato,
+                        aktørId = identer.aktørId,
+                        historiskeFolkeregisteridenter = historiskeIdenter.fødselsnumre
+                    )
+                    håndtering(berikelse)
+                }
+                false -> sikkerlogg.info("Personen støttes ikke ${identer.aktørId}")
             }
         }
     }

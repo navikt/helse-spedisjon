@@ -2,10 +2,10 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.github.navikt.tbd_libs.speed.PersonResponse.Adressebeskyttelse
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.withMDC
+import no.nav.helse.spedisjon.Personinformasjon.Companion.berikMeldingOgBehandleDen
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import java.util.UUID
@@ -40,20 +40,8 @@ internal class InntektsmeldingMediator (
         inntektsmeldingDao.hentSendeklareMeldinger(inntektsmeldingTimeoutSekunder) { inntektsmelding, antallInntektsmeldingerMottatt ->
             val callId = UUID.randomUUID().toString()
             withMDC("callId" to callId) {
-                val (personinfo, historiskeIdenter, identer) = Personinformasjon.innhent(speedClient, inntektsmelding.melding, callId)
-
-                val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
-                when (støttes) {
-                    true -> {
-                        val berikelse = Berikelse(
-                            fødselsdato = personinfo.fødselsdato,
-                            dødsdato = personinfo.dødsdato,
-                            aktørId = identer.aktørId,
-                            historiskeFolkeregisteridenter = historiskeIdenter.fødselsnumre
-                        )
-                        ekspederInntektsmelding(messageContext, berikelse, inntektsmelding, antallInntektsmeldingerMottatt)
-                    }
-                    false -> sikkerlogg.info("Personen støttes ikke ${identer.aktørId}")
+                berikMeldingOgBehandleDen(speedClient, inntektsmelding.melding, callId) { berikelse ->
+                    ekspederInntektsmelding(messageContext, berikelse, inntektsmelding, antallInntektsmeldingerMottatt)
                 }
             }
         }

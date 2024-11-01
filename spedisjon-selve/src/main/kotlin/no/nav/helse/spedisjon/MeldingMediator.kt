@@ -1,12 +1,12 @@
 package no.nav.helse.spedisjon
 
-import com.github.navikt.tbd_libs.speed.PersonResponse.Adressebeskyttelse
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.Counter
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.withMDC
+import no.nav.helse.spedisjon.Personinformasjon.Companion.berikMeldingOgBehandleDen
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -69,22 +69,9 @@ internal class MeldingMediator(
 
         val callId = UUID.randomUUID().toString()
         withMDC("callId" to callId) {
-            val (personinfo, historiskeIdenter, identer) = Personinformasjon.innhent(speedClient, melding, callId)
-
-            val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
-            if (!støttes) {
-                sikkerLogg.info("Personen støttes ikke ${identer.aktørId}")
-            } else {
-                val berikelse = Berikelse(
-                    fødselsdato = personinfo.fødselsdato,
-                    dødsdato = personinfo.dødsdato,
-                    aktørId = identer.aktørId,
-                    historiskeFolkeregisteridenter = historiskeIdenter.fødselsnumre
-                )
-
+            berikMeldingOgBehandleDen(speedClient, melding, callId) { berikelse ->
                 val beriketMelding = berikelse.berik(melding)
-
-                context.publish(identer.fødselsnummer, beriketMelding.toString())
+                context.publish(melding.fødselsnummer(), beriketMelding.toString())
             }
         }
     }
