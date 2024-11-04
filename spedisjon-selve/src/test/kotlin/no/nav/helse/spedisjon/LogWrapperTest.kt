@@ -2,6 +2,9 @@ package no.nav.helse.spedisjon
 
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import com.github.navikt.tbd_libs.result_object.Result
+import com.github.navikt.tbd_libs.speed.PersonResponse
+import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.mockk.every
 import io.mockk.mockk
 import no.nav.helse.rapids_rivers.*
@@ -23,7 +26,12 @@ internal class LogWrapperTest {
     }
 
     private val meldingMock:MeldingDao = mockk()
-    private val mediator = MeldingMediator(meldingMock, mockk(relaxed = true))
+    private val speedClient = mockk<SpeedClient> {
+        every { hentPersoninfo(any(), any()) } returns Result.Ok(mockk(relaxed = true))
+        every { hentHistoriskeFødselsnumre(any(), any()) } returns Result.Ok(mockk(relaxed = true))
+        every { hentFødselsnummerOgAktørId(any(), any()) } returns Result.Ok(mockk(relaxed = true))
+    }
+    private val mediator = MeldingMediator(meldingMock, speedClient)
 
     @BeforeEach
     fun setup() {

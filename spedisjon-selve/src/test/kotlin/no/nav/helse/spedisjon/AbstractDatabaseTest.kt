@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import com.github.navikt.tbd_libs.result_object.ok
 import com.github.navikt.tbd_libs.speed.HistoriskeIdenterResponse
 import com.github.navikt.tbd_libs.speed.IdentResponse
 import com.github.navikt.tbd_libs.speed.PersonResponse
@@ -69,14 +70,14 @@ abstract class AbstractDatabaseTest {
                 etternavn = "PERSON",
                 adressebeskyttelse = if (støttes) PersonResponse.Adressebeskyttelse.UGRADERT else PersonResponse.Adressebeskyttelse.STRENGT_FORTROLIG,
                 kjønn = PersonResponse.Kjønn.MANN
-            )
-            every { hentHistoriskeFødselsnumre(fnr, any()) } returns HistoriskeIdenterResponse(emptyList())
+            ).ok()
+            every { hentHistoriskeFødselsnumre(fnr, any()) } returns HistoriskeIdenterResponse(emptyList()).ok()
             every { hentFødselsnummerOgAktørId(fnr, any()) } returns IdentResponse(
                 fødselsnummer = fnr,
                 aktørId = aktørId,
                 npid = null,
                 kilde = IdentResponse.KildeResponse.PDL
-            )
+            ).ok()
         }
     }
 }

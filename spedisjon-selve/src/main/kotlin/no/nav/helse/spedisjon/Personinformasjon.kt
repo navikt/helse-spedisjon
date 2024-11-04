@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import com.github.navikt.tbd_libs.result_object.Result
 import com.github.navikt.tbd_libs.retry.retry
 import com.github.navikt.tbd_libs.speed.HistoriskeIdenterResponse
 import com.github.navikt.tbd_libs.speed.IdentResponse
@@ -26,15 +27,30 @@ data class Personinformasjon(
             return runBlocking {
                 val personinfoDeferred = async(Dispatchers.IO) {
                     sikkerlogg.info("henter personinfo for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
-                    retry { speedClient.hentPersoninfo(melding.fødselsnummer(), callId) }
+                    retry {
+                        when (val svar = speedClient.hentPersoninfo(melding.fødselsnummer(), callId)) {
+                            is Result.Error -> throw RuntimeException(svar.error, svar.cause)
+                            is Result.Ok -> svar.value
+                        }
+                    }
                 }
                 val historiskeIdenterDeferred = async(Dispatchers.IO) {
                     sikkerlogg.info("henter historiske identer for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
-                    retry { speedClient.hentHistoriskeFødselsnumre(melding.fødselsnummer(), callId) }
+                    retry {
+                        when (val svar = speedClient.hentHistoriskeFødselsnumre(melding.fødselsnummer(), callId)) {
+                            is Result.Error -> throw RuntimeException(svar.error, svar.cause)
+                            is Result.Ok -> svar.value
+                        }
+                    }
                 }
                 val identerDeferred = async(Dispatchers.IO) {
                     sikkerlogg.info("henter aktørId for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
-                    retry { speedClient.hentFødselsnummerOgAktørId(melding.fødselsnummer(), callId) }
+                    retry {
+                        when (val svar = speedClient.hentFødselsnummerOgAktørId(melding.fødselsnummer(), callId)) {
+                            is Result.Error -> throw RuntimeException(svar.error, svar.cause)
+                            is Result.Ok -> svar.value
+                        }
+                    }
                 }
 
                 Personinformasjon(personinfoDeferred.await(), historiskeIdenterDeferred.await(), identerDeferred.await())
@@ -42,7 +58,7 @@ data class Personinformasjon(
         }
 
         fun berikMeldingOgBehandleDen(speedClient: SpeedClient, melding: Melding, callId: String, håndtering: (Berikelse) -> Unit) {
-            val (personinfo, historiskeIdenter, identer) = Personinformasjon.innhent(speedClient, melding, callId)
+            val (personinfo, historiskeIdenter, identer) = innhent(speedClient, melding, callId)
             val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
             when (støttes) {
                 true -> {
