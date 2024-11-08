@@ -12,7 +12,7 @@ import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.util.*
 
-abstract class Melding(protected val packet: JsonMessage) {
+abstract class Melding(val packet: JsonMessage) {
     private val id = UUID.randomUUID()
 
     abstract val type: String

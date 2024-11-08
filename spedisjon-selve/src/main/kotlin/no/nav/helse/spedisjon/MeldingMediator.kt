@@ -71,7 +71,7 @@ internal class MeldingMediator(
         withMDC("callId" to callId) {
             berikMeldingOgBehandleDen(speedClient, melding, callId) { berikelse ->
                 val beriketMelding = berikelse.berik(melding)
-                context.publish(melding.fødselsnummer(), beriketMelding.toString())
+                context.publish(melding.fødselsnummer(), beriketMelding.toJson())
             }
         }
     }

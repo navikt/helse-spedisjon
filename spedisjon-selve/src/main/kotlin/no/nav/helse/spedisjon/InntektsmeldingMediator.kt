@@ -3,6 +3,7 @@ package no.nav.helse.spedisjon
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.navikt.tbd_libs.speed.SpeedClient
+import no.nav.helse.rapids_rivers.JsonMessage
 import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.withMDC
 import no.nav.helse.spedisjon.Personinformasjon.Companion.berikMeldingOgBehandleDen
@@ -51,11 +52,13 @@ internal class InntektsmeldingMediator (
         val beriketMelding = berikelse.berik(inntektsmelding.melding)
         sikkerlogg.info("Ekspederer inntektsmelding med fødselsnummer: ${inntektsmelding.fnr} og orgnummer: ${inntektsmelding.orgnummer}")
         val beriketMeldingMedFlagg = flaggFlereInntektsmeldinger(beriketMelding, antallInntektsmeldingMottatt)
-        messageContext.publish(inntektsmelding.fnr, beriketMeldingMedFlagg.toString())
+        messageContext.publish(inntektsmelding.fnr, beriketMeldingMedFlagg.toJson())
     }
 
-    private fun flaggFlereInntektsmeldinger(beriketMelding: ObjectNode, antallInntektsmeldinger: Int): JsonNode =
-        beriketMelding.put("harFlereInntektsmeldinger", antallInntektsmeldinger > 1)
+    private fun flaggFlereInntektsmeldinger(beriketMelding: JsonMessage, antallInntektsmeldinger: Int) =
+        beriketMelding.apply {
+            this["harFlereInntektsmeldinger"] = antallInntektsmeldinger > 1
+        }
 
     fun onRiverError(error: String) {
         meldingMediator.onRiverError(error)
