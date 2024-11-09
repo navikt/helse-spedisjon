@@ -58,7 +58,6 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
         {
             "inntektsmeldingId": "id",
             "arbeidstakerFnr": "$FØDSELSNUMMER",
-            "arbeidstakerAktorId": "$AKTØR",
             "virksomhetsnummer": "1234",
             "arbeidsgivertype": "BEDRIFT",
             "beregnetInntekt": "1000",

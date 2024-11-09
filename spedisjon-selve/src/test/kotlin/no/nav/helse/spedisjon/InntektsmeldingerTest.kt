@@ -15,7 +15,6 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 {
     "inntektsmeldingId": "id",
     "arbeidstakerFnr": "$FØDSELSNUMMER",
-    "arbeidstakerAktorId": "$AKTØR",
     "virksomhetsnummer": "1234",
     "arbeidsgivertype": "BEDRIFT",
     "beregnetInntekt": "1000",
@@ -38,7 +37,6 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         testRapid.sendTestMessage("""
 {
     "inntektsmeldingId": "id",
-    "arbeidstakerAktorId": "$AKTØR",
     "virksomhetsnummer": "1234",
     "arbeidsgivertype": "BEDRIFT",
     "beregnetInntekt": "1000",
@@ -62,7 +60,6 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 {
     "inntektsmeldingId": "id",
     "arbeidstakerFnr": "$FØDSELSNUMMER",
-    "arbeidstakerAktorId": "$AKTØR",
     "virksomhetsnummer": "1234",
     "arbeidsgivertype": "BEDRIFT",
     "beregnetInntekt": "1000",
@@ -136,7 +133,6 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 {
     "inntektsmeldingId": "$id",
     "arbeidstakerFnr": "$FØDSELSNUMMER",
-    "arbeidstakerAktorId": "$AKTØR",
     $arbeidsforholdIdJson
     "virksomhetsnummer": "$virksomhetsnummer",
     "arbeidsgivertype": "BEDRIFT",
