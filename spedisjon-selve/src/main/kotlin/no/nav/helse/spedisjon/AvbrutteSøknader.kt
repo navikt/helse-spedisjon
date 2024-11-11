@@ -1,7 +1,14 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
-import no.nav.helse.rapids_rivers.*
+import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
+import com.github.navikt.tbd_libs.rapids_and_rivers.River
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.micrometer.core.instrument.MeterRegistry
 import org.slf4j.LoggerFactory
 
 /**
@@ -12,7 +19,8 @@ import org.slf4j.LoggerFactory
 internal class AvbrutteSøknader(
     rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator
-) : River.PacketListener {
+) :
+    River.PacketListener {
 
     init {
         River(rapidsConnection).apply {
@@ -27,13 +35,13 @@ internal class AvbrutteSøknader(
         }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext) {
+    override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
         val avbruttSøknadMelding = Melding.AvbruttSøknad(packet)
         meldingMediator.onMelding(avbruttSøknadMelding, context)
         sikkerlogg.info("Mottatt avbrutt søknad: $avbruttSøknadMelding")
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext) {
+    override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne Avbrutt søknad:\n$problems")
     }
 

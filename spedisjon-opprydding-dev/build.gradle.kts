@@ -5,6 +5,7 @@ private val hikariVersion = "5.1.0"
 private val kotliqueryVersion = "1.9.0"
 
 val rapidsAndRiversVersion: String by project
+val tbdLibsVersion: String by project
 
 val mainClass = "no.nav.helse.opprydding.AppKt"
 
@@ -17,6 +18,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikariVersion")
 
     testImplementation(project(":spedisjon-selve")) // for å få  tilgang på db/migrations-filene
+    testImplementation("com.github.navikt.tbd-libs:rapids-and-rivers-test:$tbdLibsVersion")
     testImplementation("org.testcontainers:postgresql:$testcontainersVersion") {
         exclude("com.fasterxml.jackson.core")
     }

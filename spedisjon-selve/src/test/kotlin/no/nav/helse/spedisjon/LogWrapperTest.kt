@@ -2,14 +2,18 @@ package no.nav.helse.spedisjon
 
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
+import com.github.navikt.tbd_libs.rapids_and_rivers.River
+import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import com.github.navikt.tbd_libs.result_object.Result
-import com.github.navikt.tbd_libs.speed.PersonResponse
 import com.github.navikt.tbd_libs.speed.SpeedClient
+import io.micrometer.core.instrument.MeterRegistry
 import io.mockk.every
 import io.mockk.mockk
-import no.nav.helse.rapids_rivers.*
-import no.nav.helse.rapids_rivers.testsupport.TestRapid
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -72,10 +76,10 @@ internal class LogWrapperTest {
             River(rapidsConnection).apply(validation).register(this)
         }
 
-        override fun onPacket(packet: JsonMessage, context: MessageContext) {
+        override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
             mediator.onMelding(TestMelding(packet), context)
         }
-        override fun onError(problems: MessageProblems, context: MessageContext) {
+        override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
             mediator.onRiverError("Ukjent melding:\n$problems")
         }
     }

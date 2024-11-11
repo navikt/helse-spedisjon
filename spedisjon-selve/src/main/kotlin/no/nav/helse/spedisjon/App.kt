@@ -3,11 +3,14 @@ package no.nav.helse.spedisjon
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.azure.createAzureTokenClientFromEnvironment
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection.MessageListener
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection.StatusListener
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.MeterRegistry
-import no.nav.helse.rapids_rivers.MessageContext
 import no.nav.helse.rapids_rivers.RapidApplication
-import no.nav.helse.rapids_rivers.RapidsConnection
 import org.slf4j.LoggerFactory
 import java.net.http.HttpClient
 
@@ -58,7 +61,7 @@ fun main() {
         AvbrutteSøknader(this, meldingMediator)
         AvbrutteArbeidsledigSøknader(this, meldingMediator)
     }.apply {
-        register(object : RapidsConnection.StatusListener {
+        register(object : StatusListener {
             override fun onStartup(rapidsConnection: RapidsConnection) {
                 dataSourceBuilder.migrate()
             }
@@ -69,16 +72,16 @@ fun main() {
 internal class LogWrapper(
     private val rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator,
-) : RapidsConnection(), RapidsConnection.MessageListener, RapidsConnection.StatusListener {
+) : RapidsConnection(), MessageListener, StatusListener {
 
     init {
         rapidsConnection.register(this as MessageListener)
         rapidsConnection.register(this as StatusListener)
     }
 
-    override fun onMessage(message: String, context: MessageContext, metrics: MeterRegistry) {
+    override fun onMessage(message: String, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
         meldingMediator.beforeMessage()
-        notifyMessage(message, this, metrics)
+        notifyMessage(message, this, metadata, meterRegistry)
         meldingMediator.afterMessage(message)
     }
 

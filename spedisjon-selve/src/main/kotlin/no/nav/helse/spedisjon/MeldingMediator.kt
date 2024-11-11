@@ -1,11 +1,11 @@
 package no.nav.helse.spedisjon
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.withMDC
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.Counter
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
-import no.nav.helse.rapids_rivers.MessageContext
-import no.nav.helse.rapids_rivers.withMDC
 import no.nav.helse.spedisjon.Personinformasjon.Companion.berikMeldingOgBehandleDen
 import org.slf4j.LoggerFactory
 import java.util.UUID

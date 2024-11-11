@@ -19,6 +19,7 @@ dependencies {
     api("com.github.navikt.tbd-libs:retry:$tbdLibsVersion")
     api("com.github.navikt.tbd-libs:speed-client:$tbdLibsVersion")
 
+    testImplementation("com.github.navikt.tbd-libs:rapids-and-rivers-test:$tbdLibsVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("com.github.tomakehurst:wiremock-jre8:$wiremockJre8Version") {
         exclude(group = "com.github.jknack.handlebars.java")

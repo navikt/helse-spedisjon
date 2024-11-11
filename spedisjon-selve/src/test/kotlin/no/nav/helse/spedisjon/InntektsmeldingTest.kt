@@ -1,13 +1,13 @@
 package no.nav.helse.spedisjon
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
+import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.mockk
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
-import no.nav.helse.rapids_rivers.JsonMessage
-import no.nav.helse.rapids_rivers.MessageProblems
-import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import no.nav.helse.spedisjon.Melding.Companion.sha512
 import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
 import org.junit.jupiter.api.Assertions.assertEquals

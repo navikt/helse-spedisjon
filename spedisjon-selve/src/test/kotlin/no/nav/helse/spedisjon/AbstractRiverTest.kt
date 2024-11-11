@@ -2,19 +2,12 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.github.navikt.tbd_libs.speed.HistoriskeIdenterResponse
-import com.github.navikt.tbd_libs.speed.IdentResponse
-import com.github.navikt.tbd_libs.speed.PersonResponse
-import com.github.navikt.tbd_libs.speed.SpeedClient
+import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import no.nav.helse.rapids_rivers.RapidsConnection
-import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
-import java.time.LocalDate
 import javax.sql.DataSource
 
 internal abstract class AbstractRiverTest : AbstractDatabaseTest() {

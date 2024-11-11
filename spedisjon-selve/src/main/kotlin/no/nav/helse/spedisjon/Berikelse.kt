@@ -1,6 +1,6 @@
 package no.nav.helse.spedisjon
 
-import no.nav.helse.rapids_rivers.JsonMessage
+import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import java.time.LocalDate
 
 class Berikelse(
