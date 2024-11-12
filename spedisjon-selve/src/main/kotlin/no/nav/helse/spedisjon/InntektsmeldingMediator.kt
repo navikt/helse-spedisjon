@@ -37,11 +37,8 @@ internal class InntektsmeldingMediator (
 
     fun ekspeder(messageContext: MessageContext) {
         inntektsmeldingDao.hentSendeklareMeldinger(inntektsmeldingTimeoutSekunder) { inntektsmelding, antallInntektsmeldingerMottatt ->
-            val callId = UUID.randomUUID().toString()
-            withMDC("callId" to callId) {
-                berikMeldingOgBehandleDen(speedClient, inntektsmelding.melding, callId) { berikelse ->
-                    ekspederInntektsmelding(messageContext, berikelse, inntektsmelding, antallInntektsmeldingerMottatt)
-                }
+            berikMeldingOgBehandleDen(speedClient, inntektsmelding.melding) { berikelse ->
+                ekspederInntektsmelding(messageContext, berikelse, inntektsmelding, antallInntektsmeldingerMottatt)
             }
         }
     }

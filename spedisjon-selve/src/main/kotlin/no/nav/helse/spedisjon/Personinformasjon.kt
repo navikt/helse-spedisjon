@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.withMDC
 import com.github.navikt.tbd_libs.result_object.Result
 import com.github.navikt.tbd_libs.retry.retry
 import com.github.navikt.tbd_libs.speed.HistoriskeIdenterResponse
@@ -12,6 +13,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArguments.kv
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 data class Personinformasjon(
     val personinfo: PersonResponse,
@@ -57,20 +59,24 @@ data class Personinformasjon(
             }
         }
 
-        fun berikMeldingOgBehandleDen(speedClient: SpeedClient, melding: Melding, callId: String, håndtering: (Berikelse) -> Unit) {
-            val (personinfo, historiskeIdenter, identer) = innhent(speedClient, melding, callId)
-            val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
-            when (støttes) {
-                true -> {
-                    val berikelse = Berikelse(
-                        fødselsdato = personinfo.fødselsdato,
-                        dødsdato = personinfo.dødsdato,
-                        aktørId = identer.aktørId,
-                        historiskeFolkeregisteridenter = historiskeIdenter.fødselsnumre
-                    )
-                    håndtering(berikelse)
+        fun berikMeldingOgBehandleDen(speedClient: SpeedClient, melding: Melding, håndtering: (Berikelse) -> Unit) {
+            val callId = UUID.randomUUID().toString()
+            withMDC("callId" to callId) {
+                sikkerlogg.info("beriker ${melding::class.simpleName}")
+                val (personinfo, historiskeIdenter, identer) = innhent(speedClient, melding, callId)
+                val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
+                when (støttes) {
+                    true -> {
+                        val berikelse = Berikelse(
+                            fødselsdato = personinfo.fødselsdato,
+                            dødsdato = personinfo.dødsdato,
+                            aktørId = identer.aktørId,
+                            historiskeFolkeregisteridenter = historiskeIdenter.fødselsnumre
+                        )
+                        håndtering(berikelse)
+                    }
+                    false -> sikkerlogg.info("Personen støttes ikke ${identer.aktørId}")
                 }
-                false -> sikkerlogg.info("Personen støttes ikke ${identer.aktørId}")
             }
         }
     }

@@ -67,12 +67,9 @@ internal class MeldingMediator(
         // vi sender ikke inntektsmelding  videre. her er vi avhengig av puls!
         if (melding is Melding.Inntektsmelding) return
 
-        val callId = UUID.randomUUID().toString()
-        withMDC("callId" to callId) {
-            berikMeldingOgBehandleDen(speedClient, melding, callId) { berikelse ->
-                val beriketMelding = berikelse.berik(melding)
-                context.publish(melding.fødselsnummer(), beriketMelding.toJson())
-            }
+        berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
+            val beriketMelding = berikelse.berik(melding)
+            context.publish(melding.fødselsnummer(), beriketMelding.toJson())
         }
     }
 }
