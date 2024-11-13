@@ -1,16 +1,18 @@
 package no.nav.helse.spedisjon
 
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.mockk.mockk
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
+import java.util.UUID
 import javax.sql.DataSource
 
 internal class AvbrutteSøknaderTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val speedClient = mockSpeed()
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
         AvbrutteSøknader(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator
@@ -38,7 +40,7 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         @Language("JSON")
         private val AVBRUTT_SØKNAD = """
         {
-            "id": "id",
+            "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
             "aktorId": "$AKTØR",
             "arbeidsgiver": {
@@ -50,14 +52,14 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
             "fravar": [],
             "status": "AVBRUTT",
             "type": "ARBEIDSTAKERE",
-            "sykmeldingId": "id",
+            "sykmeldingId": "${UUID.randomUUID()}",
             "fom": "2020-01-01",
             "tom": "2020-01-01"
         }"""
 
         private val AVBRUTT_ARBEIDSLEDIG_SØKNAD = """
         {
-            "id": "id",
+            "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
             "aktorId": "$AKTØR",
             "opprettet": "${LocalDateTime.now()}",
@@ -66,7 +68,7 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
             "fravar": [],
             "status": "AVBRUTT",
             "type": "ARBEIDSLEDIG",
-            "sykmeldingId": "id",
+            "sykmeldingId": "${UUID.randomUUID()}",
             "fom": "2020-01-01",
             "tom": "2020-01-01"
         }"""

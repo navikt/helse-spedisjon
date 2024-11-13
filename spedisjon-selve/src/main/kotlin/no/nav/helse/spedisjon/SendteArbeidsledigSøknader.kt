@@ -25,7 +25,7 @@ internal class SendteArbeidsledigSøknader(
                 it.demandKey("sendtNav")
                 it.requireKey("soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
-                it.requireKey("id", "fnr", "fom", "tom")
+                it.requireKey("id", "fnr", "fom", "tom", "sykmeldingId")
                 it.require("sendtNav", JsonNode::asLocalDateTime)
                 it.interestedIn("aktorId", "utenlandskSykmelding", "sendTilGosys")
             }

@@ -1,9 +1,11 @@
 package no.nav.helse.spedisjon
 
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
+import java.util.UUID
 import javax.sql.DataSource
 
 internal class PersonStøttesIkkeTest : AbstractRiverTest() {
@@ -55,7 +57,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
         testRapid.sendTestMessage(
             """
         {
-            "inntektsmeldingId": "id",
+            "inntektsmeldingId": "${UUID.randomUUID()}",
             "arbeidstakerFnr": "$FØDSELSNUMMER",
             "virksomhetsnummer": "1234",
             "arbeidsgivertype": "BEDRIFT",
@@ -77,8 +79,8 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val speedClient = mockSpeed(støttes = false)
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient)
-        val inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, meldingMediator = meldingMediator)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
+        val inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, meldingMediator = meldingMediator, dokumentAliasProducer = mockk(relaxed = true))
         LogWrapper(testRapid, meldingMediator = meldingMediator).apply {
             Inntektsmeldinger(rapidsConnection = this, inntektsmeldingMediator = inntektsmeldingMediator)
             NyeSøknader(this, meldingMediator)
@@ -95,7 +97,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
     ) = """
         {
             ${if (ekstralinjer.isNotEmpty()) ekstralinjer.joinToString(postfix = ",") else ""}
-            "id": "id",
+            "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
             "aktorId": "$AKTØR",
             "arbeidsgiver": {
@@ -105,7 +107,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
             "type": "$type",
             "soknadsperioder": [],
             "status": "$status",
-            "sykmeldingId": "id",
+            "sykmeldingId": "${UUID.randomUUID()}",
             "fom": "2020-01-01",
             "tom": "2020-01-01"
         }

@@ -1,8 +1,10 @@
 package no.nav.helse.spedisjon
 
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.util.UUID
 import javax.sql.DataSource
 
 internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
@@ -11,7 +13,7 @@ internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
     fun `leser nye søknader`() {
         testRapid.sendTestMessage("""
 {
-  "id": "id",
+  "id": "${UUID.randomUUID()}",
   "type": "SELVSTENDIGE_OG_FRILANSERE",
   "status": "NY",
   "fnr": "$FØDSELSNUMMER",
@@ -70,7 +72,7 @@ internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val speedClient = mockSpeed()
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
         NyeFrilansSøknader(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator

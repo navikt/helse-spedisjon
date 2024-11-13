@@ -2,6 +2,7 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -13,7 +14,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     fun `leser inntektsmeldinger`() {
         testRapid.sendTestMessage("""
 {
-    "inntektsmeldingId": "id",
+    "inntektsmeldingId": "ac85bd20-7a1e-45e0-afaf-d946db30acd1",
     "arbeidstakerFnr": "$FØDSELSNUMMER",
     "virksomhetsnummer": "1234",
     "arbeidsgivertype": "BEDRIFT",
@@ -58,7 +59,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     fun `leser inntektsmeldinger uten første fraværsdag`() {
         testRapid.sendTestMessage("""
 {
-    "inntektsmeldingId": "id",
+    "inntektsmeldingId": "ac85bd20-7a1e-45e0-afaf-d946db30acd1",
     "arbeidstakerFnr": "$FØDSELSNUMMER",
     "virksomhetsnummer": "1234",
     "arbeidsgivertype": "BEDRIFT",
@@ -80,9 +81,9 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
     fun `flere inntektsmeldinger forskjellig duplikatkontroll`() {
-        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse") )
+        testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse") )
         manipulerTimeoutOgPubliser()
-        testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2") )
+        testRapid.sendTestMessage( inntektsmelding("66072deb-8586-4fa3-b41a-2e21850fd7db", "virksomhetsnummer", "arkivreferanse2") )
         assertEquals(2, antallMeldinger(FØDSELSNUMMER))
         manipulerTimeoutOgPubliser()
         assertSendteEvents("inntektsmelding", "inntektsmelding")
@@ -90,8 +91,8 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
     fun `flere inntektsmeldinger - begge er beriket`() {
-        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse", "noe") )
-        testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2", "noeAnnet") )
+        testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse", "noe") )
+        testRapid.sendTestMessage( inntektsmelding("66072deb-8586-4fa3-b41a-2e21850fd7db", "virksomhetsnummer", "arkivreferanse2", "noeAnnet") )
         manipulerTimeoutOgPubliser()
         assertSendteEvents("inntektsmelding", "inntektsmelding")
         inntektsmeldinger() .forEach {
@@ -101,19 +102,19 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
     fun `flere inntektsmeldinger - en er beriket`() {
-        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse", "noe") )
-        testRapid.sendTestMessage( inntektsmelding("id2", "virksomhetsnummer", "arkivreferanse2", "noe_annet") )
+        testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse", "noe") )
+        testRapid.sendTestMessage( inntektsmelding("66072deb-8586-4fa3-b41a-2e21850fd7db", "virksomhetsnummer", "arkivreferanse2", "noe_annet") )
         manipulerTimeoutOgPubliser()
         assertSendteEvents("inntektsmelding", "inntektsmelding")
         assertEquals(2, inntektsmeldinger().size)
-        assertEquals("id", inntektsmeldinger().first().get("inntektsmeldingId").asText())
+        assertEquals("afbb6489-f3f5-4b7d-8689-af1d7b53087a", inntektsmeldinger().first().get("inntektsmeldingId").asText())
         assertTrue(inntektsmeldinger().first().path("harFlereInntektsmeldinger").asBoolean())
         assertTrue(inntektsmeldinger().last().path("harFlereInntektsmeldinger").asBoolean())
     }
 
     @Test
     fun `leser ikke inn inntektsmeldinger hvis matcherSpleis er false`() {
-        testRapid.sendTestMessage( inntektsmelding("id", "virksomhetsnummer", "arkivreferanse", "noe", matcherSpleis = false) )
+        testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse", "noe", matcherSpleis = false) )
         assertEquals(0, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents()
     }
@@ -151,8 +152,8 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     private lateinit var inntektsmeldingMediator: InntektsmeldingMediator
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val speedClient = mockSpeed()
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient)
-        inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, meldingMediator = meldingMediator)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
+        inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, meldingMediator = meldingMediator, dokumentAliasProducer = mockk(relaxed = true))
         LogWrapper(testRapid, meldingMediator).apply {
             Inntektsmeldinger(this, inntektsmeldingMediator)
         }

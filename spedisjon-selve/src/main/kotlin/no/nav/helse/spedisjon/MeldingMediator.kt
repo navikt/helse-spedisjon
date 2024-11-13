@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon
 
-import com.github.navikt.tbd_libs.rapids_and_rivers.withMDC
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.Counter
@@ -8,11 +7,11 @@ import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.helse.spedisjon.Personinformasjon.Companion.berikMeldingOgBehandleDen
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 internal class MeldingMediator(
     private val meldingDao: MeldingDao,
-    private val speedClient: SpeedClient
+    private val speedClient: SpeedClient,
+    private val dokumentAliasProducer: DokumentAliasProducer
 ) {
     internal companion object {
         private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
@@ -69,6 +68,7 @@ internal class MeldingMediator(
 
         berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
             val beriketMelding = berikelse.berik(melding)
+            dokumentAliasProducer.send(melding)
             context.publish(melding.fødselsnummer(), beriketMelding.toJson())
         }
     }

@@ -1,10 +1,12 @@
 package no.nav.helse.spedisjon
 
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.mockk.mockk
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
+import java.util.UUID
 import javax.sql.DataSource
 
 internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
@@ -60,7 +62,7 @@ internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val speedClient = mockSpeed()
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
         SendteSøknaderArbeidsgiver(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator
@@ -71,7 +73,7 @@ internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
         @Language("JSON")
         private val SØKNAD = """
         {
-            "id": "id",
+            "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
             "aktorId": "$AKTØR",
             "arbeidsgiver": {
@@ -83,7 +85,7 @@ internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
             "fravar": [],
             "status": "SENDT",
             "type": "ARBEIDSTAKERE",
-            "sykmeldingId": "id",
+            "sykmeldingId": "${UUID.randomUUID()}",
             "fom": "2020-01-01",
             "tom": "2020-01-01"
         }"""

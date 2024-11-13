@@ -13,13 +13,14 @@ import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
+import java.util.UUID
 
 class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
     fun `tar imot inntektsmelding`() {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk())
-        val mediator = InntektsmeldingMediator(dataSource, mockk(), meldingMediator = meldingMediator)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(), mockk(relaxed = true))
+        val mediator = InntektsmeldingMediator(dataSource, mockk(), meldingMediator = meldingMediator, dokumentAliasProducer = mockk(relaxed = true))
         val im = Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a"))
         mediator.lagreInntektsmelding(im, TestRapid())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
@@ -28,8 +29,8 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
     fun `lagrer inntektsmelding bare en gang`() {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk())
-        val mediator = InntektsmeldingMediator(dataSource, mockk(), meldingMediator = meldingMediator)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(), mockk(relaxed = true))
+        val mediator = InntektsmeldingMediator(dataSource, mockk(), meldingMediator = meldingMediator, dokumentAliasProducer = mockk(relaxed = true))
         val im = Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a"))
         mediator.lagreInntektsmelding(im, TestRapid())
         mediator.lagreInntektsmelding(im, TestRapid())
@@ -119,7 +120,8 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         "virksomhetsnummer": "$orgnummer",
         "mottattDato": "${LocalDateTime.now()}",
         $arbeidsforholdIdJson
-        "arkivreferanse": "$arkivreferanse"
+        "arkivreferanse": "$arkivreferanse",
+        "inntektsmeldingId": "${UUID.randomUUID()}"
         }"""
 
         return JsonMessage(inntektsmelding, MessageProblems(inntektsmelding), registry).also {
@@ -128,6 +130,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             it.interestedIn("mottattDato")
             it.interestedIn("arkivreferanse")
             it.interestedIn("arbeidsforholdId")
+            it.interestedIn("inntektsmeldingId")
         }
     }
 

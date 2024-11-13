@@ -25,7 +25,7 @@ internal class SendteSøknaderArbeidsgiver(
                 it.demandValue("type", "ARBEIDSTAKERE")
                 it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
-                it.requireKey("id", "fom", "tom", "fravar")
+                it.requireKey("id", "sykmeldingId", "fom", "tom", "fravar")
                 it.require("sendtArbeidsgiver", JsonNode::asLocalDateTime)
                 it.interestedIn("aktorId", "utenlandskSykmelding", "sendTilGosys")
             }

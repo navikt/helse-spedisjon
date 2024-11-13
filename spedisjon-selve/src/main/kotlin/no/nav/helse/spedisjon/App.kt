@@ -3,6 +3,8 @@ package no.nav.helse.spedisjon
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.azure.createAzureTokenClientFromEnvironment
+import com.github.navikt.tbd_libs.kafka.AivenConfig
+import com.github.navikt.tbd_libs.kafka.ConsumerProducerFactory
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
@@ -27,7 +29,10 @@ fun main() {
     val meldingDao = MeldingDao(dataSource)
     val inntektsmeldingDao = InntektsmeldingDao(dataSource)
 
-    val meldingMediator = MeldingMediator(meldingDao, speedClient)
+    val factory = ConsumerProducerFactory(AivenConfig.default)
+    val dokumentaliasproducer = DokumentAliasProducer("tbd.subsumsjon.v1", factory.createProducer())
+
+    val meldingMediator = MeldingMediator(meldingDao, speedClient, dokumentaliasproducer)
     val inntektsmeldingTimeoutSekunder = env["KARANTENE_TID"]?.toLong() ?: 0L.also {
         val loggtekst = "KARANTENE_TID er tom; defaulter til ingen karantene"
         LoggerFactory.getLogger(::main.javaClass).info(loggtekst)
@@ -38,10 +43,11 @@ fun main() {
         speedClient,
         inntektsmeldingDao,
         meldingMediator,
+        dokumentaliasproducer,
         inntektsmeldingTimeoutSekunder = inntektsmeldingTimeoutSekunder
     )
 
-    LogWrapper(RapidApplication.create(env), meldingMediator).apply {
+    LogWrapper(RapidApplication.create(env, factory), meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
         if (erUtvikling) NyeFrilansSøknader(this, meldingMediator)
         if (erUtvikling) NyeSelvstendigSøknader(this, meldingMediator)

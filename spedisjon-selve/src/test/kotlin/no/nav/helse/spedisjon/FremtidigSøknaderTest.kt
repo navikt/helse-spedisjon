@@ -1,8 +1,10 @@
 package no.nav.helse.spedisjon
 
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.util.UUID
 import javax.sql.DataSource
 
 internal class FremtidigSøknaderTest: AbstractRiverTest() {
@@ -26,7 +28,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val speedClient = mockSpeed()
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
         FremtidigSøknaderRiver(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator
@@ -39,7 +41,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
 
     private fun søknad(status: String = "FREMTIDIG", type: String = "ARBEIDSTAKERE") = """
         {
-            "id": "id",
+            "id": "afbb6489-f3f5-4b7d-8689-af1d7b53087a",
             "fnr": "$FØDSELSNUMMER",
             "aktorId": "$AKTØR",
             "arbeidsgiver": {
@@ -49,7 +51,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
             "type": "$type",
             "soknadsperioder": [],
             "status": "$status",
-            "sykmeldingId": "id",
+            "sykmeldingId": "${UUID.randomUUID()}",
             "fom": "2020-01-01",
             "tom": "2020-01-01"
         }

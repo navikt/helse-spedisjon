@@ -36,10 +36,11 @@ internal class DuplikateMeldingerTest {
                 {
                     "arkivreferanse": "1",
                     "arbeidstakerFnr": "123",
-                    "mottattDato": "${LocalDateTime.now()}"
+                    "mottattDato": "${LocalDateTime.now()}",
+                    "inntektsmeldingId": "${UUID.randomUUID()}"
                 }
             """).apply {
-            requireKey("arkivreferanse", "arbeidstakerFnr", "mottattDato")
+            requireKey("arkivreferanse", "arbeidstakerFnr", "inntektsmeldingId", "mottattDato")
         }
 
         assertTrue(meldingDao.leggInn(Melding.Inntektsmelding(packet)))
@@ -54,11 +55,12 @@ internal class DuplikateMeldingerTest {
                     "id": "${UUID.randomUUID()}",
                     "fnr": "123",
                     "sendtNav": "${LocalDateTime.now()}",
-                    "status": "SENDT"
+                    "status": "SENDT",
+                    "sykmeldingId": "${UUID.randomUUID()}"
                 }
             """
         ).apply {
-            requireKey("id", "fnr", "sendtNav", "status")
+            requireKey("id", "fnr", "sykmeldingId", "sendtNav", "status")
         }
 
         assertTrue(meldingDao.leggInn(Melding.SendtSøknadNav(packet)))
@@ -73,11 +75,12 @@ internal class DuplikateMeldingerTest {
                     "id": "${UUID.randomUUID()}",
                     "fnr": "123",
                     "sendtArbeidsgiver": "${LocalDateTime.now()}",
-                    "status": "SENDT"
+                    "status": "SENDT",
+                    "sykmeldingId": "${UUID.randomUUID()}"
                 }
             """
         ).apply {
-            requireKey("id", "fnr", "sendtArbeidsgiver", "status")
+            requireKey("id", "sykmeldingId", "fnr", "sendtArbeidsgiver", "status")
         }
 
         assertTrue(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(packet)))
@@ -94,11 +97,12 @@ internal class DuplikateMeldingerTest {
                     "fnr": "123",
                     "sendtArbeidsgiver": "${LocalDateTime.now()}",
                     "sendtNav": null,
-                    "status": "SENDT"
+                    "status": "SENDT",
+                    "sykmeldingId": "${UUID.randomUUID()}"
                 }
             """
         ).apply {
-            requireKey("id", "fnr", "sendtArbeidsgiver", "status")
+            requireKey("id", "sykmeldingId", "fnr", "sendtArbeidsgiver", "status")
         }
         val andreInnsending = lagMelding(
             """
@@ -107,11 +111,12 @@ internal class DuplikateMeldingerTest {
                     "fnr": "123",
                     "sendtArbeidsgiver": "${LocalDateTime.now()}",
                     "sendtNav": "${LocalDateTime.now().minusDays(1)}",
-                    "status": "SENDT"
+                    "status": "SENDT",
+                    "sykmeldingId": "${UUID.randomUUID()}"
                 }
             """
         ).apply {
-            requireKey("id", "fnr", "sendtArbeidsgiver", "sendtNav", "status")
+            requireKey("id", "sykmeldingId", "fnr", "sendtArbeidsgiver", "sendtNav", "status")
         }
 
         assertTrue(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(førsteInnsending)))
@@ -126,10 +131,11 @@ internal class DuplikateMeldingerTest {
                     "id": "${UUID.randomUUID()}",
                     "fnr": "123",
                     "opprettet": "${LocalDateTime.now()}",
-                    "status": "NY"
+                    "status": "NY",
+                    "sykmeldingId": "${UUID.randomUUID()}"
                 }
             """).apply {
-            requireKey("id", "fnr", "opprettet", "status")
+            requireKey("id", "sykmeldingId", "fnr", "opprettet", "status")
         }
 
         assertTrue(meldingDao.leggInn(Melding.NySøknad(packet)))

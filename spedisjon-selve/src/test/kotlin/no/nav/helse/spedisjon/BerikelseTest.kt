@@ -2,17 +2,20 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
+import no.nav.helse.spedisjon.Melding.Inntektsmelding
+import no.nav.helse.spedisjon.Melding.NySøknad
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.UUID
 
 class BerikelseTest {
 
     @Test
     fun `skal putte på fødselsdato og aktørId og dødsdato`() {
-        val json = Melding.les("ny_søknad", nySøknad)!!
+        val json = NySøknad.lagNySøknad(nySøknad)
         val beriketJson = Berikelse(
             fødselsdato = LocalDate.of(2012, 12, 31),
             dødsdato = LocalDate.of(2023, 1, 2),
@@ -27,7 +30,7 @@ class BerikelseTest {
 
     @Test
     fun `inntektsmelding blir ikke beriket med aktørid`() {
-        val json = Melding.les("inntektsmelding", inntektsmelding)!!
+        val json = Inntektsmelding.lagInntektsmelding(inntektsmelding)
         val beriketJson = Berikelse(
             fødselsdato = LocalDate.of(2012, 12, 31),
             dødsdato = null,
@@ -46,13 +49,16 @@ class BerikelseTest {
 private val nySøknad = """
     {
       "@event_name": "ny_søknad",
-      "opprettet": "${LocalDateTime.now()}"
+      "opprettet": "${LocalDateTime.now()}",
+      "id": "${UUID.randomUUID()}",
+      "sykmeldingId": "${UUID.randomUUID()}"
     }
 """.trimIndent()
 
 private val inntektsmelding = """
     {
       "@event_name": "inntektsmelding",
-      "mottattDato": "${LocalDateTime.now()}"
+      "mottattDato": "${LocalDateTime.now()}",
+      "inntektsmeldingId": "${UUID.randomUUID()}"
     }
 """.trimIndent()
