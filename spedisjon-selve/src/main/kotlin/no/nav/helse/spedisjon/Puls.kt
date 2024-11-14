@@ -15,7 +15,7 @@ internal class Puls(
         River(rapidsConnection)
             .apply {
                 // pulserer hvert minutt eller hvis noen sender ut 'spedisjon_pulser'-event
-                validate { it.demandAny("@event_name", listOf("minutt", "spedisjon_pulser")) }
+                precondition { it.requireAny("@event_name", listOf("minutt", "spedisjon_pulser")) }
             }.register(this)
     }
 

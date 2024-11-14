@@ -17,14 +17,16 @@ internal class AndreSøknaderRiver(
 
     init {
         River(rapidsConnection).apply {
-            validate {
-                it.rejectKey("@event_name", "inntektsmeldingId")
-                it.rejectValue("type", "ARBEIDSTAKERE")
-                it.rejectValue("type", "ARBEIDSLEDIG")
+            precondition {
+                it.forbid("@event_name", "inntektsmeldingId")
+                it.forbidValue("type", "ARBEIDSTAKERE")
+                it.forbidValue("type", "ARBEIDSLEDIG")
                 if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp") {
                     // vi støtter selvstendig og arbeidsledig i dev
-                    it.rejectValue("type", "SELVSTENDIGE_OG_FRILANSERE")
+                    it.forbidValue("type", "SELVSTENDIGE_OG_FRILANSERE")
                 }
+            }
+            validate {
                 it.requireKey("id", "fnr", "status")
                 it.interestedIn("arbeidssituasjon", "arbeidsgiver.orgnummer")
             }

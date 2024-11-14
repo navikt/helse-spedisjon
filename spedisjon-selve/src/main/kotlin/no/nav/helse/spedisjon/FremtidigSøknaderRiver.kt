@@ -22,10 +22,12 @@ class FremtidigSøknaderRiver internal constructor(
 
     init {
         River(rapidsConnection).apply {
+            precondition {
+                it.forbid("@event_name")
+                it.requireValue("status", "FREMTIDIG")
+                it.requireValue("type", "ARBEIDSTAKERE")
+            }
             validate {
-                it.rejectKey("@event_name")
-                it.demandValue("status", "FREMTIDIG")
-                it.demandValue("type", "ARBEIDSTAKERE")
                 it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "sykmeldingId", "fom", "tom")

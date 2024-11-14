@@ -18,12 +18,14 @@ internal class SendteFrilansSøknader(
 
     init {
         River(rapidsConnection).apply {
+            precondition {
+                it.forbid("@event_name")
+                it.requireValue("status", "SENDT")
+                it.requireValue("type", "SELVSTENDIGE_OG_FRILANSERE")
+                it.requireValue("arbeidssituasjon", "FRILANSER")
+                it.requireKey("sendtNav")
+            }
             validate {
-                it.rejectKey("@event_name")
-                it.demandValue("status", "SENDT")
-                it.demandValue("type", "SELVSTENDIGE_OG_FRILANSERE")
-                it.demandValue("arbeidssituasjon", "FRILANSER")
-                it.demandKey("sendtNav")
                 it.requireKey("soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fnr", "fom", "tom", "sykmeldingId")

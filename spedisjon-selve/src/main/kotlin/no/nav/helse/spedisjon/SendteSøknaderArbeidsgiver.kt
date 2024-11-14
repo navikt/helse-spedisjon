@@ -17,12 +17,14 @@ internal class SendteSøknaderArbeidsgiver(
 
     init {
         River(rapidsConnection).apply {
+            precondition {
+                it.forbid("@event_name")
+                it.forbid("sendtNav")
+                it.requireKey("sendtArbeidsgiver")
+                it.requireValue("status", "SENDT")
+                it.requireValue("type", "ARBEIDSTAKERE")
+            }
             validate {
-                it.rejectKey("@event_name")
-                it.rejectKey("sendtNav")
-                it.demandKey("sendtArbeidsgiver")
-                it.demandValue("status", "SENDT")
-                it.demandValue("type", "ARBEIDSTAKERE")
                 it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "sykmeldingId", "fom", "tom", "fravar")

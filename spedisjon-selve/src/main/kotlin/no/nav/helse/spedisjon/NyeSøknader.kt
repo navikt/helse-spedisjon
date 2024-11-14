@@ -18,10 +18,12 @@ internal class NyeSøknader(
 
     init {
         River(rapidsConnection).apply {
+            precondition {
+                it.forbid("@event_name")
+                it.requireValue("status", "NY")
+                it.requireValue("type", "ARBEIDSTAKERE")
+            }
             validate {
-                it.rejectKey("@event_name")
-                it.demandValue("status", "NY")
-                it.demandValue("type", "ARBEIDSTAKERE")
                 it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "sykmeldingId", "fom", "tom")

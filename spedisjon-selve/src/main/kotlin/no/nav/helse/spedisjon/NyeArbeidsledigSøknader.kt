@@ -18,9 +18,9 @@ internal class NyeArbeidsledigSøknader(
     init {
         River(rapidsConnection).apply {
             validate {
-                it.rejectKey("@event_name")
-                it.demandValue("status", "NY")
-                it.demandValue("type", "ARBEIDSLEDIG")
+                it.forbid("@event_name")
+                it.requireValue("status", "NY")
+                it.requireValue("type", "ARBEIDSLEDIG")
                 it.requireKey("fnr", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "sykmeldingId", "fom", "tom")

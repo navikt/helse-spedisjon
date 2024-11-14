@@ -18,10 +18,12 @@ internal class AvbrutteArbeidsledigSøknader(
 
     init {
         River(rapidsConnection).apply {
+            precondition {
+                it.forbid("@event_name")
+                it.requireAny("status", listOf("AVBRUTT", "UTGATT"))
+                it.requireValue("type", "ARBEIDSLEDIG")
+            }
             validate {
-                it.rejectKey("@event_name")
-                it.demandAny("status", listOf("AVBRUTT", "UTGATT"))
-                it.demandValue("type", "ARBEIDSLEDIG")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fnr", "fom", "tom")
                 it.interestedIn("aktorId")

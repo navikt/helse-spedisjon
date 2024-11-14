@@ -24,10 +24,12 @@ internal class AvbrutteSøknader(
 
     init {
         River(rapidsConnection).apply {
+            precondition {
+                it.forbid("@event_name")
+                it.requireAny("status", listOf("AVBRUTT", "UTGATT"))
+                it.requireValue("type", "ARBEIDSTAKERE")
+            }
             validate {
-                it.rejectKey("@event_name")
-                it.demandAny("status", listOf("AVBRUTT", "UTGATT"))
-                it.demandValue("type", "ARBEIDSTAKERE")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fnr", "fom", "tom", "arbeidsgiver.orgnummer")
                 it.interestedIn("aktorId")

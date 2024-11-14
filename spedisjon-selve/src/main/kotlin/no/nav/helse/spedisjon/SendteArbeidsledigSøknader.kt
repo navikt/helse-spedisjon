@@ -18,11 +18,13 @@ internal class SendteArbeidsledigSøknader(
 
     init {
         River(rapidsConnection).apply {
+            precondition {
+                it.forbid("@event_name")
+                it.requireValue("status", "SENDT")
+                it.requireValue("type", "ARBEIDSLEDIG")
+                it.requireKey("sendtNav")
+            }
             validate {
-                it.rejectKey("@event_name")
-                it.demandValue("status", "SENDT")
-                it.demandValue("type", "ARBEIDSLEDIG")
-                it.demandKey("sendtNav")
                 it.requireKey("soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fnr", "fom", "tom", "sykmeldingId")
