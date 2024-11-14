@@ -87,10 +87,7 @@ internal class LogWrapperTest {
 
 }
 
-internal class TestMelding(packet: JsonMessage) : Melding(packet) {
-    override val type: String = "test_melding"
-    override val eksternDokumentId = UUID.randomUUID()
+internal class TestMelding(packet: JsonMessage) : Melding(packet, meldingsdetaljer = Meldingsdetaljer(type = "test_melding", eksternDokumentId = UUID.randomUUID(), rapportertDato = LocalDateTime.now())) {
     override fun fødselsnummer(): String = "123412341234"
-    override fun rapportertDato(): LocalDateTime = LocalDateTime.now()
     override fun duplikatnøkkel(): String = "1"
 }

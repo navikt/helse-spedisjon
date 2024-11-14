@@ -26,8 +26,11 @@ class DokumentAliasProducer(val topic: String, val producer: KafkaProducer<Strin
 
     fun send(melding: Melding) {
         val dokumenttype = melding.dokumenttypeOrNull() ?: return
-        val hendelsenavn = melding.type
-        val dokumentaliasmelding = dokumentalias(dokumenttype, hendelsenavn, melding.id, melding.eksternDokumentId, melding.rapportertDato())
+        val hendelsenavn = melding.meldingsdetaljer.type
+        val id = melding.meldingsdetaljer.id
+        val eksternDokumentId = melding.meldingsdetaljer.eksternDokumentId
+        val rapportertDato = melding.meldingsdetaljer.rapportertDato
+        val dokumentaliasmelding = dokumentalias(dokumenttype, hendelsenavn, id, eksternDokumentId, rapportertDato)
         producer.send(ProducerRecord(topic, melding.fødselsnummer(), dokumentaliasmelding))
 
         when (melding) {
@@ -45,7 +48,7 @@ class DokumentAliasProducer(val topic: String, val producer: KafkaProducer<Strin
                     is SendtArbeidsledigSøknad -> melding.sykmeldingDokumentId
                     else -> error("sykmeldingId må være på en søknad")
                 }
-                val dokumentaliasmelding = dokumentalias(Dokumenttype.SYKMELDING, hendelsenavn, melding.id, sykmeldingId, melding.rapportertDato())
+                val dokumentaliasmelding = dokumentalias(Dokumenttype.SYKMELDING, hendelsenavn, id, sykmeldingId, rapportertDato)
                 producer.send(ProducerRecord(topic, melding.fødselsnummer(), dokumentaliasmelding))
             }
         }

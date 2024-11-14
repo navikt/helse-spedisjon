@@ -1,8 +1,14 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.mockk.clearMocks
 import io.mockk.mockk
+import io.mockk.verify
+import kotliquery.queryOf
+import kotliquery.sessionOf
+import org.apache.kafka.clients.producer.KafkaProducer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -80,6 +86,30 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     }
 
     @Test
+    fun `publiserer samme id`() {
+        testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse") )
+        manipulerTimeoutOgPubliser()
+        val id = testRapid.inspektør.field(0, "@id").asText()
+        verify { dokumentProducerMock.send(match {
+            it.value().let { jacksonObjectMapper().readTree(it) }.path("intern_dokument_id").asText() == id
+        }) }
+        val inntetsmeldingFrånDatabasen = inntektsmeldingFrånDatabasen()
+        assertEquals(id, inntetsmeldingFrånDatabasen.path("@id").asText())
+    }
+
+    private fun inntektsmeldingFrånDatabasen() : JsonNode {
+        return sessionOf(dataSource).use { session ->
+            session.run(
+                queryOf(
+                    "SELECT data FROM melding",
+                ).map { row ->
+                    jacksonObjectMapper().readTree(row.string("data"))
+                }.asList
+            ).single()
+        }
+    }
+
+    @Test
     fun `flere inntektsmeldinger forskjellig duplikatkontroll`() {
         testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse") )
         manipulerTimeoutOgPubliser()
@@ -150,10 +180,13 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     }
 
     private lateinit var inntektsmeldingMediator: InntektsmeldingMediator
+    private val dokumentProducerMock = mockk<KafkaProducer<String, String>>(relaxed = true)
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
+        clearMocks(dokumentProducerMock)
         val speedClient = mockSpeed()
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
-        inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, meldingMediator = meldingMediator, dokumentAliasProducer = mockk(relaxed = true))
+        val dokumentAliasProducer = DokumentAliasProducer("tøysetopic", dokumentProducerMock)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, dokumentAliasProducer)
+        inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, meldingMediator = meldingMediator, dokumentAliasProducer = dokumentAliasProducer)
         LogWrapper(testRapid, meldingMediator).apply {
             Inntektsmeldinger(this, inntektsmeldingMediator)
         }

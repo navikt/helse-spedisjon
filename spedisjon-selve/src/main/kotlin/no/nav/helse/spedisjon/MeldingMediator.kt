@@ -36,7 +36,7 @@ internal class MeldingMediator(
 
         Counter.builder("melding_totals")
             .description("Antall meldinger mottatt")
-            .tag("type", melding.type)
+            .tag("type", melding.meldingsdetaljer.type)
             .register(registry)
             .increment()
 
@@ -46,13 +46,13 @@ internal class MeldingMediator(
 
         Counter.builder("melding_unik_totals")
             .description("Antall unike meldinger mottatt")
-            .tag("type", melding.type)
+            .tag("type", melding.meldingsdetaljer.type)
             .register(registry)
             .increment()
 
         Counter.builder("melding_sendt_totals")
             .description("Antall meldinger sendt")
-            .tag("type", melding.type)
+            .tag("type", melding.meldingsdetaljer.type)
             .register(registry)
             .increment()
     }
