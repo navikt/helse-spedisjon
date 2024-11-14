@@ -17,10 +17,12 @@ internal class NyeArbeidsledigSøknader(
 
     init {
         River(rapidsConnection).apply {
-            validate {
+            precondition {
                 it.forbid("@event_name")
                 it.requireValue("status", "NY")
                 it.requireValue("type", "ARBEIDSLEDIG")
+            }
+            validate {
                 it.requireKey("fnr", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "sykmeldingId", "fom", "tom")
