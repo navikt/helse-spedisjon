@@ -21,7 +21,7 @@ dependencies {
 
     testImplementation("com.github.navikt.tbd-libs:rapids-and-rivers-test:$tbdLibsVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("com.github.tomakehurst:wiremock:$wiremockVersion") {
+    testImplementation("org.wiremock:wiremock:$wiremockVersion") {
         exclude(group = "junit")
         exclude("com.github.jknack.handlebars.java")
     }
