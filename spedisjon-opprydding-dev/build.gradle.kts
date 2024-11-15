@@ -1,7 +1,7 @@
 private val testcontainersVersion = "1.19.5"
 private val cloudSqlVersion = "1.15.2"
 private val postgresqlVersion = "42.7.2"
-private val hikariVersion = "5.1.0"
+val hikariCPVersion = "6.1.0"
 private val kotliqueryVersion = "1.9.0"
 
 val rapidsAndRiversVersion: String by project
@@ -15,7 +15,7 @@ dependencies {
     implementation("com.google.cloud.sql:postgres-socket-factory:$cloudSqlVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
-    implementation("com.zaxxer:HikariCP:$hikariVersion")
+    implementation("com.zaxxer:HikariCP:$hikariCPVersion")
 
     testImplementation(project(":spedisjon-selve")) // for å få  tilgang på db/migrations-filene
     testImplementation("com.github.navikt.tbd-libs:rapids-and-rivers-test:$tbdLibsVersion")
