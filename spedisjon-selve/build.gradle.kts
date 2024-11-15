@@ -1,6 +1,6 @@
-val flywayCoreVersion = "10.6.0"
+val flywayCoreVersion = "10.21.0"
 val hikariCPVersion = "6.1.0"
-val postgresqlVersion = "42.7.2"
+val postgresqlVersion = "42.7.4"
 val kotliqueryVersion = "1.9.0"
 val mockkVersion = "1.13.9"
 val wiremockVersion = "3.9.2"
@@ -9,7 +9,6 @@ val tbdLibsVersion: String by project
 
 dependencies {
     implementation("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
-    api("org.flywaydb:flyway-core:$flywayCoreVersion")
     api("org.flywaydb:flyway-database-postgresql:$flywayCoreVersion")
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
