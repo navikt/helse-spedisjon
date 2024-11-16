@@ -32,7 +32,6 @@ internal class AvbrutteSøknader(
             validate {
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fnr", "fom", "tom", "arbeidsgiver.orgnummer")
-                it.interestedIn("aktorId")
             }
         }.register(this)
     }

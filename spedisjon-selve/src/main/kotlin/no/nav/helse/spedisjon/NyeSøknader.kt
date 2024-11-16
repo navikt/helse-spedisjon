@@ -27,7 +27,6 @@ internal class NyeSøknader(
                 it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "sykmeldingId", "fom", "tom")
-                it.interestedIn("aktorId")
             }
         }.register(this)
     }

@@ -16,7 +16,6 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
 {
     "id": "${UUID.randomUUID()}",
     "fnr": "$FØDSELSNUMMER",
-    "aktorId": "$AKTØR",
     "arbeidsgiver": {
         "orgnummer": "1234"
     },

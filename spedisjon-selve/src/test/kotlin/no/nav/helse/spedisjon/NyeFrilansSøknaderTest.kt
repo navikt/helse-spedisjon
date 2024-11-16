@@ -17,7 +17,6 @@ internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
   "type": "SELVSTENDIGE_OG_FRILANSERE",
   "status": "NY",
   "fnr": "$FØDSELSNUMMER",
-  "aktorId": "$AKTØR",
   "sykmeldingId": "227c0743-5ac4-4ca8-ad41-38145bf06bd6",
   "arbeidsgiver": null,
   "arbeidssituasjon": "FRILANSER",

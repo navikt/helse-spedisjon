@@ -26,7 +26,6 @@ internal class AvbrutteArbeidsledigSøknader(
             validate {
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fnr", "fom", "tom")
-                it.interestedIn("aktorId")
             }
         }.register(this)
     }

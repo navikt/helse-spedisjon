@@ -99,7 +99,6 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
             ${if (ekstralinjer.isNotEmpty()) ekstralinjer.joinToString(postfix = ",") else ""}
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "aktorId": "$AKTØR",
             "arbeidsgiver": {
                 "orgnummer": "1234"
             },

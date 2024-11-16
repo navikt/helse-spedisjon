@@ -30,7 +30,7 @@ internal class SendteFrilansSøknader(
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "fnr", "fom", "tom", "sykmeldingId")
                 it.require("sendtNav", JsonNode::asLocalDateTime)
-                it.interestedIn("aktorId", "utenlandskSykmelding", "sendTilGosys")
+                it.interestedIn("utenlandskSykmelding", "sendTilGosys")
             }
         }.register(this)
     }

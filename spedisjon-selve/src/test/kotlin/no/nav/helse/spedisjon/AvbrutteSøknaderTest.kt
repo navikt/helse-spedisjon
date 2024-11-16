@@ -42,7 +42,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "aktorId": "$AKTØR",
             "arbeidsgiver": {
                 "orgnummer": "1234"
             },
@@ -61,7 +60,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "aktorId": "$AKTØR",
             "opprettet": "${LocalDateTime.now()}",
             "sendtNav": "${LocalDateTime.now()}",
             "soknadsperioder": [],

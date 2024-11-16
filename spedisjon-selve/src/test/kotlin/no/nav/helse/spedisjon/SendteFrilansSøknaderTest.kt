@@ -76,7 +76,6 @@ internal class SendteFrilansSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "aktorId": "$AKTØR",
             "arbeidsgiver": null,
             "opprettet": "${LocalDateTime.now()}",
             "sendtNav": "${LocalDateTime.now()}",

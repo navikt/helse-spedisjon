@@ -43,7 +43,6 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         {
             "id": "afbb6489-f3f5-4b7d-8689-af1d7b53087a",
             "fnr": "$FØDSELSNUMMER",
-            "aktorId": "$AKTØR",
             "arbeidsgiver": {
                 "orgnummer": "1234"
             },

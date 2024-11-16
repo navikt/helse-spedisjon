@@ -75,7 +75,6 @@ internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "aktorId": "$AKTØR",
             "arbeidsgiver": {
                 "orgnummer": "1234"
             },

@@ -32,7 +32,6 @@ class FremtidigFrilansSøknaderRiver internal constructor(
                 it.requireKey("fnr", "soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
                 it.requireKey("id", "sykmeldingId", "fom", "tom")
-                it.interestedIn("aktorId")
             }
         }.register(this)
     }
