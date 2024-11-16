@@ -35,8 +35,8 @@ subprojects {
     val testImplementation by configurations
     val testRuntimeOnly by configurations
     dependencies {
-        testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
         testImplementation("com.github.navikt.tbd-libs:postgres-testdatabaser:$tbdLibsVersion")
+        testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
 

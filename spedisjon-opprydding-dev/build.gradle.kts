@@ -18,7 +18,6 @@ dependencies {
 
     testImplementation(project(":spedisjon-selve")) // for å få  tilgang på db/migrations-filene
     testImplementation("com.github.navikt.tbd-libs:rapids-and-rivers-test:$tbdLibsVersion")
-    testImplementation("com.github.navikt.tbd-libs:postgres-testdatabaser:$tbdLibsVersion")
 }
 
 tasks {
