@@ -55,7 +55,7 @@ jobs:
             env:
                 APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
                 CLUSTER: dev-gcp
-                RESOURCE: spedisjon-migrering-dev-policy.yml
+                RESOURCE: deploy/spedisjon-migrering-dev-policy.yml
                 IMAGE: ${{ needs.build.outputs.image }}
 
   deployProd:
@@ -68,5 +68,5 @@ jobs:
             env:
                 APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
                 CLUSTER: prod-gcp
-                RESOURCE: spedisjon-migrering-prod-policy.yml
+                RESOURCE: deploy/spedisjon-migrering-prod-policy.yml
                 IMAGE: ${{ needs.build.outputs.image }}
