@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import java.time.Duration
 import kotlin.io.path.Path
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
@@ -19,6 +20,9 @@ private fun connectionConfigFromMountPath(instanceId: String, mountPath: String)
     /* søker etter filer som slutter på det vi forventer, fordi miljøvariabelene/filnavnet kan ha
         en custom prefiks som hver app har bestemt selv
      */
+
+    log.info("fant følgende filer under $mountPath: ${secretsPath.joinToString { it.name } }")
+
     val databaseName = secretsPath.first { it.endsWith("_DATABASE") }.readText()
     val databaseUsername = secretsPath.first { it.endsWith("_USERNAME") }.readText()
     val databasePassword = secretsPath.first { it.endsWith("_PASSWORD") }.readText()
