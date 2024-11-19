@@ -2,17 +2,18 @@ name: Bygg og deploy
 
 on:
   push:
-    paths-ignore:
-      - 'spedisjon-opprydding-dev/**'
-      - '.github/workflows/spedisjon-opprydding-dev.yml'
-      - 'deploy/spedisjon-opprydding-dev.yml'
-      - '.idea/**'
-      - 'README.md'
-      - 'LICENSE'
-      - 'CODEOWNERS'
-      - '.github/workflows/alerts.yml'
-      - 'deploy/prod-sendt-søknad-alertrule.yml'
-      - 'deploy/prod-inntektsmelding-alertrule.yml'
+    paths:
+      - 'spedisjon-selve/**'
+      - '.github/workflows/master.yml'
+      - 'Dockerfile'
+      - 'gradle/'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'deploy/dev.yml'
+      - 'deploy/prod.yml'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
     branches:
       - master
 
