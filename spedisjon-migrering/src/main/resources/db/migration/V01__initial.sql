@@ -1,5 +1,6 @@
 CREATE TABLE arbeidstabell(
-    fnr bigint primary key,
+    id bigint primary key generated always as identity,
+    fnr text unique,
     arbeid_startet timestamptz,
     arbeid_ferdig timestamptz
 );

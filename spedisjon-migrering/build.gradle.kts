@@ -8,6 +8,7 @@ val postgresqlVersion = "42.7.4"
 val hikariCPVersion = "6.1.0"
 val kotliqueryVersion = "1.9.0"
 val jacksonVersion = "2.18.1"
+val kotlinxCoroutinesVersion = "1.9.0"
 
 tasks.withType<Test> {
     useJUnitPlatform()
@@ -17,6 +18,8 @@ tasks.withType<Test> {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$kotlinxCoroutinesVersion")
+
     implementation("ch.qos.logback:logback-classic:$logbackClassicVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logbackEncoderVersion") {
         exclude("com.fasterxml.jackson.core")

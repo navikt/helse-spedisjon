@@ -2,9 +2,16 @@ package no.nav.helse.spedisjon.migrering
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotliquery.Session
+import kotliquery.queryOf
+import kotliquery.sessionOf
 import org.flywaydb.core.Flyway
+import org.intellij.lang.annotations.Language
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import javax.sql.DataSource
 import kotlin.io.path.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -13,29 +20,6 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 val log: Logger = LoggerFactory.getLogger("no.nav.helse.spedisjon.migrering.App")
-
-private val baseConnectionConfig = HikariConfig().apply {
-    jdbcUrl = cloudSqlConnectionString(
-        gcpProjectId = System.getenv("GCP_PROJECT_ID"),
-        databaseInstance = System.getenv("SPEDISJON_MIGRATE_INSTANCE"),
-        databaseName = System.getenv("DATABASE_DATABASE"),
-        databaseRegion = System.getenv("GCP_SQL_REGION")
-    )
-    username = System.getenv("DATABASE_USERNAME")
-    password = System.getenv("DATABASE_PASSWORD")
-}
-
-private val flywayMigrationConfig = HikariConfig().apply {
-    baseConnectionConfig.copyStateTo(this)
-    maximumPoolSize = 2
-    poolName = "flyway-migration"
-    initializationFailTimeout = -1
-}
-private val appConfig = HikariConfig().apply {
-    baseConnectionConfig.copyStateTo(this)
-    poolName = "spedisjon-migrering"
-    maximumPoolSize = 1
-}
 
 fun main() {
     try {
@@ -49,6 +33,29 @@ fun main() {
 }
 
 private fun workMain() {
+    val baseConnectionConfig = HikariConfig().apply {
+        jdbcUrl = cloudSqlConnectionString(
+            gcpProjectId = System.getenv("GCP_PROJECT_ID"),
+            databaseInstance = System.getenv("SPEDISJON_MIGRATE_INSTANCE"),
+            databaseName = System.getenv("DATABASE_DATABASE"),
+            databaseRegion = System.getenv("GCP_SQL_REGION")
+        )
+        username = System.getenv("DATABASE_USERNAME")
+        password = System.getenv("DATABASE_PASSWORD")
+    }
+
+    val flywayMigrationConfig = HikariConfig().apply {
+        baseConnectionConfig.copyStateTo(this)
+        maximumPoolSize = 2
+        poolName = "flyway-migration"
+        initializationFailTimeout = -1
+    }
+    val appConfig = HikariConfig().apply {
+        baseConnectionConfig.copyStateTo(this)
+        poolName = "spedisjon-migrering"
+        maximumPoolSize = 1
+    }
+
     val spedisjonConfig = HikariConfig().apply {
         connectionConfigFromMountPath(System.getenv("SPEDISJON_INSTANCE"), "/var/run/secrets/sql/spedisjon")
             .copyStateTo(this)
@@ -64,6 +71,108 @@ private fun workMain() {
 
     testTilkoblinger(flywayMigrationConfig, appConfig, spedisjonConfig, spreSubsumsjon)
     migrateDatabase(flywayMigrationConfig)
+
+    HikariDataSource(appConfig).use { dataSource ->
+        utførMigrering(dataSource, spedisjonConfig)
+    }
+}
+
+fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig) {
+    sessionOf(dataSource).use { session ->
+        klargjørEllerVentPåTilgjengeligArbeid(session) {
+            log.info("Henter personer fra spedisjon og forbereder arbeidstabell")
+
+            val personer = HikariDataSource(spedisjonConfig).use { spedisjonDataSource ->
+                sessionOf(spedisjonDataSource).use { spedisjonSession ->
+                    @Language("PostgreSQL")
+                    val stmt = "select fnr from melding group by fnr"
+                    spedisjonSession.run(queryOf(stmt).map { row ->
+                        row.string("fnr").padStart(11, '0')
+                    }.asList)
+                }
+            }
+
+            @Language("PostgreSQL")
+            val query = """INSERT INTO arbeidstabell (fnr) VALUES ${personer.joinToString { "(?)" }}"""
+            session.run(queryOf(query, *personer.toTypedArray()).asExecute)
+        }
+        utførArbeid(session) { arbeid ->
+            log.info("Arbeider på ${arbeid.id}")
+        }
+    }
+}
+
+data class Arbeid(val id: Long, val fnr: String)
+
+private fun utførArbeid(session: Session, arbeider: (arbeid: Arbeid) -> Unit) {
+    do {
+        log.info("Forsøker å hente arbeid")
+        val arbeidsliste = hentArbeid(session)
+            .also {
+                if (it.isNotEmpty()) log.info("Fikk ${it.size} stk")
+            }
+            .onEach {
+                try {
+                    arbeider(it)
+                } finally {
+                    arbeidFullført(session, it)
+                }
+            }
+    } while (arbeidsliste.isNotEmpty())
+    log.info("Fant ikke noe arbeid, avslutter")
+}
+
+private fun fåLås(session: Session): Boolean {
+    // oppretter en lås som varer ut levetiden til sesjonen.
+    // returnerer umiddelbart med true/false avhengig om vi fikk låsen eller ikke
+    @Language("PostgreSQL")
+    val query = "SELECT pg_try_advisory_lock(1337)"
+    return session.run(queryOf(query).map { it.boolean(1) }.asSingle)!!
+}
+
+private fun hentArbeid(session: Session, size: Int = 500): List<Arbeid> {
+    @Language("PostgreSQL")
+    val query = """
+    select id,fnr from arbeidstabell where arbeid_startet IS NULL limit $size for update skip locked; 
+    """
+    @Language("PostgreSQL")
+    val oppdater = "update arbeidstabell set arbeid_startet=now() where id IN(%s)"
+    return session.transaction { txSession ->
+        txSession.run(queryOf(query).map {
+            Arbeid(
+                id = it.long("id"),
+                fnr = it.string("fnr").padStart(11, '0')
+            )
+        }.asList).also { personer ->
+            if (personer.isNotEmpty()) {
+                txSession.run(queryOf(String.format(oppdater, personer.joinToString { "?" }), *personer.map { it.id }.toTypedArray()).asUpdate)
+            }
+        }
+    }
+}
+private fun arbeidFullført(session: Session, arbeid: Arbeid) {
+    @Language("PostgreSQL")
+    val query = "update arbeidstabell set arbeid_ferdig=now() where id=?"
+    session.run(queryOf(query, arbeid.id).asUpdate)
+}
+private fun arbeidFinnes(session: Session): Boolean {
+    @Language("PostgreSQL")
+    val query = "SELECT COUNT(1) as antall FROM arbeidstabell"
+    val antall = session.run(queryOf(query).map { it.long("antall") }.asSingle) ?: 0
+    return antall > 0
+}
+
+private fun klargjørEllerVentPåTilgjengeligArbeid(session: Session, fyllArbeidstabell: () -> Unit) {
+    if (fåLås(session)) {
+        if (arbeidFinnes(session)) return
+        return fyllArbeidstabell()
+    }
+
+    log.info("Venter på at arbeid skal bli tilgjengelig")
+    while (!arbeidFinnes(session)) {
+        log.info("Arbeid finnes ikke ennå, venter litt")
+        runBlocking { delay(250) }
+    }
 }
 
 private fun migrateDatabase(connectionConfig: HikariConfig) {
