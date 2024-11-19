@@ -1,0 +1,1 @@
+alter table melding alter column intern_dokument_id set default gen_random_uuid();
