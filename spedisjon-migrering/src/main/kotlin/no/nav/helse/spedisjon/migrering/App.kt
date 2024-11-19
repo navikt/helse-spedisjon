@@ -9,6 +9,8 @@ import java.time.Duration
 import kotlin.io.path.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.toJavaDuration
 
 val log: Logger = LoggerFactory.getLogger(::main::class.java)
 
@@ -64,24 +66,13 @@ private val appConfig = HikariConfig().apply {
     poolName = "spedisjon-migrering"
     maximumPoolSize = 1
 }
-private val spedisjonConfig = HikariConfig().apply {
-    connectionConfigFromMountPath(System.getenv("SPEDISJON_INSTANCE"), "/var/run/secrets/sql/spedisjon")
-        .copyStateTo(this)
-    poolName = "spedisjon"
-    maximumPoolSize = 1
-}
-private val spreSubsumsjon = HikariConfig().apply {
-    connectionConfigFromMountPath(System.getenv("SPRE_SUBSUMSJON_INSTANCE"), "/var/run/secrets/sql/spre_subsumsjon")
-        .copyStateTo(this)
-    poolName = "spre-subsumsjon"
-    maximumPoolSize = 1
-}
 
 fun main() {
     try {
         workMain()
     } catch (err: Exception) {
-        log.error("Alvorlig feil: ${err.message}. Jobben stopper.", err)
+        log.error("Alvorlig feil: ${err.message}. Jobben stopper, men venter i 5 minutter.", err)
+        Thread.sleep(5.minutes.toJavaDuration())
     }
 }
 
@@ -98,6 +89,19 @@ private fun migrateDatabase(connectionConfig: HikariConfig) {
 
 private fun workMain() {
     log.info("Tester datasourcer")
+
+    val spedisjonConfig = HikariConfig().apply {
+        connectionConfigFromMountPath(System.getenv("SPEDISJON_INSTANCE"), "/var/run/secrets/sql/spedisjon")
+            .copyStateTo(this)
+        poolName = "spedisjon"
+        maximumPoolSize = 1
+    }
+    val spreSubsumsjon = HikariConfig().apply {
+        connectionConfigFromMountPath(System.getenv("SPRE_SUBSUMSJON_INSTANCE"), "/var/run/secrets/sql/spre_subsumsjon")
+            .copyStateTo(this)
+        poolName = "spre-subsumsjon"
+        maximumPoolSize = 1
+    }
 
     listOf(flywayMigrationConfig, appConfig, spedisjonConfig, spreSubsumsjon).forEach {
         HikariDataSource(it).apply {
