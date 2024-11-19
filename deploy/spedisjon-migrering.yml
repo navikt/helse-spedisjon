@@ -1,0 +1,49 @@
+apiVersion: nais.io/v1
+kind: Naisjob
+metadata:
+  labels:
+    team: tbd
+  name: spedisjon-migrate
+  namespace: tbd
+spec:
+  image: {{ image }}
+  parallelism: {{ parallelism }}
+  resources:
+    limits:
+      memory: 4096Mi
+      cpu: 4000m
+    requests:
+      cpu: 200m
+  secureLogs:
+    enabled: true
+  filesFrom:
+    - configmap: google-sql-spedisjon
+      mountPath: /var/run/secrets/sql/spedisjon
+    - configmap: google-sql-spre-subsumsjon
+      mountPath: /var/run/secrets/sql/spre_subsumsjon
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_17
+        diskAutoresize: true
+        diskSize: 10
+        tier: db-custom-1-3840
+        name: spedisjon-migrering
+        databases:
+          - name: spedisjon_migrering
+            envVarPrefix: DATABASE
+    permissions:
+      - resource:
+          apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+          kind: Project
+          name: {{ gcp_project_id }}
+        role: roles/cloudsql.client
+  env:
+    - name: GCP_PROJECT_ID
+      value: {{ gcp_project_id }}
+    - name: GCP_SQL_REGION
+      value: "europe-north1"
+    - name: SPEDISJON_INSTANCE
+      value: {{ spedisjon_instance }}
+    - name: SPRE_SUBSUMSJON_INSTANCE
+      value: {{ spre_subsumsjon_instance }}
+

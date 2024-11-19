@@ -1,0 +1,6 @@
+{
+  "parallelism": 2,
+  "gcp_project_id": "tbd-dev-7ff9",
+  "spedisjon_instance": "spedisjon",
+  "spre_subsumsjon_instance": "spre-subsumsjon"
+}

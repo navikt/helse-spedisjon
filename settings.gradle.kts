@@ -6,4 +6,4 @@ pluginManagement {
     }
 }
 
-include("spedisjon-opprydding-dev", "spedisjon-selve")
+include("spedisjon-opprydding-dev", "spedisjon-selve", "spedisjon-migrering")

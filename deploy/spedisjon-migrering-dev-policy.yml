@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: spedisjon-migrering-db-policies
+  namespace: tbd
+spec:
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 35.228.170.175/32 # spre-subsumsjon
+    - to:
+        - ipBlock:
+            cidr: 34.88.43.173/32 # spedisjon
+  podSelector:
+    matchLabels:
+      app: spedisjon-migrate
+  policyTypes:
+    - Egress
