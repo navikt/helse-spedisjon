@@ -40,6 +40,8 @@ private val appConfig = HikariConfig().apply {
 fun main() {
     try {
         workMain()
+        log.info("Appen er ferdig, men venter i 1 minutt med å avslutte.")
+        Thread.sleep(1.minutes.toJavaDuration())
     } catch (err: Exception) {
         log.error("Alvorlig feil: ${err.message}. Jobben stopper, men venter i 5 minutter.", err)
         Thread.sleep(5.minutes.toJavaDuration())
