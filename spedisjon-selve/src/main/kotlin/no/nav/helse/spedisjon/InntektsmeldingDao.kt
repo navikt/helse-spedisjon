@@ -1,6 +1,7 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
 import kotliquery.Session
 import kotliquery.sessionOf
@@ -17,6 +18,7 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
     private companion object {
         private val logg = LoggerFactory.getLogger(Puls::class.java)
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
+        private val objectMapper = jacksonObjectMapper()
     }
 
     fun leggInn(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime = LocalDateTime.now()): Boolean {
@@ -50,14 +52,14 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
                         fnr = row.string("fnr"),
                         orgnummer = row.string("orgnummer"),
                         melding = Inntektsmelding(
-                            internId = row.uuidOrNull("intern_dokument_id") ?: jacksonObjectMapper().readTree(row.string("data")).path("@id").asText().toUUID(), // todo: fjerne "OrNull()" når alle rader har intern id
+                            internId = row.uuidOrNull("intern_dokument_id") ?: objectMapper.readTree(row.string("data")).path("@id").asText().toUUID(), // todo: fjerne "OrNull()" når alle rader har intern id
                             orgnummer = row.string("orgnummer"),
                             arbeidsforholdId = row.stringOrNull("arbeidsforhold_id"),
                             meldingsdetaljer = Meldingsdetaljer(
                                 type = "inntektsmelding",
                                 fnr = row.string("fnr"),
-                                eksternDokumentId = row.uuidOrNull("ekstern_dokument_id") ?: jacksonObjectMapper().readTree(row.string("data")).path("inntektsmeldingId").asText().toUUID(), // todo: fjerne "OrNull()" når alle rader har intern id,
-                                rapportertDato = row.localDateTime("opprettet"),
+                                eksternDokumentId = row.uuidOrNull("ekstern_dokument_id") ?: objectMapper.readTree(row.string("data")).path("inntektsmeldingId").asText().toUUID(), // todo: fjerne "OrNull()" når alle rader har intern id,
+                                rapportertDato = objectMapper.readTree(row.string("data")).path("mottattDato").asLocalDateTime(),
                                 duplikatkontroll = row.string("duplikatkontroll"),
                                 jsonBody = row.string("data")
                             )
