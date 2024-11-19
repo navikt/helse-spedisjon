@@ -26,7 +26,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             eksternDokumentId = UUID.randomUUID(),
             rapportertDato = LocalDateTime.now(),
             duplikatnøkkel = listOf("a"),
-            jsonBody = "{}"
+            jsonBody = """{ "mottattDato": "${LocalDateTime.now()}" }"""
         )
 
         val internId = meldingMediator.leggInnMelding(detaljer) ?: fail { "skulle legge inn melding" }
@@ -47,7 +47,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             eksternDokumentId = UUID.randomUUID(),
             rapportertDato = LocalDateTime.now(),
             duplikatnøkkel = listOf("a"),
-            jsonBody = "{}"
+            jsonBody = """{ "mottattDato": "${LocalDateTime.now()}" }"""
         )
 
         val internId = meldingMediator.leggInnMelding(detaljer) ?: fail { "skulle legge inn melding" }
@@ -136,7 +136,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             eksternDokumentId = UUID.randomUUID(),
             rapportertDato = LocalDateTime.now(),
             duplikatnøkkel = listOf(arkivreferanse),
-            jsonBody = "{}"
+            jsonBody = """{ "mottattDato": "${LocalDateTime.now()}" }"""
         )
 
         val im = Melding.Inntektsmelding(UUID.randomUUID(), ORGNUMMER, null, detaljer)
@@ -153,7 +153,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             eksternDokumentId = UUID.randomUUID(),
             rapportertDato = LocalDateTime.now(),
             duplikatnøkkel = listOf(arkivreferanse),
-            jsonBody = "{}"
+            jsonBody = """{ "mottattDato": "${LocalDateTime.now()}" }"""
         )
 
         val internId = meldingDao.leggInn(detaljer) ?: fail { "skulle legge inn melding" }
