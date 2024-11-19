@@ -29,7 +29,7 @@ spec:
         tier: db-custom-1-3840
         name: spedisjon-migrering
         databases:
-          - name: spedisjon_migrering
+          - name: spedisjon-migrering
             envVarPrefix: DATABASE
     permissions:
       - resource:
