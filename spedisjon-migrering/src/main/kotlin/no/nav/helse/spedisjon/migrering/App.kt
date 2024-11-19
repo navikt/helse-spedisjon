@@ -51,7 +51,12 @@ private fun cloudSqlProxyConnectionString(databaseName: String) =
     String.format("jdbc:postgresql://%s:%s/%s", "127.0.0.1", "5432", databaseName)
 
 private val baseConnectionConfig = HikariConfig().apply {
-    jdbcUrl = cloudSqlProxyConnectionString(System.getenv("DATABASE_DATABASE"))
+    jdbcUrl = cloudSqlConnectionString(
+        gcpProjectId = System.getenv("GCP_PROJECT_ID"),
+        databaseInstance = System.getenv("SPEDISJON_MIGRATE_INSTANCE"),
+        databaseName = System.getenv("DATABASE_DATABASE"),
+        databaseRegion = System.getenv("GCP_SQL_REGION")
+    )
     username = System.getenv("DATABASE_USERNAME")
     password = System.getenv("DATABASE_PASSWORD")
 }
@@ -108,7 +113,7 @@ private fun workMain() {
     }
 
     listOf(flywayMigrationConfig, appConfig, spedisjonConfig, spreSubsumsjon).forEach {
-        HikariDataSource(it).apply {
+        HikariDataSource(it).use {
             log.info("${it.poolName} OK!")
         }
     }

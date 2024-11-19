@@ -46,4 +46,5 @@ spec:
       value: {{ spedisjon_instance }}
     - name: SPRE_SUBSUMSJON_INSTANCE
       value: {{ spre_subsumsjon_instance }}
-
+    - name: SPEDISJON_MIGRATE_INSTANCE
+      value: spedisjon-migrering
