@@ -23,7 +23,7 @@ spec:
       mountPath: /var/run/secrets/sql/spre_subsumsjon
   gcp:
     sqlInstances:
-      - type: POSTGRES_17
+      - type: POSTGRES_16
         diskAutoresize: true
         diskSize: 10
         tier: db-custom-1-3840
