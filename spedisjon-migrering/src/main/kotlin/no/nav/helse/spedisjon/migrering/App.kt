@@ -65,10 +65,7 @@ private val flywayMigrationConfig = HikariConfig().apply {
     baseConnectionConfig.copyStateTo(this)
     maximumPoolSize = 2
     poolName = "flyway-migration"
-    maxLifetime = Duration.ofMinutes(30).toMillis()
-    idleTimeout = Duration.ofSeconds(10).toMillis()
-    connectionTimeout = Duration.ofMinutes(30).toMillis()
-    initializationFailTimeout = Duration.ofMinutes(30).toMillis()
+    initializationFailTimeout = -1
 }
 private val appConfig = HikariConfig().apply {
     baseConnectionConfig.copyStateTo(this)
