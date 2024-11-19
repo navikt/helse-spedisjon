@@ -63,6 +63,7 @@ private fun workMain() {
     }
 
     testTilkoblinger(flywayMigrationConfig, appConfig, spedisjonConfig, spreSubsumsjon)
+    migrateDatabase(flywayMigrationConfig)
 }
 
 private fun migrateDatabase(connectionConfig: HikariConfig) {
