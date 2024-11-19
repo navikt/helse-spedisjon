@@ -1,6 +1,7 @@
 package no.nav.helse.spedisjon
 
-import com.github.navikt.tbd_libs.speed.SpeedClient
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
 import kotliquery.Session
 import kotliquery.sessionOf
 import net.logstash.logback.argument.StructuredArguments.keyValue
@@ -21,20 +22,20 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
     fun leggInn(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime = LocalDateTime.now()): Boolean {
         sikkerlogg.info("legger inn ekstra info om inntektsmelding")
         return leggInnUtenDuplikat(melding, ønsketPublisert, mottatt).also {
-            if (!it) sikkerlogg.info("Duplikat melding: {} melding={}", keyValue("duplikatkontroll", melding.duplikatkontroll()), melding.json())
+            if (!it) sikkerlogg.info("Duplikat melding: {} melding={}", keyValue("duplikatkontroll", melding.meldingsdetaljer.duplikatkontroll), melding.meldingsdetaljer.jsonBody)
         }
     }
 
     private fun markerSomEkspedert(session: Session, melding: Melding.Inntektsmelding) {
-        sikkerlogg.info("markerer inntektsmelding med duplikatkontroll ${melding.duplikatkontroll()} som ekspedert")
+        sikkerlogg.info("markerer inntektsmelding med duplikatkontroll ${melding.meldingsdetaljer.duplikatkontroll} som ekspedert")
         """UPDATE inntektsmelding SET ekspedert = :ekspedert WHERE duplikatkontroll = :duplikatkontroll"""
-            .update(session, mapOf("ekspedert" to LocalDateTime.now(), "duplikatkontroll" to melding.duplikatkontroll()))
+            .update(session, mapOf("ekspedert" to LocalDateTime.now(), "duplikatkontroll" to melding.meldingsdetaljer.duplikatkontroll))
     }
 
     fun hentSendeklareMeldinger(inntektsmeldingTimeoutSekunder: Long, onEach: (SendeklarInntektsmelding, Int) -> Unit) {
         sessionOf(dataSource).use { session ->
             @Language("PostgreSQL")
-            val stmt = """SELECT i.fnr, i.orgnummer, i.mottatt, m.data
+            val stmt = """SELECT i.fnr, i.orgnummer, i.arbeidsforhold_id, i.mottatt, m.ekstern_dokument_id, m.duplikatkontroll, m.intern_dokument_id, m.opprettet, m.data
             FROM inntektsmelding i 
             JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
             WHERE i.ekspedert IS NULL AND i.timeout < :timeout
@@ -44,10 +45,23 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
 
             stmt
                 .listQuery(session, mapOf("timeout" to LocalDateTime.now())) { row ->
+                    println("sendeklarIM: internId = ${row.uuidOrNull("intern_dokument_id")}")
                     SendeklarInntektsmelding(
                         fnr = row.string("fnr"),
                         orgnummer = row.string("orgnummer"),
-                        melding = Inntektsmelding.lagInntektsmelding(row.string("data")),
+                        melding = Inntektsmelding(
+                            internId = row.uuidOrNull("intern_dokument_id") ?: jacksonObjectMapper().readTree(row.string("data")).path("@id").asText().toUUID(), // todo: fjerne "OrNull()" når alle rader har intern id
+                            orgnummer = row.string("orgnummer"),
+                            arbeidsforholdId = row.stringOrNull("arbeidsforhold_id"),
+                            meldingsdetaljer = Meldingsdetaljer(
+                                type = "inntektsmelding",
+                                fnr = row.string("fnr"),
+                                eksternDokumentId = row.uuidOrNull("ekstern_dokument_id") ?: jacksonObjectMapper().readTree(row.string("data")).path("inntektsmeldingId").asText().toUUID(), // todo: fjerne "OrNull()" når alle rader har intern id,
+                                rapportertDato = row.localDateTime("opprettet"),
+                                duplikatkontroll = row.string("duplikatkontroll"),
+                                jsonBody = row.string("data")
+                            )
+                        ),
                         mottatt = row.localDateTime("mottatt")
                     )
                 }
@@ -74,10 +88,10 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
 
     private fun leggInnUtenDuplikat(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime) =
         """INSERT INTO inntektsmelding (fnr, orgnummer, arbeidsforhold_id, mottatt, timeout, duplikatkontroll) VALUES (:fnr, :orgnummer, :arbeidsforhold_id, :mottatt, :timeout, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""
-            .update(mapOf(  "fnr" to melding.fødselsnummer(),
-                            "orgnummer" to melding.orgnummer(),
-                            "arbeidsforhold_id" to melding.arbeidsforholdId(),
+            .update(mapOf(  "fnr" to melding.meldingsdetaljer.fnr,
+                            "orgnummer" to melding.orgnummer,
+                            "arbeidsforhold_id" to melding.arbeidsforholdId,
                             "mottatt" to mottatt,
                             "timeout" to ønsketPublisert,
-                            "duplikatkontroll" to melding.duplikatkontroll())) == 1
+                            "duplikatkontroll" to melding.meldingsdetaljer.duplikatkontroll)) == 1
 }

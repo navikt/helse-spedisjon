@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.mockk
 import org.intellij.lang.annotations.Language
@@ -28,12 +29,14 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(AVBRUTT_SØKNAD)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_søknad")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
     @Test
     fun `Leser, beriker, videresender avbrutte arbeidsledig-søknader`() {
         testRapid.sendTestMessage(AVBRUTT_ARBEIDSLEDIG_SØKNAD)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_arbeidsledig_søknad")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     private companion object {
@@ -45,7 +48,7 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
             "arbeidsgiver": {
                 "orgnummer": "1234"
             },
-            "opprettet": "${LocalDateTime.now()}",
+            "opprettet": "$OPPRETTET_DATO",
             "sendtNav": "${LocalDateTime.now()}",
             "soknadsperioder": [],
             "fravar": [],
@@ -60,7 +63,7 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "opprettet": "${LocalDateTime.now()}",
+            "opprettet": "$OPPRETTET_DATO",
             "sendtNav": "${LocalDateTime.now()}",
             "soknadsperioder": [],
             "fravar": [],

@@ -1,28 +1,38 @@
 package no.nav.helse.spedisjon
 
-import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
-import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.mockk
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
-import no.nav.helse.spedisjon.Melding.Companion.sha512
+import no.nav.helse.spedisjon.Meldingsdetaljer.Companion.sha512
 import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
     fun `tar imot inntektsmelding`() {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(), mockk(relaxed = true))
-        val mediator = InntektsmeldingMediator(dataSource, mockk(), meldingMediator = meldingMediator, dokumentAliasProducer = mockk(relaxed = true))
-        val im = Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a"))
+        val mediator = InntektsmeldingMediator(dataSource, mockk(), dokumentAliasProducer = mockk(relaxed = true))
+
+        val detaljer = Meldingsdetaljer(
+            type = "inntektsmelding",
+            fnr = FØDSELSNUMMER,
+            eksternDokumentId = UUID.randomUUID(),
+            rapportertDato = LocalDateTime.now(),
+            duplikatnøkkel = listOf("a"),
+            jsonBody = "{}"
+        )
+
+        val internId = meldingMediator.leggInnMelding(detaljer) ?: fail { "skulle legge inn melding" }
+        val im = Melding.Inntektsmelding(internId, ORGNUMMER, null, detaljer)
         mediator.lagreInntektsmelding(im, TestRapid())
+
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
     }
@@ -30,10 +40,21 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     @Test
     fun `lagrer inntektsmelding bare en gang`() {
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(), mockk(relaxed = true))
-        val mediator = InntektsmeldingMediator(dataSource, mockk(), meldingMediator = meldingMediator, dokumentAliasProducer = mockk(relaxed = true))
-        val im = Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = "a"))
+        val mediator = InntektsmeldingMediator(dataSource, mockk(), dokumentAliasProducer = mockk(relaxed = true))
+        val detaljer = Meldingsdetaljer(
+            type = "inntektsmelding",
+            fnr = FØDSELSNUMMER,
+            eksternDokumentId = UUID.randomUUID(),
+            rapportertDato = LocalDateTime.now(),
+            duplikatnøkkel = listOf("a"),
+            jsonBody = "{}"
+        )
+
+        val internId = meldingMediator.leggInnMelding(detaljer) ?: fail { "skulle legge inn melding" }
+        val im = Melding.Inntektsmelding(internId, ORGNUMMER, null, detaljer)
         mediator.lagreInntektsmelding(im, TestRapid())
         mediator.lagreInntektsmelding(im, TestRapid())
+
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
     }
@@ -52,7 +73,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             }
         }
         assertEquals(2, metaInntektsmeldinger.size)
-        assertEquals(b, metaInntektsmeldinger.first().melding.duplikatkontroll())
+        assertEquals(b, metaInntektsmeldinger.first().melding.meldingsdetaljer.duplikatkontroll)
     }
 
     @Test
@@ -98,7 +119,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             genererSendeklarInntektsmelding("tredje", LocalDateTime.now().plusMinutes(1))
         ).sorter()
 
-        assertEquals(listOf("første", "andre", "tredje").map { it.sha512() }, sendeKlareInntektsmeldinger.map { it.melding.duplikatkontroll() })
+        assertEquals(listOf("første", "andre", "tredje").map { it.sha512() }, sendeKlareInntektsmeldinger.map { it.melding.meldingsdetaljer.duplikatkontroll })
     }
 
     private fun antallInntektsmeldinger(fnr: String, orgnummer: String) =
@@ -109,38 +130,36 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         }
 
     private fun genererSendeklarInntektsmelding(arkivreferanse: String, mottatt: LocalDateTime): SendeklarInntektsmelding {
-        return SendeklarInntektsmelding(FØDSELSNUMMER, ORGNUMMER, Melding.Inntektsmelding(genererInntektsmelding(arkivreferanse = arkivreferanse)), mottatt)
-    }
+        val detaljer = Meldingsdetaljer(
+            type = "inntektsmelding",
+            fnr = FØDSELSNUMMER,
+            eksternDokumentId = UUID.randomUUID(),
+            rapportertDato = LocalDateTime.now(),
+            duplikatnøkkel = listOf(arkivreferanse),
+            jsonBody = "{}"
+        )
 
-    private val registry = SimpleMeterRegistry()
-    private fun genererInntektsmelding(fnr: String = FØDSELSNUMMER, orgnummer: String = ORGNUMMER, arbeidsforholdId: String? = null, arkivreferanse: String): JsonMessage {
-        val arbeidsforholdIdJson = if (arbeidsforholdId == null) "" else """ "arbeidsforholdId": "$arbeidsforholdId", """
-        val inntektsmelding = """{
-        "arbeidstakerFnr": "$fnr",
-        "virksomhetsnummer": "$orgnummer",
-        "mottattDato": "${LocalDateTime.now()}",
-        $arbeidsforholdIdJson
-        "arkivreferanse": "$arkivreferanse",
-        "inntektsmeldingId": "${UUID.randomUUID()}"
-        }"""
-
-        return JsonMessage(inntektsmelding, MessageProblems(inntektsmelding), registry).also {
-            it.interestedIn("arbeidstakerFnr")
-            it.interestedIn("virksomhetsnummer")
-            it.interestedIn("mottattDato")
-            it.interestedIn("arkivreferanse")
-            it.interestedIn("arbeidsforholdId")
-            it.interestedIn("inntektsmeldingId")
-        }
+        val im = Melding.Inntektsmelding(UUID.randomUUID(), ORGNUMMER, null, detaljer)
+        return SendeklarInntektsmelding(FØDSELSNUMMER, ORGNUMMER, im, mottatt)
     }
 
     private fun lagreMelding(fnr: String = FØDSELSNUMMER, orgnummer: String = ORGNUMMER, arbeidsforholdId: String? = null, arkivreferanse: String, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime = LocalDateTime.now()) : String{
         val inntektsmeldingDao = InntektsmeldingDao(dataSource)
         val meldingDao = MeldingDao(dataSource)
-        val melding = Melding.Inntektsmelding(genererInntektsmelding(fnr, orgnummer, arbeidsforholdId, arkivreferanse))
-        meldingDao.leggInn(melding)
+
+        val detaljer = Meldingsdetaljer(
+            type = "inntektsmelding",
+            fnr = fnr,
+            eksternDokumentId = UUID.randomUUID(),
+            rapportertDato = LocalDateTime.now(),
+            duplikatnøkkel = listOf(arkivreferanse),
+            jsonBody = "{}"
+        )
+
+        val internId = meldingDao.leggInn(detaljer) ?: fail { "skulle legge inn melding" }
+        val melding = Melding.Inntektsmelding(internId, orgnummer, arbeidsforholdId, detaljer)
         inntektsmeldingDao.leggInn(melding, ønsketPublisert, mottatt = mottatt)
-        return melding.duplikatkontroll()
+        return melding.meldingsdetaljer.duplikatkontroll
     }
 
 }

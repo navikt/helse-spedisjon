@@ -13,7 +13,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import net.logstash.logback.argument.StructuredArguments.kv
 import org.slf4j.LoggerFactory
-import java.util.UUID
+import java.util.*
 
 data class Personinformasjon(
     val personinfo: PersonResponse,
@@ -28,27 +28,27 @@ data class Personinformasjon(
         fun innhent(speedClient: SpeedClient, melding: Melding, callId: String): Personinformasjon {
             return runBlocking {
                 val personinfoDeferred = async(Dispatchers.IO) {
-                    sikkerlogg.info("henter personinfo for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
+                    sikkerlogg.info("henter personinfo for ${melding::class.simpleName} (${melding.meldingsdetaljer.type}) for {}", kv("fødselsnummer", melding.meldingsdetaljer.fnr))
                     retry {
-                        when (val svar = speedClient.hentPersoninfo(melding.fødselsnummer(), callId)) {
+                        when (val svar = speedClient.hentPersoninfo(melding.meldingsdetaljer.fnr, callId)) {
                             is Result.Error -> throw RuntimeException(svar.error, svar.cause)
                             is Result.Ok -> svar.value
                         }
                     }
                 }
                 val historiskeIdenterDeferred = async(Dispatchers.IO) {
-                    sikkerlogg.info("henter historiske identer for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
+                    sikkerlogg.info("henter historiske identer for ${melding::class.simpleName} (${melding.meldingsdetaljer.type}) for {}", kv("fødselsnummer", melding.meldingsdetaljer.fnr))
                     retry {
-                        when (val svar = speedClient.hentHistoriskeFødselsnumre(melding.fødselsnummer(), callId)) {
+                        when (val svar = speedClient.hentHistoriskeFødselsnumre(melding.meldingsdetaljer.fnr, callId)) {
                             is Result.Error -> throw RuntimeException(svar.error, svar.cause)
                             is Result.Ok -> svar.value
                         }
                     }
                 }
                 val identerDeferred = async(Dispatchers.IO) {
-                    sikkerlogg.info("henter aktørId for ${melding::class.simpleName} for {}", kv("fødselsnummer", melding.fødselsnummer()))
+                    sikkerlogg.info("henter aktørId for ${melding::class.simpleName} (${melding.meldingsdetaljer.type}) for {}", kv("fødselsnummer", melding.meldingsdetaljer.fnr))
                     retry {
-                        when (val svar = speedClient.hentFødselsnummerOgAktørId(melding.fødselsnummer(), callId)) {
+                        when (val svar = speedClient.hentFødselsnummerOgAktørId(melding.meldingsdetaljer.fnr, callId)) {
                             is Result.Error -> throw RuntimeException(svar.error, svar.cause)
                             is Result.Ok -> svar.value
                         }

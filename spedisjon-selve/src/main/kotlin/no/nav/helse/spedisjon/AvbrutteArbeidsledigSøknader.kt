@@ -31,9 +31,11 @@ internal class AvbrutteArbeidsledigSøknader(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
-        val avbruttSøknadMelding = Melding.AvbruttArbeidsledigSøknad(packet)
-        meldingMediator.onMelding(avbruttSøknadMelding, context)
-        sikkerlogg.info("Mottatt avbrutt arbeidsledig-søknad: $avbruttSøknadMelding")
+        val detaljer = Meldingsdetaljer.avbruttSøknadArbeidsledig(packet)
+        meldingMediator.leggInnMelding(detaljer)?.also { internId ->
+            meldingMediator.onMelding(Melding.AvbruttSøknad(internId, detaljer), context)
+        }
+        sikkerlogg.info("Mottatt avbrutt arbeidsledig-søknad: $detaljer")
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {

@@ -7,6 +7,7 @@ import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import no.nav.helse.spedisjon.Personinformasjon.Companion.berikMeldingOgBehandleDen
 import org.slf4j.LoggerFactory
+import java.util.*
 
 internal class MeldingMediator(
     private val meldingDao: MeldingDao,
@@ -31,17 +32,17 @@ internal class MeldingMediator(
         riverErrors.add(error)
     }
 
-    fun onMelding(melding: Melding, context: MessageContext) {
-        messageRecognized = true
-
+    fun leggInnMelding(meldingsdetaljer: Meldingsdetaljer): UUID? {
         Counter.builder("melding_totals")
             .description("Antall meldinger mottatt")
-            .tag("type", melding.meldingsdetaljer.type)
+            .tag("type", meldingsdetaljer.type)
             .register(registry)
             .increment()
+        return meldingDao.leggInn(meldingsdetaljer)
+    }
 
-        if (!meldingDao.leggInn(melding)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
-
+    fun onMelding(melding: Melding, context: MessageContext) {
+        messageRecognized = true
         berikOgSendVidere(melding, context)
 
         Counter.builder("melding_unik_totals")
@@ -69,7 +70,7 @@ internal class MeldingMediator(
         berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
             val beriketMelding = berikelse.berik(melding)
             dokumentAliasProducer.send(melding)
-            context.publish(melding.fødselsnummer(), beriketMelding.toJson())
+            context.publish(melding.meldingsdetaljer.fnr, beriketMelding.json)
         }
     }
 }

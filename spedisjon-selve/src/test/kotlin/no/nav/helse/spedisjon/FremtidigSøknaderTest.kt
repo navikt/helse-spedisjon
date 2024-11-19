@@ -1,10 +1,11 @@
 package no.nav.helse.spedisjon
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 import javax.sql.DataSource
 
 internal class FremtidigSøknaderTest: AbstractRiverTest() {
@@ -14,8 +15,9 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         testRapid.sendTestMessage(søknad())
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("ny_søknad")
-        assertEquals("NY", testRapid.inspektør.message(0)["status"].textValue())
-        assertEquals(true, testRapid.inspektør.message(0)["fremtidig_søknad"].booleanValue())
+        assertEquals("NY", testRapid.inspektør.field(0, "status").textValue())
+        assertEquals(true, testRapid.inspektør.field(0, "fremtidig_søknad").booleanValue())
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test

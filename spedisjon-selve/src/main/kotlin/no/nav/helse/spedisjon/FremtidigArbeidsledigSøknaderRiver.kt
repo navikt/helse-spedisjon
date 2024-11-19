@@ -9,7 +9,6 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.micrometer.core.instrument.MeterRegistry
-import no.nav.helse.rapids_rivers.*
 import org.slf4j.LoggerFactory
 
 class FremtidigArbeidsledigSøknaderRiver internal constructor(
@@ -48,8 +47,10 @@ class FremtidigArbeidsledigSøknaderRiver internal constructor(
         packet["status"] = "NY"
         packet["fremtidig_søknad"] = true
 
-        val nySøknadMelding = Melding.NyArbeidsledigSøknad(packet)
-        meldingMediator.onMelding(nySøknadMelding, context)
+        val detaljer = Meldingsdetaljer.nySøknadArbeidsledig(packet)
+        meldingMediator.leggInnMelding(detaljer)?.also { internId ->
+            meldingMediator.onMelding(Melding.NySøknad(internId, detaljer), context)
+        }
     }
 
 }

@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon
 
-import java.lang.Exception
 import java.time.LocalDate
 
 internal class Personidentifikator(value: String) {

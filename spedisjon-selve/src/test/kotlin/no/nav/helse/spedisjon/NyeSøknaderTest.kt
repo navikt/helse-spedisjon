@@ -1,11 +1,11 @@
 package no.nav.helse.spedisjon
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 import javax.sql.DataSource
 
 internal class NyeSøknaderTest : AbstractRiverTest() {
@@ -19,7 +19,7 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     "arbeidsgiver": {
         "orgnummer": "1234"
     },
-    "opprettet": "${LocalDateTime.now()}",
+    "opprettet": "$OPPRETTET_DATO",
     "soknadsperioder": [],
     "status": "NY",
     "type": "ARBEIDSTAKERE",
@@ -29,6 +29,7 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
 }""")
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("ny_søknad")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {

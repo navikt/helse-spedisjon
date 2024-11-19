@@ -19,7 +19,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 internal class LogWrapperTest {
     private val rapid = TestRapid()
@@ -42,7 +42,7 @@ internal class LogWrapperTest {
     fun setup() {
         appender.list.clear()
         rapid.reset()
-        every { meldingMock.leggInn(any()) }.answers { true }
+        every { meldingMock.leggInn(any()) }.answers { UUID.randomUUID() }
     }
 
     @Test
@@ -78,16 +78,21 @@ internal class LogWrapperTest {
         }
 
         override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
-            mediator.onMelding(TestMelding(packet), context)
+            mediator.onMelding(Melding.NySøknad(
+                internId = UUID.randomUUID(),
+                meldingsdetaljer = Meldingsdetaljer(
+                    type = "ny_søknad",
+                    fnr = "fnr",
+                    eksternDokumentId = UUID.randomUUID(),
+                    rapportertDato = LocalDateTime.now(),
+                    duplikatnøkkel = listOf("en_nøkkel"),
+                    jsonBody = packet.toJson()
+                )
+            ), context)
         }
         override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
             mediator.onRiverError("Ukjent melding:\n$problems")
         }
     }
 
-}
-
-internal class TestMelding(packet: JsonMessage) : Melding(packet, meldingsdetaljer = Meldingsdetaljer(type = "test_melding", eksternDokumentId = UUID.randomUUID(), rapportertDato = LocalDateTime.now())) {
-    override fun fødselsnummer(): String = "123412341234"
-    override fun duplikatnøkkel(): String = "1"
 }

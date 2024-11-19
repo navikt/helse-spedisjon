@@ -1,17 +1,15 @@
 package no.nav.helse.spedisjon
 
-import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
-import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import com.github.navikt.tbd_libs.test_support.TestDataSource
-import io.micrometer.prometheusmetrics.PrometheusConfig
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
+import no.nav.helse.spedisjon.Meldingsdetaljer.Companion.sha512
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 internal class DuplikateMeldingerTest {
 
@@ -31,117 +29,38 @@ internal class DuplikateMeldingerTest {
 
     @Test
     fun `duplikat inntektsmelding slipper ikke igjennom`() {
-        val packet = lagMelding(
-            """
-                {
-                    "arkivreferanse": "1",
-                    "arbeidstakerFnr": "123",
-                    "mottattDato": "${LocalDateTime.now()}",
-                    "inntektsmeldingId": "${UUID.randomUUID()}"
-                }
-            """).apply {
-            requireKey("arkivreferanse", "arbeidstakerFnr", "inntektsmeldingId", "mottattDato")
-        }
-
-        assertTrue(meldingDao.leggInn(Melding.Inntektsmelding(packet)))
-        assertFalse(meldingDao.leggInn(Melding.Inntektsmelding(packet)))
+        val duplikatnøkkel = "unik nøkkel"
+        val im1 = Meldingsdetaljer(
+            type = "inntektsmelding",
+            fnr = "123",
+            eksternDokumentId = UUID.randomUUID(),
+            rapportertDato = LocalDateTime.now(),
+            duplikatnøkkel = listOf(duplikatnøkkel),
+            jsonBody = "{}"
+        )
+        val im2 = Meldingsdetaljer(
+            type = "inntektsmelding",
+            fnr = "567",
+            eksternDokumentId = UUID.randomUUID(),
+            rapportertDato = LocalDateTime.now(),
+            duplikatnøkkel = listOf(duplikatnøkkel),
+            jsonBody = "{}"
+        )
+        assertNotNull(meldingDao.leggInn(im1))
+        assertNull(meldingDao.leggInn(im2))
     }
 
     @Test
-    fun `duplikat sendt søknad til nav slipper ikke igjennom`() {
-        val packet = lagMelding(
-            """
-                {
-                    "id": "${UUID.randomUUID()}",
-                    "fnr": "123",
-                    "sendtNav": "${LocalDateTime.now()}",
-                    "status": "SENDT",
-                    "sykmeldingId": "${UUID.randomUUID()}"
-                }
-            """
-        ).apply {
-            requireKey("id", "fnr", "sykmeldingId", "sendtNav", "status")
-        }
-
-        assertTrue(meldingDao.leggInn(Melding.SendtSøknadNav(packet)))
-        assertFalse(meldingDao.leggInn(Melding.SendtSøknadNav(packet)))
+    fun `duplikatkontroll`() {
+        val detaljer = Meldingsdetaljer(
+            type = "ny_søknad",
+            fnr = "123",
+            eksternDokumentId = UUID.randomUUID(),
+            rapportertDato = LocalDateTime.now(),
+            duplikatnøkkel = listOf("bit_a", "bit_b"),
+            jsonBody = "{}"
+        )
+        assertEquals("bit_abit_b".sha512(), detaljer.duplikatkontroll)
+        assertEquals("56cf3c91019a0d437e2ff6f735ab95ab6239d93a11a0841589b981ce337a4459dcece37b6b06baa2dbc9884354793db462af5c4adf4cc97749fe16b50ecf5ae5", detaljer.duplikatkontroll)
     }
-
-    @Test
-    fun `duplikat sendt søknad til arbeidsgiver slipper ikke igjennom`() {
-        val packet = lagMelding(
-            """
-                {
-                    "id": "${UUID.randomUUID()}",
-                    "fnr": "123",
-                    "sendtArbeidsgiver": "${LocalDateTime.now()}",
-                    "status": "SENDT",
-                    "sykmeldingId": "${UUID.randomUUID()}"
-                }
-            """
-        ).apply {
-            requireKey("id", "sykmeldingId", "fnr", "sendtArbeidsgiver", "status")
-        }
-
-        assertTrue(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(packet)))
-        assertFalse(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(packet)))
-    }
-
-    @Test
-    fun `duplikat sendt søknad til arbeidsgiver (ettersending) slipper ikke igjennom`() {
-        val id = UUID.randomUUID()
-        val førsteInnsending = lagMelding(
-            """
-                {
-                    "id": "$id",
-                    "fnr": "123",
-                    "sendtArbeidsgiver": "${LocalDateTime.now()}",
-                    "sendtNav": null,
-                    "status": "SENDT",
-                    "sykmeldingId": "${UUID.randomUUID()}"
-                }
-            """
-        ).apply {
-            requireKey("id", "sykmeldingId", "fnr", "sendtArbeidsgiver", "status")
-        }
-        val andreInnsending = lagMelding(
-            """
-                {
-                    "id": "$id",
-                    "fnr": "123",
-                    "sendtArbeidsgiver": "${LocalDateTime.now()}",
-                    "sendtNav": "${LocalDateTime.now().minusDays(1)}",
-                    "status": "SENDT",
-                    "sykmeldingId": "${UUID.randomUUID()}"
-                }
-            """
-        ).apply {
-            requireKey("id", "sykmeldingId", "fnr", "sendtArbeidsgiver", "sendtNav", "status")
-        }
-
-        assertTrue(meldingDao.leggInn(Melding.SendtSøknadArbeidsgiver(førsteInnsending)))
-        assertFalse(meldingDao.leggInn(Melding.SendtSøknadNav(andreInnsending)))
-    }
-
-    @Test
-    fun `duplikat ny søknad slipper ikke igjennom`() {
-        val packet = lagMelding(
-            """
-                {
-                    "id": "${UUID.randomUUID()}",
-                    "fnr": "123",
-                    "opprettet": "${LocalDateTime.now()}",
-                    "status": "NY",
-                    "sykmeldingId": "${UUID.randomUUID()}"
-                }
-            """).apply {
-            requireKey("id", "sykmeldingId", "fnr", "opprettet", "status")
-        }
-
-        assertTrue(meldingDao.leggInn(Melding.NySøknad(packet)))
-        assertFalse(meldingDao.leggInn(Melding.NySøknad(packet)))
-    }
-
-    private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
-    private fun lagMelding(json: String) = JsonMessage(json, MessageProblems(json), registry)
 }

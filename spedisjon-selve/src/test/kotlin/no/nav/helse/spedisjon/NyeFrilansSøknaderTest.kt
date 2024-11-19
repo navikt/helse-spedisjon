@@ -1,10 +1,11 @@
 package no.nav.helse.spedisjon
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.util.UUID
+import java.util.*
 import javax.sql.DataSource
 
 internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
@@ -30,7 +31,7 @@ internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
   "startSyketilfelle": "2023-07-03",
   "arbeidGjenopptatt": null,
   "sykmeldingSkrevet": "2023-07-03T02:00:00",
-  "opprettet": "2023-08-25T14:41:11.518772",
+  "opprettet": "$OPPRETTET_DATO",
   "opprinneligSendt": null,
   "sendtNav": null,
   "sendtArbeidsgiver": null,
@@ -67,6 +68,7 @@ internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
 }""")
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("ny_søknad_frilans")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {

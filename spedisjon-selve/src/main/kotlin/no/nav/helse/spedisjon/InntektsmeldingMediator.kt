@@ -1,6 +1,9 @@
 package no.nav.helse.spedisjon
 
-import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import no.nav.helse.spedisjon.Personinformasjon.Companion.berikMeldingOgBehandleDen
@@ -12,7 +15,6 @@ internal class InntektsmeldingMediator (
     dataSource: DataSource,
     private val speedClient: SpeedClient,
     private val inntektsmeldingDao: InntektsmeldingDao = InntektsmeldingDao(dataSource),
-    private val meldingMediator: MeldingMediator,
     private val dokumentAliasProducer: DokumentAliasProducer,
     private val inntektsmeldingTimeoutSekunder: Long = 1
 ) {
@@ -20,11 +22,13 @@ internal class InntektsmeldingMediator (
     private companion object {
         private val logg = LoggerFactory.getLogger(Puls::class.java)
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
+        private val objectmapper = jacksonObjectMapper()
+            .registerModule(JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     }
 
     fun lagreInntektsmelding(inntektsmelding: Melding.Inntektsmelding, messageContext: MessageContext) {
         val ønsketPublisert = LocalDateTime.now().plusSeconds(inntektsmeldingTimeoutSekunder)
-        meldingMediator.onMelding(inntektsmelding, messageContext)
         if (!inntektsmeldingDao.leggInn(inntektsmelding, ønsketPublisert)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
 
         if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp") {
@@ -47,15 +51,13 @@ internal class InntektsmeldingMediator (
         sikkerlogg.info("Ekspederer inntektsmelding med fødselsnummer: ${inntektsmelding.fnr} og orgnummer: ${inntektsmelding.orgnummer}")
         val beriketMeldingMedFlagg = flaggFlereInntektsmeldinger(beriketMelding, antallInntektsmeldingMottatt)
         dokumentAliasProducer.send(inntektsmelding.melding)
-        messageContext.publish(inntektsmelding.fnr, beriketMeldingMedFlagg.toJson())
+        messageContext.publish(inntektsmelding.fnr, beriketMeldingMedFlagg.json)
     }
 
-    private fun flaggFlereInntektsmeldinger(beriketMelding: JsonMessage, antallInntektsmeldinger: Int) =
-        beriketMelding.apply {
-            this["harFlereInntektsmeldinger"] = antallInntektsmeldinger > 1
-        }
-
-    fun onRiverError(error: String) {
-        meldingMediator.onRiverError(error)
-    }
+    private fun flaggFlereInntektsmeldinger(beriketMelding: BeriketMelding, antallInntektsmeldinger: Int) =
+        beriketMelding.copy(
+            json = (objectmapper.readTree(beriketMelding.json) as ObjectNode).apply {
+                put("harFlereInntektsmeldinger", antallInntektsmeldinger > 1)
+            }.toString()
+        )
 }

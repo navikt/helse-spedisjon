@@ -42,7 +42,6 @@ fun main() {
         dataSource,
         speedClient,
         inntektsmeldingDao,
-        meldingMediator,
         dokumentaliasproducer,
         inntektsmeldingTimeoutSekunder = inntektsmeldingTimeoutSekunder
     )
@@ -62,7 +61,7 @@ fun main() {
         if (erUtvikling) SendteSelvstendigSøknader(this, meldingMediator)
         SendteArbeidsledigSøknader(this, meldingMediator)
         AndreSøknaderRiver(this)
-        Inntektsmeldinger(this, inntektsmeldingMediator)
+        Inntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
         Puls(this, inntektsmeldingMediator)
         AvbrutteSøknader(this, meldingMediator)
         AvbrutteArbeidsledigSøknader(this, meldingMediator)

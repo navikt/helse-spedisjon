@@ -1,139 +1,118 @@
 package no.nav.helse.spedisjon
 
-import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
-import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDate
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
-import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
-import io.micrometer.prometheusmetrics.PrometheusConfig
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.util.*
 
 data class Meldingsdetaljer(
-    val id: UUID = UUID.randomUUID(),
     val type: String,
+    val fnr: String,
     val eksternDokumentId: UUID,
-    val rapportertDato: LocalDateTime
-)
+    val rapportertDato: LocalDateTime,
+    val duplikatkontroll: String,
+    val jsonBody: String
+) {
+    constructor(
+        type: String,
+        fnr: String,
+        eksternDokumentId: UUID,
+        rapportertDato: LocalDateTime,
+        duplikatnøkkel: List<String>,
+        jsonBody: String,
+    ) : this(type, fnr, eksternDokumentId, rapportertDato, duplikatnøkkel.joinToString(separator = "").sha512(), fjernInternIdFraJson(jsonBody))
 
-abstract class Melding(val packet: JsonMessage, val meldingsdetaljer: Meldingsdetaljer) {
-    abstract fun fødselsnummer(): String
-    protected abstract fun duplikatnøkkel(): String
-    fun duplikatkontroll() = duplikatnøkkel().sha512()
-    fun json(): String {
-        return packet.toJson()
-    }
+    companion object {
+        private val objectmapper = jacksonObjectMapper()
+            .registerModule(JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
-    init {
-        packet["@event_name"] = meldingsdetaljer.type
-        packet["@id"] = meldingsdetaljer.id
-        packet["@opprettet"] = meldingsdetaljer.rapportertDato
-    }
+        private fun fjernInternIdFraJson(jsonBody: String) = (objectmapper.readTree(jsonBody) as ObjectNode).apply {
+            remove("@id")
+            remove("@opprettet")
+            remove("system_read_count")
+            remove("system_participating_services")
+        }.toString()
 
-    internal companion object {
-        private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
-        internal fun String.sha512(): String {
-            return MessageDigest
+        internal fun String.sha512(): String =
+            MessageDigest
                 .getInstance("SHA-512")
                 .digest(this.toByteArray())
                 .joinToString("") { "%02x".format(it) }
+
+        private fun søknad(type: String, fnr: String, eksternDokumentId: UUID, søknadId: UUID, søknadStatus: String, rapportertDato: LocalDateTime, jsonBody: String): Meldingsdetaljer {
+            return Meldingsdetaljer(
+                type = type,
+                fnr = fnr,
+                eksternDokumentId = eksternDokumentId,
+                rapportertDato = rapportertDato,
+                duplikatnøkkel = listOf(søknadId.toString(), søknadStatus),
+                jsonBody = jsonBody
+            )
         }
-    }
 
-    class NySøknad(packet: JsonMessage) : Melding(packet, Meldingsdetaljer(type = "ny_søknad", eksternDokumentId = packet["sykmeldingId"].asText().toUUID(), rapportertDato = packet["opprettet"].asLocalDateTime())) {
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
+        private fun nySøknad(type: String, packet: JsonMessage) =
+            søknad(
+                type = type,
+                fnr = packet["fnr"].asText(),
+                eksternDokumentId = packet["sykmeldingId"].asText().toUUID(),
+                søknadId = packet["id"].asText().toUUID(),
+                søknadStatus = packet["status"].asText(),
+                rapportertDato = packet["opprettet"].asLocalDateTime(),
+                jsonBody = packet.toJson()
+            )
+        private fun sendtSøknad(type: String, rapportetDatoFelt: String, packet: JsonMessage) =
+            søknad(
+                type = type,
+                fnr = packet["fnr"].asText(),
+                eksternDokumentId = packet["id"].asText().toUUID(),
+                søknadId = packet["id"].asText().toUUID(),
+                søknadStatus = packet["status"].asText(),
+                rapportertDato = packet[rapportetDatoFelt].asLocalDateTime(),
+                jsonBody = packet.toJson()
+            )
 
-        companion object {
-            fun lagNySøknad(data: String) : NySøknad {
-                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
-                    it.interestedIn("fnr")
-                    it.interestedIn("opprettet")
-                    it.interestedIn("id")
-                    it.interestedIn("sykmeldingId")
-                    it.interestedIn("status")
-                }
-                return NySøknad(jsonMessage)
-            }
-        }
-    }
-    class NyFrilansSøknad(packet: JsonMessage) : Melding(packet, Meldingsdetaljer(type = "ny_søknad_frilans", eksternDokumentId = packet["sykmeldingId"].asText().toUUID(), rapportertDato = packet["opprettet"].asLocalDateTime())) {
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
-    }
-    class NySelvstendigSøknad(packet: JsonMessage) : Melding(packet,Meldingsdetaljer(type = "ny_søknad_selvstendig", eksternDokumentId = packet["sykmeldingId"].asText().toUUID(), rapportertDato = packet["opprettet"].asLocalDateTime())) {
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
-    }
-    class NyArbeidsledigSøknad(packet: JsonMessage) : Melding(packet, Meldingsdetaljer(type = "ny_søknad_arbeidsledig", eksternDokumentId = packet["sykmeldingId"].asText().toUUID(), rapportertDato = packet["opprettet"].asLocalDateTime())) {
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
-    }
+        fun nySøknad(packet: JsonMessage) = nySøknad("ny_søknad", packet)
+        fun nySøknadFrilans(packet: JsonMessage) = nySøknad("ny_søknad_frilans", packet)
+        fun nySøknadSelvstendig(packet: JsonMessage) = nySøknad("ny_søknad_selvstendig", packet)
+        fun nySøknadArbeidsledig(packet: JsonMessage) = nySøknad("ny_søknad_arbeidsledig", packet)
 
-    class SendtSøknadArbeidsgiver(packet: JsonMessage) : Melding(packet, Meldingsdetaljer(type = "sendt_søknad_arbeidsgiver", eksternDokumentId = packet["id"].asText().toUUID(), rapportertDato = packet["sendtArbeidsgiver"].asLocalDateTime())) {
-        val sykmeldingDokumentId = packet["sykmeldingId"].asText().toUUID()
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
-    }
+        fun sendtSøknadArbeidsgiver(packet: JsonMessage) = sendtSøknad("sendt_søknad_arbeidsgiver", "sendtArbeidsgiver", packet)
+        fun sendtSøknadNav(packet: JsonMessage) = sendtSøknad("sendt_søknad_nav", "sendtNav", packet)
+        fun sendtSøknadFrilans(packet: JsonMessage) = sendtSøknad("sendt_søknad_frilans", "sendtNav", packet)
+        fun sendtSøknadSelvstendig(packet: JsonMessage) = sendtSøknad("sendt_søknad_selvstendig", "sendtNav", packet)
+        fun sendtSøknadArbeidsledig(packet: JsonMessage) = sendtSøknad("sendt_søknad_arbeidsledig", "sendtNav", packet)
 
-    class SendtSøknadNav(packet: JsonMessage) : Melding(packet, Meldingsdetaljer(type = "sendt_søknad_nav", eksternDokumentId = packet["id"].asText().toUUID(), rapportertDato = packet["sendtNav"].asLocalDateTime())) {
-        val sykmeldingDokumentId = packet["sykmeldingId"].asText().toUUID()
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
+        fun avbruttSøknad(packet: JsonMessage) = sendtSøknad("avbrutt_søknad", "opprettet", packet)
+        fun avbruttSøknadArbeidsledig(packet: JsonMessage) = sendtSøknad("avbrutt_arbeidsledig_søknad", "opprettet", packet)
     }
+}
 
-    class SendtFrilansSøknad(packet: JsonMessage) : Melding(packet, Meldingsdetaljer(type = "sendt_søknad_frilans", eksternDokumentId = packet["id"].asText().toUUID(), rapportertDato = packet["sendtNav"].asLocalDateTime())) {
-        val sykmeldingDokumentId = packet["sykmeldingId"].asText().toUUID()
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
+sealed class Melding(val internId: UUID, val meldingsdetaljer: Meldingsdetaljer) {
+    private companion object {
+        private val objectmapper = jacksonObjectMapper()
+            .registerModule(JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     }
+    val rapidhendelse = (objectmapper.readTree(meldingsdetaljer.jsonBody) as ObjectNode).apply {
+        put("@event_name", meldingsdetaljer.type)
+        put("@id", internId.toString())
+        put("@opprettet", meldingsdetaljer.rapportertDato.toString())
+    }.toString()
 
-    class SendtSelvstendigSøknad(packet: JsonMessage) : Melding(packet, Meldingsdetaljer(type = "sendt_søknad_selvstendig", eksternDokumentId = packet["id"].asText().toUUID(), rapportertDato = packet["sendtNav"].asLocalDateTime())) {
-        val sykmeldingDokumentId = packet["sykmeldingId"].asText().toUUID()
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
-    }
-
-    class SendtArbeidsledigSøknad(packet: JsonMessage) : Melding(packet, Meldingsdetaljer(type = "sendt_søknad_arbeidsledig", eksternDokumentId = packet["id"].asText().toUUID(), rapportertDato = packet["sendtNav"].asLocalDateTime())) {
-        val sykmeldingDokumentId = packet["sykmeldingId"].asText().toUUID()
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
-    }
-
-    class AvbruttSøknad(packet: JsonMessage) : Melding(packet, Meldingsdetaljer(type = "avbrutt_søknad", eksternDokumentId = packet["id"].asText().toUUID(), rapportertDato = packet["opprettet"].asLocalDateTime())) {
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
-        override fun toString(): String = "${fødselsnummer()}, ${packet["arbeidsgiver.orgnummer"].asText()}, ${packet["fom"].asLocalDate()} til ${packet["tom"].asLocalDate()}"
-    }
-    class AvbruttArbeidsledigSøknad(packet: JsonMessage) : Melding(packet, Meldingsdetaljer(type = "avbrutt_arbeidsledig_søknad", eksternDokumentId = packet["id"].asText().toUUID(), rapportertDato = packet["opprettet"].asLocalDateTime())) {
-        override fun fødselsnummer(): String = packet["fnr"].asText()
-        override fun duplikatnøkkel() = packet["id"].asText() + packet["status"].asText()
-        override fun toString(): String = "${fødselsnummer()}, arbeidsledig, ${packet["fom"].asLocalDate()} til ${packet["tom"].asLocalDate()}"
-    }
-
-    class Inntektsmelding(packet: JsonMessage, id: UUID = UUID.randomUUID()) : Melding(packet, Meldingsdetaljer(id = id, type = "inntektsmelding", eksternDokumentId = packet["inntektsmeldingId"].asText().toUUID(), rapportertDato = packet["mottattDato"].asLocalDateTime())) {
-        override fun fødselsnummer(): String = packet["arbeidstakerFnr"].asText().toString()
-        override fun duplikatnøkkel(): String = packet["arkivreferanse"].asText()
-        fun orgnummer(): String = packet["virksomhetsnummer"].asText()
-
-        fun arbeidsforholdId(): String? = packet["arbeidsforholdId"].takeIf(JsonNode::isTextual)?.asText()
-
-        companion object {
-            fun lagInntektsmelding(data: String) : Inntektsmelding {
-                val jsonMessage = JsonMessage(data, MessageProblems(data), registry).also {
-                    it.interestedIn("arbeidstakerFnr")
-                    it.interestedIn("virksomhetsnummer")
-                    it.interestedIn("inntektsmeldingId")
-                    it.interestedIn("mottattDato")
-                    it.interestedIn("arkivreferanse")
-                    it.interestedIn("@id")
-                }
-                return Inntektsmelding(jsonMessage, jsonMessage["@id"].asText().toUUID())
-            }
-        }
-    }
+    class NySøknad(internId: UUID, meldingsdetaljer: Meldingsdetaljer) : Melding(internId, meldingsdetaljer)
+    class SendtSøknad(internId: UUID, val sykmeldingId: UUID, meldingsdetaljer: Meldingsdetaljer) : Melding(internId, meldingsdetaljer)
+    class AvbruttSøknad(internId: UUID, meldingsdetaljer: Meldingsdetaljer) : Melding(internId, meldingsdetaljer)
+    class Inntektsmelding(
+        internId: UUID,
+        val orgnummer: String,
+        val arbeidsforholdId: String?,
+        meldingsdetaljer: Meldingsdetaljer
+    ) : Melding(internId, meldingsdetaljer)
 }

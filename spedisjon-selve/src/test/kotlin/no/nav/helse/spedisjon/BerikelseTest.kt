@@ -1,21 +1,26 @@
 package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import no.nav.helse.spedisjon.Melding.Inntektsmelding
-import no.nav.helse.spedisjon.Melding.NySøknad
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 class BerikelseTest {
 
     @Test
     fun `skal putte på fødselsdato og aktørId og dødsdato`() {
-        val json = NySøknad.lagNySøknad(nySøknad)
+        val json = Melding.NySøknad(UUID.randomUUID(), Meldingsdetaljer(
+            type = "ny_søknad",
+            fnr = "fnr",
+            eksternDokumentId = UUID.randomUUID(),
+            rapportertDato = LocalDateTime.now(),
+            duplikatnøkkel = listOf("unik key"),
+            jsonBody = "{}"
+        ))
         val beriketJson = Berikelse(
             fødselsdato = LocalDate.of(2012, 12, 31),
             dødsdato = LocalDate.of(2023, 1, 2),
@@ -30,7 +35,19 @@ class BerikelseTest {
 
     @Test
     fun `inntektsmelding blir ikke beriket med aktørid`() {
-        val json = Inntektsmelding.lagInntektsmelding(inntektsmelding)
+        val json = Inntektsmelding(
+            internId = UUID.randomUUID(),
+            orgnummer = "orgnr",
+            arbeidsforholdId = null,
+            meldingsdetaljer = Meldingsdetaljer(
+                type = "inntektsmelding",
+                fnr = "fnr",
+                eksternDokumentId = UUID.randomUUID(),
+                rapportertDato = LocalDateTime.now(),
+                duplikatnøkkel = listOf("unik key"),
+                jsonBody = "{}"
+            )
+        )
         val beriketJson = Berikelse(
             fødselsdato = LocalDate.of(2012, 12, 31),
             dødsdato = null,
@@ -42,23 +59,6 @@ class BerikelseTest {
         assertEquals("inntektsmelding", beriketJson.path("@event_name").asText())
     }
 
-    private fun JsonMessage.toJsonNode() =
-        toJson().let { jacksonObjectMapper().readTree(it) }
+    private fun BeriketMelding.toJsonNode() =
+        jacksonObjectMapper().readTree(json)
 }
-
-private val nySøknad = """
-    {
-      "@event_name": "ny_søknad",
-      "opprettet": "${LocalDateTime.now()}",
-      "id": "${UUID.randomUUID()}",
-      "sykmeldingId": "${UUID.randomUUID()}"
-    }
-""".trimIndent()
-
-private val inntektsmelding = """
-    {
-      "@event_name": "inntektsmelding",
-      "mottattDato": "${LocalDateTime.now()}",
-      "inntektsmeldingId": "${UUID.randomUUID()}"
-    }
-""".trimIndent()

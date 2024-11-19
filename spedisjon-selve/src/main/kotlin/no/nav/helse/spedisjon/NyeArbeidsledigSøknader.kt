@@ -31,8 +31,10 @@ internal class NyeArbeidsledigSøknader(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
-        val nySøknadMelding = Melding.NyArbeidsledigSøknad(packet)
-        meldingMediator.onMelding(nySøknadMelding, context)
+        val detaljer = Meldingsdetaljer.nySøknadArbeidsledig(packet)
+        meldingMediator.leggInnMelding(detaljer)?.also { internId ->
+            meldingMediator.onMelding(Melding.NySøknad(internId, detaljer), context)
+        }
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {

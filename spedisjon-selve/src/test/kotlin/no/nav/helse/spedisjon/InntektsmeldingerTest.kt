@@ -2,6 +2,7 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearMocks
 import io.mockk.mockk
@@ -12,6 +13,7 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
+import java.util.UUID
 import javax.sql.DataSource
 
 internal class InntektsmeldingerTest : AbstractRiverTest() {
@@ -25,7 +27,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     "virksomhetsnummer": "1234",
     "arbeidsgivertype": "BEDRIFT",
     "beregnetInntekt": "1000",
-    "mottattDato": "${LocalDateTime.now()}",
+    "mottattDato": "$OPPRETTET_DATO",
     "endringIRefusjoner": [],
     "arbeidsgiverperioder": [],
     "ferieperioder": [],
@@ -37,6 +39,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         manipulerTimeoutOgPubliser()
         assertSendteEvents("inntektsmelding")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -90,20 +93,24 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse") )
         manipulerTimeoutOgPubliser()
         val id = testRapid.inspektør.field(0, "@id").asText()
-        verify { dokumentProducerMock.send(match {
-            it.value().let { jacksonObjectMapper().readTree(it) }.path("intern_dokument_id").asText() == id
-        }) }
+        verify {
+            dokumentProducerMock.send(match { record ->
+                objectMapper.readTree(record.value()).path("intern_dokument_id").asText() == id
+            })
+        }
         val inntetsmeldingFrånDatabasen = inntektsmeldingFrånDatabasen()
-        assertEquals(id, inntetsmeldingFrånDatabasen.path("@id").asText())
+        println(inntetsmeldingFrånDatabasen)
+        assertEquals(id, inntetsmeldingFrånDatabasen.first.toString())
+        assertFalse(inntetsmeldingFrånDatabasen.second.hasNonNull("@id"))
     }
 
-    private fun inntektsmeldingFrånDatabasen() : JsonNode {
+    private fun inntektsmeldingFrånDatabasen() : Pair<UUID, JsonNode> {
         return sessionOf(dataSource).use { session ->
             session.run(
                 queryOf(
-                    "SELECT data FROM melding",
+                    "SELECT intern_dokument_id, data FROM melding",
                 ).map { row ->
-                    jacksonObjectMapper().readTree(row.string("data"))
+                    row.uuid("intern_dokument_id") to objectMapper.readTree(row.string("data"))
                 }.asList
             ).single()
         }
@@ -186,14 +193,18 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         val speedClient = mockSpeed()
         val dokumentAliasProducer = DokumentAliasProducer("tøysetopic", dokumentProducerMock)
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, dokumentAliasProducer)
-        inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, meldingMediator = meldingMediator, dokumentAliasProducer = dokumentAliasProducer)
+        inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, dokumentAliasProducer = dokumentAliasProducer)
         LogWrapper(testRapid, meldingMediator).apply {
-            Inntektsmeldinger(this, inntektsmeldingMediator)
+            Inntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
         }
     }
 
     private fun manipulerTimeoutOgPubliser() {
         manipulerTimeoutInntektsmelding(FØDSELSNUMMER)
         inntektsmeldingMediator.ekspeder(testRapid)
+    }
+
+    private companion object {
+        val objectMapper = jacksonObjectMapper()
     }
 }

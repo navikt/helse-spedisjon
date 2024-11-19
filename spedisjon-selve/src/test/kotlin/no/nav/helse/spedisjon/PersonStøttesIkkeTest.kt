@@ -80,9 +80,9 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
         val speedClient = mockSpeed(støttes = false)
         val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
-        val inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, meldingMediator = meldingMediator, dokumentAliasProducer = mockk(relaxed = true))
-        LogWrapper(testRapid, meldingMediator = meldingMediator).apply {
-            Inntektsmeldinger(rapidsConnection = this, inntektsmeldingMediator = inntektsmeldingMediator)
+        val inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, dokumentAliasProducer = mockk(relaxed = true))
+        LogWrapper(testRapid, meldingMediator).apply {
+            Inntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
             NyeSøknader(this, meldingMediator)
             FremtidigSøknaderRiver(this, meldingMediator)
             SendteSøknaderArbeidsgiver(this, meldingMediator)
