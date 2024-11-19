@@ -23,9 +23,9 @@ private fun connectionConfigFromMountPath(instanceId: String, mountPath: String)
 
     log.info("fant følgende filer under $mountPath: ${secretsPath.joinToString { it.name } }")
 
-    val databaseName = secretsPath.first { it.endsWith("_DATABASE") }.readText()
-    val databaseUsername = secretsPath.first { it.endsWith("_USERNAME") }.readText()
-    val databasePassword = secretsPath.first { it.endsWith("_PASSWORD") }.readText()
+    val databaseName = secretsPath.first { it.name.endsWith("_DATABASE") }.readText()
+    val databaseUsername = secretsPath.first { it.name.endsWith("_USERNAME") }.readText()
+    val databasePassword = secretsPath.first { it.name.endsWith("_PASSWORD") }.readText()
 
     return HikariConfig().apply {
         jdbcUrl = cloudSqlConnectionString(
