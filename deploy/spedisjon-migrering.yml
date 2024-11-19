@@ -17,9 +17,9 @@ spec:
   secureLogs:
     enabled: true
   filesFrom:
-    - configmap: google-sql-spedisjon
+    - secret: google-sql-spedisjon
       mountPath: /var/run/secrets/sql/spedisjon
-    - configmap: google-sql-spre-subsumsjon
+    - secret: google-sql-spre-subsumsjon
       mountPath: /var/run/secrets/sql/spre_subsumsjon
   gcp:
     sqlInstances:
