@@ -37,7 +37,7 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
     fun hentSendeklareMeldinger(inntektsmeldingTimeoutSekunder: Long, onEach: (SendeklarInntektsmelding, Int) -> Unit) {
         sessionOf(dataSource).use { session ->
             @Language("PostgreSQL")
-            val stmt = """SELECT i.fnr, i.orgnummer, i.arbeidsforhold_id, i.mottatt, m.ekstern_dokument_id, m.duplikatkontroll, m.intern_dokument_id, m.opprettet, m.data
+            val stmt = """SELECT i.fnr, i.orgnummer, i.arbeidsforhold_id, i.mottatt, m.ekstern_dokument_id, m.duplikatkontroll, m.intern_dokument_id, m.data
             FROM inntektsmelding i 
             JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
             WHERE i.ekspedert IS NULL AND i.timeout < :timeout
@@ -47,18 +47,17 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
 
             stmt
                 .listQuery(session, mapOf("timeout" to LocalDateTime.now())) { row ->
-                    println("sendeklarIM: internId = ${row.uuidOrNull("intern_dokument_id")}")
                     SendeklarInntektsmelding(
                         fnr = row.string("fnr"),
                         orgnummer = row.string("orgnummer"),
                         melding = Inntektsmelding(
-                            internId = row.uuidOrNull("intern_dokument_id") ?: objectMapper.readTree(row.string("data")).path("@id").asText().toUUID(), // todo: fjerne "OrNull()" når alle rader har intern id
+                            internId = row.uuid("intern_dokument_id"),
                             orgnummer = row.string("orgnummer"),
                             arbeidsforholdId = row.stringOrNull("arbeidsforhold_id"),
                             meldingsdetaljer = Meldingsdetaljer(
                                 type = "inntektsmelding",
                                 fnr = row.string("fnr"),
-                                eksternDokumentId = row.uuidOrNull("ekstern_dokument_id") ?: objectMapper.readTree(row.string("data")).path("inntektsmeldingId").asText().toUUID(), // todo: fjerne "OrNull()" når alle rader har intern id,
+                                eksternDokumentId = row.uuid("ekstern_dokument_id"),
                                 rapportertDato = objectMapper.readTree(row.string("data")).path("mottattDato").asLocalDateTime(),
                                 duplikatkontroll = row.string("duplikatkontroll"),
                                 jsonBody = row.string("data")
