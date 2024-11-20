@@ -115,9 +115,9 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig) {
                 log.info("Brukte ${it.inWholeSeconds} sekunder på å fylle arbeidstabellen")
             }
         }
-        utførArbeid(session) { arbeid ->
+        /*utførArbeid(session) { arbeid ->
             log.info("Arbeider på ${arbeid.id}")
-        }
+        }*/
     }
 }
 

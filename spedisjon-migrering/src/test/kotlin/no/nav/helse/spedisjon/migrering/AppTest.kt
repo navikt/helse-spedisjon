@@ -8,7 +8,7 @@ import kotliquery.queryOf
 import kotliquery.sessionOf
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import javax.sql.DataSource
@@ -41,16 +41,16 @@ class AppTest {
                 Arbeidrad(
                     id = it.long("id"),
                     fnr = it.string("fnr"),
-                    arbeidStartet = it.instant("arbeid_startet"),
-                    arbeidFerdig = it.instant("arbeid_ferdig")
+                    arbeidStartet = it.instantOrNull("arbeid_startet"),
+                    arbeidFerdig = it.instantOrNull("arbeid_ferdig")
                 )
             }.asList)
         }.single()
 
         assertEquals(1, arbeidRow.id)
         assertEquals(testperson.padStart(11, '0'), arbeidRow.fnr)
-        assertNotNull(arbeidRow.arbeidStartet)
-        assertNotNull(arbeidRow.arbeidFerdig)
+        assertNull(arbeidRow.arbeidStartet)
+        assertNull(arbeidRow.arbeidFerdig)
     }
 
     private data class Arbeidrad(
