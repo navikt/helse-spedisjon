@@ -17,6 +17,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.measureTime
 import kotlin.time.toJavaDuration
 
 val log: Logger = LoggerFactory.getLogger("no.nav.helse.spedisjon.migrering.App")
@@ -82,19 +83,37 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig) {
         klargjørEllerVentPåTilgjengeligArbeid(session) {
             log.info("Henter personer fra spedisjon og forbereder arbeidstabell")
 
-            val personer = HikariDataSource(spedisjonConfig).use { spedisjonDataSource ->
-                sessionOf(spedisjonDataSource).use { spedisjonSession ->
-                    @Language("PostgreSQL")
-                    val stmt = "select fnr from melding group by fnr"
-                    spedisjonSession.run(queryOf(stmt).map { row ->
-                        row.string("fnr").padStart(11, '0')
-                    }.asList)
-                }
-            }
+            measureTime {
+                HikariDataSource(spedisjonConfig).use { spedisjonDataSource ->
+                    sessionOf(spedisjonDataSource).use { spedisjonSession ->
+                        val limit = 50_000
+                        @Language("PostgreSQL")
+                        val stmt = "select fnr from melding group by fnr order by fnr limit $limit offset ?"
+                        var page = 0
+                        do {
+                            val offset = limit * page
+                            page += 1
 
-            @Language("PostgreSQL")
-            val query = """INSERT INTO arbeidstabell (fnr) VALUES ${personer.joinToString { "(?)" }}"""
-            session.run(queryOf(query, *personer.toTypedArray()).asExecute)
+                            log.info("[page $page] henter personer")
+                            val personer = spedisjonSession.run(queryOf(stmt, offset).map { row ->
+                                row.string("fnr").padStart(11, '0')
+                            }.asList)
+
+                            log.info("[page $page] inserter i arbeidstabell")
+
+                            if (personer.isNotEmpty()) {
+                                @Language("PostgreSQL")
+                                val query = """INSERT INTO arbeidstabell (fnr) VALUES ${personer.joinToString { "(?)" }}"""
+                                session.run(queryOf(query, *personer.toTypedArray()).asExecute)
+                            }
+
+                            log.info("[page $page] complete")
+                        } while (personer.size >= limit)
+                    }
+                }
+            }.also {
+                log.info("Brukte ${it.inWholeSeconds} sekunder på å fylle arbeidstabellen")
+            }
         }
         utførArbeid(session) { arbeid ->
             log.info("Arbeider på ${arbeid.id}")
