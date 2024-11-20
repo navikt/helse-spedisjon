@@ -36,16 +36,16 @@ class AppTest {
             @Language("PostgreSQL")
             val stmt1 = """create table melding (id bigint generated always as identity, fnr text, type text, ekstern_dokument_id uuid default null, intern_dokument_id uuid default null, data jsonb);"""
             session.run(queryOf(stmt1).asExecute)
-            val treffPåInternId = session.run(queryOf("insert into melding(fnr, type, data) values (?, ?, ?::jsonb) returning id", testperson, "ny_søknad", """{ "sykmeldingId": "8fc424c7-7ddc-495d-be71-54ddf5fa543d", "@id": "c47c9d1a-bc36-4118-98d3-2a8d49b837fe" }""").map { row ->
+            val treffPåInternId = session.run(queryOf("insert into melding(fnr, type, data) values (?, ?, ?::jsonb) returning id", testperson, "ny_søknad", """{ "sykmeldingId": "8fc424c7-7ddc-495d-be71-54ddf5fa543d", "@id": "c47c9d1a-bc36-4118-98d3-2a8d49b837fe", "id": "soknadId", "status": "NY" }""").map { row ->
                 row.long("id")
             }.asList).single()
-            val treffPåEksternIdMenUlikMeldingtype = session.run(queryOf("insert into melding(fnr, type, data) values (?, ?, ?::jsonb) returning id", testperson, "ny_søknad", """{ "sykmeldingId": "ae0bad00-eac2-4263-bb6c-37ae1618e3c1", "@id": "1f76e034-3e6e-422c-a296-f43cde57e320" }""").map { row ->
+            val treffPåEksternIdMenUlikMeldingtype = session.run(queryOf("insert into melding(fnr, type, data) values (?, ?, ?::jsonb) returning id", testperson, "ny_søknad", """{ "sykmeldingId": "ae0bad00-eac2-4263-bb6c-37ae1618e3c1", "@id": "1f76e034-3e6e-422c-a296-f43cde57e320", "id": "soknadId", "status": "NY" }""").map { row ->
                 row.long("id")
             }.asList).single()
-            val treffPåEksternIdOgSammeMeldingType = session.run(queryOf("insert into melding(fnr, type, data) values (?, ?, ?::jsonb) returning id", testperson, "ny_søknad", """{ "sykmeldingId": "8d8bc5cb-589e-4a87-9f26-50ccc6f483c7", "@id": "642edaa3-ed8f-4624-8970-43b9f80e2766" }""").map { row ->
+            val treffPåEksternIdOgSammeMeldingType = session.run(queryOf("insert into melding(fnr, type, data) values (?, ?, ?::jsonb) returning id", testperson, "ny_søknad", """{ "sykmeldingId": "8d8bc5cb-589e-4a87-9f26-50ccc6f483c7", "@id": "642edaa3-ed8f-4624-8970-43b9f80e2766", "id": "soknadId", "status": "NY" }""").map { row ->
                 row.long("id")
             }.asList).single()
-            val ingenTreff = session.run(queryOf("insert into melding(fnr, type, data) values (?, ?, ?::jsonb) returning id", testperson, "ny_søknad", """{ "sykmeldingId": "9a0faa73-9470-486f-a518-e4660980d36f", "@id": "4c63eeeb-cc98-405e-a994-2ae2eb5bc351" }""").map { row ->
+            val ingenTreff = session.run(queryOf("insert into melding(fnr, type, data) values (?, ?, ?::jsonb) returning id", testperson, "ny_søknad", """{ "sykmeldingId": "9a0faa73-9470-486f-a518-e4660980d36f", "@id": "4c63eeeb-cc98-405e-a994-2ae2eb5bc351", "id": "soknadId", "status": "NY" }""").map { row ->
                 row.long("id")
             }.asList).single()
 

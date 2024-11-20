@@ -13,6 +13,7 @@ import org.intellij.lang.annotations.Language
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
+import java.security.MessageDigest
 import java.util.UUID
 import javax.sql.DataSource
 import kotlin.io.path.Path
@@ -127,7 +128,7 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
 
         @Language("PostgreSQL")
         val hentHendelser = """
-            select id,type,data->>'id' as soknad_id, data->>'sykmeldingId' as sykmelding_id, data->>'inntektsmeldingId' as inntektsmelding_id, data->>'@id' as intern_id
+            select id,type,data->>'id' as soknad_id, data->>'sykmeldingId' as sykmelding_id, data->>'inntektsmeldingId' as inntektsmelding_id, data->>'@id' as intern_id, data->>'status' as soknad_status, data->>'arkivreferanse' as arkivreferanse
             from melding 
             where fnr = ? and (intern_dokument_id is null or ekstern_dokument_id is null);
         """
@@ -139,7 +140,7 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
         """
         @Language("PostgreSQL")
         val hentHendelserFraSpleis = """
-            select id,melding_id,melding_type,data->>'id' as soknad_id, data->>'sykmeldingId' as sykmelding_id, data->>'inntektsmeldingId' as inntektsmelding_id 
+            select id,melding_id,melding_type,data->>'id' as soknad_id, data->>'sykmeldingId' as sykmelding_id, data->>'inntektsmeldingId' as inntektsmelding_id, data->>'status' as soknad_status, data->>'arkivreferanse' as arkivreferanse
             from melding
             where fnr = ? and (
                 melding_type = 'NY_SØKNAD' OR
@@ -179,6 +180,7 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
                                             val hendelser = spedisjonSession.run(queryOf(hentHendelser, arbeid.fnr).map { row ->
                                                 val meldingId = row.long("id")
                                                 val type = Meldingtype.fraString(row.string("type").lowercase())
+                                                val flexSøknadId = row.stringOrNull("soknad_id")
                                                 val eksternId = when (type) {
                                                     Meldingtype.NY_SØKNAD,
                                                     Meldingtype.NY_SØKNAD_FRILANS,
@@ -190,14 +192,29 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
                                                     Meldingtype.SENDT_SØKNAD_SELVSTENDIG,
                                                     Meldingtype.SENDT_SØKNAD_ARBEIDSLEDIG,
                                                     Meldingtype.AVBRUTT_SØKNAD,
-                                                    Meldingtype.AVBRUTT_ARBEIDSLEDIG_SØKNAD -> row.stringOrNull("soknad_id")?.let { UUID.fromString(it) } ?: error("soknad_id er null for $meldingId")
+                                                    Meldingtype.AVBRUTT_ARBEIDSLEDIG_SØKNAD -> flexSøknadId?.let { UUID.fromString(it) } ?: error("soknad_id er null for $meldingId")
                                                     Meldingtype.INNTEKTSMELDING -> row.stringOrNull("inntektsmelding_id")?.let { UUID.fromString(it) } ?: error("inntektsmelding_id er null for $meldingId")
+                                                }
+                                                val duplikatnøkkelgrunnlag = when (type) {
+                                                    Meldingtype.NY_SØKNAD,
+                                                    Meldingtype.NY_SØKNAD_FRILANS,
+                                                    Meldingtype.NY_SØKNAD_SELVSTENDIG,
+                                                    Meldingtype.NY_SØKNAD_ARBEIDSLEDIG,
+                                                    Meldingtype.SENDT_SØKNAD_ARBEIDSGIVER,
+                                                    Meldingtype.SENDT_SØKNAD_NAV,
+                                                    Meldingtype.SENDT_SØKNAD_FRILANS,
+                                                    Meldingtype.SENDT_SØKNAD_SELVSTENDIG,
+                                                    Meldingtype.SENDT_SØKNAD_ARBEIDSLEDIG,
+                                                    Meldingtype.AVBRUTT_SØKNAD,
+                                                    Meldingtype.AVBRUTT_ARBEIDSLEDIG_SØKNAD -> listOf(checkNotNull(flexSøknadId) { "soknad_id er null for $meldingId" }, checkNotNull(row.string("soknad_status")) { "soknad_status er null for $meldingId" })
+                                                    Meldingtype.INNTEKTSMELDING -> listOf(checkNotNull(row.stringOrNull("arkivreferanse")) { "arkivreferanse er null for $meldingId" })
                                                 }
                                                 Hendelse(
                                                     id = meldingId,
                                                     type = type,
                                                     eksternId = eksternId,
-                                                    internId = row.stringOrNull("intern_id")?.let { UUID.fromString(it) } ?: error("intern_id er null for $meldingId")
+                                                    internId = row.stringOrNull("intern_id")?.let { UUID.fromString(it) } ?: error("intern_id er null for $meldingId"),
+                                                    duplikatnøkkelgrunnlag = duplikatnøkkelgrunnlag
                                                 )
                                             }.asList)
 
@@ -246,11 +263,26 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
                                                             Meldingtype.AVBRUTT_ARBEIDSLEDIG_SØKNAD -> row.stringOrNull("soknad_id")?.let { UUID.fromString(it) } ?: error("soknad_id er null for $spleisMeldingId")
                                                             Meldingtype.INNTEKTSMELDING -> row.stringOrNull("inntektsmelding_id")?.let { UUID.fromString(it) } ?: error("inntektsmelding_id er null for $spleisMeldingId")
                                                         }
+                                                        val duplikatnøkkelgrunnlag = when (meldingtype) {
+                                                            Meldingtype.NY_SØKNAD,
+                                                            Meldingtype.NY_SØKNAD_FRILANS,
+                                                            Meldingtype.NY_SØKNAD_SELVSTENDIG,
+                                                            Meldingtype.NY_SØKNAD_ARBEIDSLEDIG,
+                                                            Meldingtype.SENDT_SØKNAD_ARBEIDSGIVER,
+                                                            Meldingtype.SENDT_SØKNAD_NAV,
+                                                            Meldingtype.SENDT_SØKNAD_FRILANS,
+                                                            Meldingtype.SENDT_SØKNAD_SELVSTENDIG,
+                                                            Meldingtype.SENDT_SØKNAD_ARBEIDSLEDIG,
+                                                            Meldingtype.AVBRUTT_SØKNAD,
+                                                            Meldingtype.AVBRUTT_ARBEIDSLEDIG_SØKNAD -> listOf(row.string("soknad_id"), row.string("soknad_status"))
+                                                            Meldingtype.INNTEKTSMELDING -> listOf(row.string("arkivreferanse"))
+                                                        }
                                                         Spleishendelse(
                                                             id = spleisMeldingId,
                                                             internId = row.string("melding_id").let { UUID.fromString(it) },
                                                             meldingtype = meldingtype,
-                                                            eksternId = eksternId
+                                                            eksternId = eksternId,
+                                                            duplikatnøkkelgrunnlag = duplikatnøkkelgrunnlag
                                                         )
                                                     }.asList)
                                                 }
@@ -295,12 +327,26 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
                                                             dokumentmapping.eksternId == hendelse.eksternId && dokumentmapping.hendelsetype == hendelse.type
                                                         }
 
-                                                        // om vi ikke finner noen treff på ekstern_dokument_id så må vi bare bruke den vi fant i json under @id
-                                                        if (matchPåEksternId.isEmpty()) {
-                                                            log.info("fant ingen treff på ekstern id og hendelsetype id for {} ({}). sjekker derfor spleishendelser", hendelse.kvmeldingId, hendelse.kvmeldingType)
-                                                            val spleisHendelse = if (sjekkSpleis) spleishendelser.firstOrNull { spleishendelse ->
+                                                        // vi stoler kun på spre-subsumsjon hvis vi finner nøyaktig én mapping
+                                                        if (matchPåEksternId.size == 1) {
+                                                            log.info("fant treff på ekstern id og hendelsetype for {} ({})", hendelse.kvmeldingId, hendelse.kvmeldingType)
+                                                            // hvis vi finner dokument_id, men annen hendelse, er dette mest sannsynlig ny_søknad.
+                                                            // ny_søknad har samme eksterne ID (søkadID) som sendt_søknad,
+                                                            // men ny_søknad har ikke nødvendigvis blitt satt inn i spre-subsumsjon
+                                                            hendelse.copy(internId = matchPåEksternId.first().internId)
+                                                        } else {
+                                                            log.info("fant ikke direkte treff på ekstern id og hendelsetype id for {} ({}). sjekker derfor spleishendelser", hendelse.kvmeldingId, hendelse.kvmeldingType)
+                                                            val aktuelleSpleisHendelser = if (sjekkSpleis) spleishendelser.filter { spleishendelse ->
                                                                 spleishendelse.eksternId == hendelse.eksternId && spleishendelse.meldingtype == hendelse.type
-                                                            } else null
+                                                            } else emptyList()
+
+                                                            val spleisHendelse = if (aktuelleSpleisHendelser.size == 1)
+                                                                aktuelleSpleisHendelser.first()
+                                                            else
+                                                                aktuelleSpleisHendelser.firstOrNull { spleishendelse ->
+                                                                    spleishendelse.duplikatkontroll == hendelse.duplikatkontroll
+                                                                }
+
                                                             if (spleisHendelse != null) {
                                                                 log.info("fant treff i spleis på ekstern id og hendelsetype id for {} ({}).", hendelse.kvmeldingId, hendelse.kvmeldingType)
                                                                 hendelse.copy(
@@ -310,13 +356,6 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
                                                                 log.info("fant ingen treff på ekstern id og hendelsetype id for {} ({}) etter å ha sjekket spleishendelser", hendelse.kvmeldingId, hendelse.kvmeldingType)
                                                                 hendelse
                                                             }
-                                                        }
-                                                        else {
-                                                            log.info("fant treff på ekstern id og hendelsetype for {} ({})", hendelse.kvmeldingId, hendelse.kvmeldingType)
-                                                            // hvis vi finner dokument_id, men annen hendelse, er dette mest sannsynlig ny_søknad.
-                                                            // ny_søknad har samme eksterne ID (søkadID) som sendt_søknad,
-                                                            // men ny_søknad har ikke nødvendigvis blitt satt inn i spre-subsumsjon
-                                                            hendelse.copy(internId = matchPåEksternId.first().internId)
                                                         }
                                                     }
                                                 }
@@ -347,6 +386,12 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
     }
 }
 
+internal fun String.sha512(): String =
+    MessageDigest
+        .getInstance("SHA-512")
+        .digest(this.toByteArray())
+        .joinToString("") { "%02x".format(it) }
+
 data class Dokumentmapping(
     val internId: UUID,
     val eksternId: UUID,
@@ -357,17 +402,27 @@ data class Spleishendelse(
     val id: Long,
     val internId: UUID,
     val meldingtype: Meldingtype,
-    val eksternId: UUID
-)
+    val eksternId: UUID,
+    val duplikatnøkkelgrunnlag: List<String>
+) {
+    val duplikatkontroll by lazy {
+        duplikatnøkkelgrunnlag.joinToString("").sha512()
+    }
+}
 
 data class Hendelse(
     val id: Long,
     val type: Meldingtype,
     val eksternId: UUID,
-    val internId: UUID
+    val internId: UUID,
+    val duplikatnøkkelgrunnlag: List<String>
 ) {
     val kvmeldingId = kv("meldingId", id)
     val kvmeldingType = kv("meldingType", type)
+
+    val duplikatkontroll by lazy {
+        duplikatnøkkelgrunnlag.joinToString("").sha512()
+    }
 }
 
 private enum class SpleisMeldingstype {
