@@ -21,7 +21,7 @@ spec:
       mountPath: /var/run/secrets/sql/spedisjon
     - secret: google-sql-spre-subsumsjon
       mountPath: /var/run/secrets/sql/spre_subsumsjon
-    - secret: google-sql-spleis
+    - secret: {{ spleis_secret }}
       mountPath: /var/run/secrets/sql/spleis
   gcp:
     sqlInstances:
