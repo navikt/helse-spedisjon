@@ -328,7 +328,7 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
                                                 )
                                             }
                                             val updateStmt = oppdaterInternId.format(oppdaterteIder.joinToString { "(?, ?, ?)" })
-                                            session.run(queryOf(updateStmt, *verdier.toTypedArray()).asUpdate)
+                                            spedisjonSession.run(queryOf(updateStmt, *verdier.toTypedArray()).asUpdate)
                                         }
                                     }
                                 }
