@@ -174,161 +174,166 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
 
                                 utførArbeid(session) { arbeid ->
                                     MDC.putCloseable("arbeidId", arbeid.id.toString()).use {
-                                        log.info("henter hendelser for arbeidId=${arbeid.id}")
-                                        val hendelser = spedisjonSession.run(queryOf(hentHendelser, arbeid.fnr).map { row ->
-                                            val meldingId = row.long("id")
-                                            val type = Meldingtype.fraString(row.string("type").lowercase())
-                                            val eksternId = when (type) {
-                                                Meldingtype.NY_SØKNAD,
-                                                Meldingtype.NY_SØKNAD_FRILANS,
-                                                Meldingtype.NY_SØKNAD_SELVSTENDIG,
-                                                Meldingtype.NY_SØKNAD_ARBEIDSLEDIG -> row.stringOrNull("sykmelding_id")?.let { UUID.fromString(it) } ?: error("sykmelding_id er null for $meldingId")
-                                                Meldingtype.SENDT_SØKNAD_ARBEIDSGIVER,
-                                                Meldingtype.SENDT_SØKNAD_NAV,
-                                                Meldingtype.SENDT_SØKNAD_FRILANS,
-                                                Meldingtype.SENDT_SØKNAD_SELVSTENDIG,
-                                                Meldingtype.SENDT_SØKNAD_ARBEIDSLEDIG,
-                                                Meldingtype.AVBRUTT_SØKNAD,
-                                                Meldingtype.AVBRUTT_ARBEIDSLEDIG_SØKNAD -> row.stringOrNull("soknad_id")?.let { UUID.fromString(it) } ?: error("soknad_id er null for $meldingId")
-                                                Meldingtype.INNTEKTSMELDING -> row.stringOrNull("inntektsmelding_id")?.let { UUID.fromString(it) } ?: error("inntektsmelding_id er null for $meldingId")
-                                            }
-                                            Hendelse(
-                                                id = meldingId,
-                                                type = type,
-                                                eksternId = eksternId,
-                                                internId = row.stringOrNull("intern_id")?.let { UUID.fromString(it) } ?: error("intern_id er null for $meldingId")
-                                            )
-                                        }.asList)
-
-                                        log.info("Hentet ${hendelser.size} hendelser for arbeidId=${arbeid.id}")
-                                        if (hendelser.isNotEmpty()) {
-                                            val eksterneIder = hendelser.map { it.eksternId }
-                                            val interneIder = hendelser.map { it.internId }
-                                            val dokumentmappingStmt = hentDokumentmapping.format(eksterneIder.joinToString { "?" }, interneIder.joinToString { "?" })
-
-                                            val dokumentmapping = spreSubsumsjonSession.run(queryOf(dokumentmappingStmt, *eksterneIder.toTypedArray(), *interneIder.toTypedArray()).map { row ->
-                                                Dokumentmapping(
-                                                    internId = row.string("hendelse_id").let { UUID.fromString(it) },
-                                                    eksternId = row.string("dokument_id").let { UUID.fromString(it) },
-                                                    hendelsetype = Meldingtype.fraString(row.string("hendelse_type").lowercase())
+                                        try {
+                                            log.info("henter hendelser for arbeidId=${arbeid.id}")
+                                            val hendelser = spedisjonSession.run(queryOf(hentHendelser, arbeid.fnr).map { row ->
+                                                val meldingId = row.long("id")
+                                                val type = Meldingtype.fraString(row.string("type").lowercase())
+                                                val eksternId = when (type) {
+                                                    Meldingtype.NY_SØKNAD,
+                                                    Meldingtype.NY_SØKNAD_FRILANS,
+                                                    Meldingtype.NY_SØKNAD_SELVSTENDIG,
+                                                    Meldingtype.NY_SØKNAD_ARBEIDSLEDIG -> row.stringOrNull("sykmelding_id")?.let { UUID.fromString(it) } ?: error("sykmelding_id er null for $meldingId")
+                                                    Meldingtype.SENDT_SØKNAD_ARBEIDSGIVER,
+                                                    Meldingtype.SENDT_SØKNAD_NAV,
+                                                    Meldingtype.SENDT_SØKNAD_FRILANS,
+                                                    Meldingtype.SENDT_SØKNAD_SELVSTENDIG,
+                                                    Meldingtype.SENDT_SØKNAD_ARBEIDSLEDIG,
+                                                    Meldingtype.AVBRUTT_SØKNAD,
+                                                    Meldingtype.AVBRUTT_ARBEIDSLEDIG_SØKNAD -> row.stringOrNull("soknad_id")?.let { UUID.fromString(it) } ?: error("soknad_id er null for $meldingId")
+                                                    Meldingtype.INNTEKTSMELDING -> row.stringOrNull("inntektsmelding_id")?.let { UUID.fromString(it) } ?: error("inntektsmelding_id er null for $meldingId")
+                                                }
+                                                Hendelse(
+                                                    id = meldingId,
+                                                    type = type,
+                                                    eksternId = eksternId,
+                                                    internId = row.stringOrNull("intern_id")?.let { UUID.fromString(it) } ?: error("intern_id er null for $meldingId")
                                                 )
                                             }.asList)
 
-                                            val spleishendelser by lazy {
-                                                spleisSession.run(queryOf(hentHendelserFraSpleis, arbeid.fnr.toLong()).map { row ->
-                                                    val spleisMeldingId = row.long("id")
-                                                    val spleismeldingtype = SpleisMeldingstype.valueOf(row.string("melding_type"))
-                                                    val meldingtype = when (spleismeldingtype) {
-                                                        SpleisMeldingstype.NY_SØKNAD -> Meldingtype.NY_SØKNAD
-                                                        SpleisMeldingstype.NY_SØKNAD_FRILANS -> Meldingtype.NY_SØKNAD_FRILANS
-                                                        SpleisMeldingstype.NY_SØKNAD_SELVSTENDIG -> Meldingtype.NY_SØKNAD_SELVSTENDIG
-                                                        SpleisMeldingstype.NY_SØKNAD_ARBEIDSLEDIG -> Meldingtype.NY_SØKNAD_ARBEIDSLEDIG
-                                                        SpleisMeldingstype.SENDT_SØKNAD_ARBEIDSGIVER -> Meldingtype.SENDT_SØKNAD_ARBEIDSGIVER
-                                                        SpleisMeldingstype.SENDT_SØKNAD_NAV -> Meldingtype.SENDT_SØKNAD_NAV
-                                                        SpleisMeldingstype.SENDT_SØKNAD_FRILANS -> Meldingtype.SENDT_SØKNAD_FRILANS
-                                                        SpleisMeldingstype.SENDT_SØKNAD_SELVSTENDIG -> Meldingtype.SENDT_SØKNAD_SELVSTENDIG
-                                                        SpleisMeldingstype.SENDT_SØKNAD_ARBEIDSLEDIG -> Meldingtype.SENDT_SØKNAD_ARBEIDSLEDIG
-                                                        SpleisMeldingstype.INNTEKTSMELDING -> Meldingtype.INNTEKTSMELDING
-                                                        SpleisMeldingstype.AVBRUTT_SØKNAD -> Meldingtype.AVBRUTT_SØKNAD
-                                                    }
-                                                    val eksternId = when (meldingtype) {
-                                                        Meldingtype.NY_SØKNAD,
-                                                        Meldingtype.NY_SØKNAD_FRILANS,
-                                                        Meldingtype.NY_SØKNAD_SELVSTENDIG,
-                                                        Meldingtype.NY_SØKNAD_ARBEIDSLEDIG -> row.stringOrNull("sykmelding_id")?.let { UUID.fromString(it) } ?: error("sykmelding_id er null for $spleisMeldingId")
-                                                        Meldingtype.SENDT_SØKNAD_ARBEIDSGIVER,
-                                                        Meldingtype.SENDT_SØKNAD_NAV,
-                                                        Meldingtype.SENDT_SØKNAD_FRILANS,
-                                                        Meldingtype.SENDT_SØKNAD_SELVSTENDIG,
-                                                        Meldingtype.SENDT_SØKNAD_ARBEIDSLEDIG,
-                                                        Meldingtype.AVBRUTT_SØKNAD,
-                                                        Meldingtype.AVBRUTT_ARBEIDSLEDIG_SØKNAD -> row.stringOrNull("soknad_id")?.let { UUID.fromString(it) } ?: error("soknad_id er null for $spleisMeldingId")
-                                                        Meldingtype.INNTEKTSMELDING -> row.stringOrNull("inntektsmelding_id")?.let { UUID.fromString(it) } ?: error("inntektsmelding_id er null for $spleisMeldingId")
-                                                    }
-                                                    Spleishendelse(
-                                                        id = spleisMeldingId,
-                                                        internId = row.string("melding_id").let { UUID.fromString(it) },
-                                                        meldingtype = meldingtype,
-                                                        eksternId = eksternId
+                                            log.info("Hentet ${hendelser.size} hendelser for arbeidId=${arbeid.id}")
+                                            if (hendelser.isNotEmpty()) {
+                                                val eksterneIder = hendelser.map { it.eksternId }
+                                                val interneIder = hendelser.map { it.internId }
+                                                val dokumentmappingStmt = hentDokumentmapping.format(eksterneIder.joinToString { "?" }, interneIder.joinToString { "?" })
+
+                                                val dokumentmapping = spreSubsumsjonSession.run(queryOf(dokumentmappingStmt, *eksterneIder.toTypedArray(), *interneIder.toTypedArray()).map { row ->
+                                                    Dokumentmapping(
+                                                        internId = row.string("hendelse_id").let { UUID.fromString(it) },
+                                                        eksternId = row.string("dokument_id").let { UUID.fromString(it) },
+                                                        hendelsetype = Meldingtype.fraString(row.string("hendelse_type").lowercase())
                                                     )
                                                 }.asList)
-                                            }
 
-                                            /**
-                                             * Inntektsmelding:
-                                             *  hendelse_id = <rapid @id>
-                                             *  dokument_id = inntektsmeldingId
-                                             *  hendelse_type = inntektsmelding
-                                             *  dokument_id_type = Inntektsmelding
-                                             *
-                                             * Ny søknad:
-                                             *  hendelse_id = <rapid @id>
-                                             *  dokument_id = sykmeldingId (fra flex-søknaden)
-                                             *  hendelse_type = ny_søknad (og andre ny_søknad-varianter)
-                                             *  dokument_id_type = Sykmelding
-                                             *
-                                             * Sendt søknad:
-                                             *  hendelse_id = <rapid @id>
-                                             *  dokument_id = id (fra flex-søknaden)
-                                             *  hendelse_type = sendt_søknad_nav (og andre sendt_søknad-varianter)
-                                             *  dokument_id_type = Søknad
-                                             *
-                                             *  hendelse_id = <rapid @id>
-                                             *  dokument_id = sykmeldingId (fra flex-søknaden)
-                                             *  hendelse_type = sendt_søknad_nav (og andre sendt_søknad-varianter)
-                                             *  dokument_id_type = Sykmelding
-                                             */
-
-                                            val oppdaterteIder = hendelser.map { hendelse ->
-                                                val matchPåInternId = dokumentmapping.firstOrNull { dokumentmapping ->
-                                                    dokumentmapping.internId == hendelse.internId
+                                                val spleishendelser by lazy {
+                                                    spleisSession.run(queryOf(hentHendelserFraSpleis, arbeid.fnr.toLong()).map { row ->
+                                                        val spleisMeldingId = row.long("id")
+                                                        val spleismeldingtype = SpleisMeldingstype.valueOf(row.string("melding_type"))
+                                                        val meldingtype = when (spleismeldingtype) {
+                                                            SpleisMeldingstype.NY_SØKNAD -> Meldingtype.NY_SØKNAD
+                                                            SpleisMeldingstype.NY_SØKNAD_FRILANS -> Meldingtype.NY_SØKNAD_FRILANS
+                                                            SpleisMeldingstype.NY_SØKNAD_SELVSTENDIG -> Meldingtype.NY_SØKNAD_SELVSTENDIG
+                                                            SpleisMeldingstype.NY_SØKNAD_ARBEIDSLEDIG -> Meldingtype.NY_SØKNAD_ARBEIDSLEDIG
+                                                            SpleisMeldingstype.SENDT_SØKNAD_ARBEIDSGIVER -> Meldingtype.SENDT_SØKNAD_ARBEIDSGIVER
+                                                            SpleisMeldingstype.SENDT_SØKNAD_NAV -> Meldingtype.SENDT_SØKNAD_NAV
+                                                            SpleisMeldingstype.SENDT_SØKNAD_FRILANS -> Meldingtype.SENDT_SØKNAD_FRILANS
+                                                            SpleisMeldingstype.SENDT_SØKNAD_SELVSTENDIG -> Meldingtype.SENDT_SØKNAD_SELVSTENDIG
+                                                            SpleisMeldingstype.SENDT_SØKNAD_ARBEIDSLEDIG -> Meldingtype.SENDT_SØKNAD_ARBEIDSLEDIG
+                                                            SpleisMeldingstype.INNTEKTSMELDING -> Meldingtype.INNTEKTSMELDING
+                                                            SpleisMeldingstype.AVBRUTT_SØKNAD -> Meldingtype.AVBRUTT_SØKNAD
+                                                        }
+                                                        val eksternId = when (meldingtype) {
+                                                            Meldingtype.NY_SØKNAD,
+                                                            Meldingtype.NY_SØKNAD_FRILANS,
+                                                            Meldingtype.NY_SØKNAD_SELVSTENDIG,
+                                                            Meldingtype.NY_SØKNAD_ARBEIDSLEDIG -> row.stringOrNull("sykmelding_id")?.let { UUID.fromString(it) } ?: error("sykmelding_id er null for $spleisMeldingId")
+                                                            Meldingtype.SENDT_SØKNAD_ARBEIDSGIVER,
+                                                            Meldingtype.SENDT_SØKNAD_NAV,
+                                                            Meldingtype.SENDT_SØKNAD_FRILANS,
+                                                            Meldingtype.SENDT_SØKNAD_SELVSTENDIG,
+                                                            Meldingtype.SENDT_SØKNAD_ARBEIDSLEDIG,
+                                                            Meldingtype.AVBRUTT_SØKNAD,
+                                                            Meldingtype.AVBRUTT_ARBEIDSLEDIG_SØKNAD -> row.stringOrNull("soknad_id")?.let { UUID.fromString(it) } ?: error("soknad_id er null for $spleisMeldingId")
+                                                            Meldingtype.INNTEKTSMELDING -> row.stringOrNull("inntektsmelding_id")?.let { UUID.fromString(it) } ?: error("inntektsmelding_id er null for $spleisMeldingId")
+                                                        }
+                                                        Spleishendelse(
+                                                            id = spleisMeldingId,
+                                                            internId = row.string("melding_id").let { UUID.fromString(it) },
+                                                            meldingtype = meldingtype,
+                                                            eksternId = eksternId
+                                                        )
+                                                    }.asList)
                                                 }
 
-                                                // om vi har treff på intern id så er saken grei
-                                                if (matchPåInternId != null) {
-                                                    log.info("fant direkte treff på intern id for {} ({})", hendelse.kvmeldingId, hendelse.kvmeldingType)
-                                                    hendelse
-                                                }
-                                                else {
-                                                    val matchPåEksternId = dokumentmapping.filter { dokumentmapping ->
-                                                        dokumentmapping.eksternId == hendelse.eksternId && dokumentmapping.hendelsetype == hendelse.type
+                                                /**
+                                                 * Inntektsmelding:
+                                                 *  hendelse_id = <rapid @id>
+                                                 *  dokument_id = inntektsmeldingId
+                                                 *  hendelse_type = inntektsmelding
+                                                 *  dokument_id_type = Inntektsmelding
+                                                 *
+                                                 * Ny søknad:
+                                                 *  hendelse_id = <rapid @id>
+                                                 *  dokument_id = sykmeldingId (fra flex-søknaden)
+                                                 *  hendelse_type = ny_søknad (og andre ny_søknad-varianter)
+                                                 *  dokument_id_type = Sykmelding
+                                                 *
+                                                 * Sendt søknad:
+                                                 *  hendelse_id = <rapid @id>
+                                                 *  dokument_id = id (fra flex-søknaden)
+                                                 *  hendelse_type = sendt_søknad_nav (og andre sendt_søknad-varianter)
+                                                 *  dokument_id_type = Søknad
+                                                 *
+                                                 *  hendelse_id = <rapid @id>
+                                                 *  dokument_id = sykmeldingId (fra flex-søknaden)
+                                                 *  hendelse_type = sendt_søknad_nav (og andre sendt_søknad-varianter)
+                                                 *  dokument_id_type = Sykmelding
+                                                 */
+
+                                                val oppdaterteIder = hendelser.map { hendelse ->
+                                                    val matchPåInternId = dokumentmapping.firstOrNull { dokumentmapping ->
+                                                        dokumentmapping.internId == hendelse.internId
                                                     }
 
-                                                    // om vi ikke finner noen treff på ekstern_dokument_id så må vi bare bruke den vi fant i json under @id
-                                                    if (matchPåEksternId.isEmpty()) {
-                                                        log.info("fant ingen treff på ekstern id og hendelsetype id for {} ({}). sjekker derfor spleishendelser", hendelse.kvmeldingId, hendelse.kvmeldingType)
-                                                        val spleisHendelse = if (sjekkSpleis) spleishendelser.firstOrNull { spleishendelse ->
-                                                            spleishendelse.eksternId == hendelse.eksternId && spleishendelse.meldingtype == hendelse.type
-                                                        } else null
-                                                        if (spleisHendelse != null) {
-                                                            log.info("fant treff i spleis på ekstern id og hendelsetype id for {} ({}).", hendelse.kvmeldingId, hendelse.kvmeldingType)
-                                                            hendelse.copy(
-                                                                internId = spleisHendelse.internId
-                                                            )
-                                                        } else {
-                                                            log.info("fant ingen treff på ekstern id og hendelsetype id for {} ({}) etter å ha sjekket spleishendelser", hendelse.kvmeldingId, hendelse.kvmeldingType)
-                                                            hendelse
-                                                        }
+                                                    // om vi har treff på intern id så er saken grei
+                                                    if (matchPåInternId != null) {
+                                                        log.info("fant direkte treff på intern id for {} ({})", hendelse.kvmeldingId, hendelse.kvmeldingType)
+                                                        hendelse
                                                     }
                                                     else {
-                                                        log.info("fant treff på ekstern id og hendelsetype for {} ({})", hendelse.kvmeldingId, hendelse.kvmeldingType)
-                                                        // hvis vi finner dokument_id, men annen hendelse, er dette mest sannsynlig ny_søknad.
-                                                        // ny_søknad har samme eksterne ID (søkadID) som sendt_søknad,
-                                                        // men ny_søknad har ikke nødvendigvis blitt satt inn i spre-subsumsjon
-                                                        hendelse.copy(internId = matchPåEksternId.first().internId)
+                                                        val matchPåEksternId = dokumentmapping.filter { dokumentmapping ->
+                                                            dokumentmapping.eksternId == hendelse.eksternId && dokumentmapping.hendelsetype == hendelse.type
+                                                        }
+
+                                                        // om vi ikke finner noen treff på ekstern_dokument_id så må vi bare bruke den vi fant i json under @id
+                                                        if (matchPåEksternId.isEmpty()) {
+                                                            log.info("fant ingen treff på ekstern id og hendelsetype id for {} ({}). sjekker derfor spleishendelser", hendelse.kvmeldingId, hendelse.kvmeldingType)
+                                                            val spleisHendelse = if (sjekkSpleis) spleishendelser.firstOrNull { spleishendelse ->
+                                                                spleishendelse.eksternId == hendelse.eksternId && spleishendelse.meldingtype == hendelse.type
+                                                            } else null
+                                                            if (spleisHendelse != null) {
+                                                                log.info("fant treff i spleis på ekstern id og hendelsetype id for {} ({}).", hendelse.kvmeldingId, hendelse.kvmeldingType)
+                                                                hendelse.copy(
+                                                                    internId = spleisHendelse.internId
+                                                                )
+                                                            } else {
+                                                                log.info("fant ingen treff på ekstern id og hendelsetype id for {} ({}) etter å ha sjekket spleishendelser", hendelse.kvmeldingId, hendelse.kvmeldingType)
+                                                                hendelse
+                                                            }
+                                                        }
+                                                        else {
+                                                            log.info("fant treff på ekstern id og hendelsetype for {} ({})", hendelse.kvmeldingId, hendelse.kvmeldingType)
+                                                            // hvis vi finner dokument_id, men annen hendelse, er dette mest sannsynlig ny_søknad.
+                                                            // ny_søknad har samme eksterne ID (søkadID) som sendt_søknad,
+                                                            // men ny_søknad har ikke nødvendigvis blitt satt inn i spre-subsumsjon
+                                                            hendelse.copy(internId = matchPåEksternId.first().internId)
+                                                        }
                                                     }
                                                 }
-                                            }
 
-                                            val verdier: List<Any> = oppdaterteIder.flatMap { hendelse ->
-                                                listOf(
-                                                    hendelse.id,
-                                                    hendelse.internId,
-                                                    hendelse.eksternId
-                                                )
+                                                val verdier: List<Any> = oppdaterteIder.flatMap { hendelse ->
+                                                    listOf(
+                                                        hendelse.id,
+                                                        hendelse.internId,
+                                                        hendelse.eksternId
+                                                    )
+                                                }
+                                                val updateStmt = oppdaterInternId.format(oppdaterteIder.joinToString { "(?, ?, ?)" })
+                                                spedisjonSession.run(queryOf(updateStmt, *verdier.toTypedArray()).asUpdate)
                                             }
-                                            val updateStmt = oppdaterInternId.format(oppdaterteIder.joinToString { "(?, ?, ?)" })
-                                            spedisjonSession.run(queryOf(updateStmt, *verdier.toTypedArray()).asUpdate)
+                                        } catch (err: Exception) {
+                                            log.error("feil ved migrering: ${err.message}", err)
+                                            throw err
                                         }
                                     }
                                 }
