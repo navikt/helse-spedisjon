@@ -321,6 +321,7 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spreS
                                                     }
                                                 }
 
+                                                log.info("oppsummering: ${oppdaterteIder.joinToString()}")
                                                 val verdier: List<Any> = oppdaterteIder.flatMap { hendelse ->
                                                     listOf(
                                                         hendelse.id,
