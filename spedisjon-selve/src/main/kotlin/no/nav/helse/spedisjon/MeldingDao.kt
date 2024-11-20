@@ -51,7 +51,7 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
             select 'i' as kilde, intern_dokument_id
             from ins
             union all
-            select 's' as kilde, coalesce(m.intern_dokument_id,cast(m.data->>'@id' as uuid)) as intern_dokument_id
+            select 's' as kilde, m.intern_dokument_id
             from verdier v
             join melding m
             on v.duplikatkontroll = m.duplikatkontroll;
