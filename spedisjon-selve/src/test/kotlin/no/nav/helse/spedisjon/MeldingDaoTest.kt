@@ -3,6 +3,7 @@ package no.nav.helse.spedisjon
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import javax.sql.DataSource
 
@@ -32,7 +33,7 @@ class MeldingDaoTest {
                 fnr = nyMeldingDto.fnr,
                 internDokumentId = internDokumentId,
                 eksternDokumentId = nyMeldingDto.eksternDokumentId,
-                rapportertDato = nyMeldingDto.rapportertDato,
+                rapportertDato = nyMeldingDto.rapportertDato.truncatedTo(ChronoUnit.MICROS),
                 duplikatkontroll = nyMeldingDto.duplikatkontroll.padEnd(128, ' '),
                 jsonBody = nyMeldingDto.jsonBody
             )
