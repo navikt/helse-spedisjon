@@ -28,6 +28,11 @@ spec:
   replicas:
     min: 2
     max: 3
+    scalingStrategy:
+      kafka:
+        topic: flex.sykepengesoknad
+        consumerGroup: tbd-spedisjon-v1
+        threshold: 200
   azure:
     application:
       enabled: true
