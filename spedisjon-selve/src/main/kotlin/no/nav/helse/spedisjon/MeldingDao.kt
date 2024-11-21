@@ -5,6 +5,7 @@ import kotliquery.sessionOf
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
+import java.time.LocalDateTime
 import java.util.*
 import javax.sql.DataSource
 
@@ -14,7 +15,7 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
         private val log = LoggerFactory.getLogger("tjenestekall")
     }
 
-    fun leggInn(meldingsdetaljer: Meldingsdetaljer): UUID? {
+    fun leggInn(meldingsdetaljer: MeldingDto): UUID? {
         log.info("legger inn melding, rapportertDato=${meldingsdetaljer.rapportertDato},duplikatkontroll=${meldingsdetaljer.duplikatkontroll}\n${meldingsdetaljer.jsonBody}")
         return insertDokument(meldingsdetaljer)
             .takeIf { it.utfall == Resultat.Utfall.SATT_INN_NY }
@@ -34,7 +35,7 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
             HENTET_EKSISTERENDE
         }
     }
-    private fun insertDokument(meldingsdetaljer: Meldingsdetaljer): Resultat {
+    private fun insertDokument(meldingsdetaljer: MeldingDto): Resultat {
         return sessionOf(dataSource).use { session ->
             @Language("PostgreSQL")
             val insertStmt = """
@@ -76,3 +77,12 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
         }
     }
 }
+
+data class MeldingDto(
+    val type: String,
+    val fnr: String,
+    val eksternDokumentId: UUID,
+    val rapportertDato: LocalDateTime,
+    val duplikatkontroll: String,
+    val jsonBody: String
+)

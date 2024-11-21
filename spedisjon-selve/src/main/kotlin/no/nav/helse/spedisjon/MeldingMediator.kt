@@ -38,7 +38,15 @@ internal class MeldingMediator(
             .tag("type", meldingsdetaljer.type)
             .register(registry)
             .increment()
-        return meldingDao.leggInn(meldingsdetaljer)
+        val dto = MeldingDto(
+            type = meldingsdetaljer.type,
+            fnr = meldingsdetaljer.fnr,
+            eksternDokumentId = meldingsdetaljer.eksternDokumentId,
+            rapportertDato = meldingsdetaljer.rapportertDato,
+            duplikatkontroll = meldingsdetaljer.duplikatkontroll,
+            jsonBody = meldingsdetaljer.jsonBody
+        )
+        return meldingDao.leggInn(dto)
     }
 
     fun onMelding(melding: Melding, context: MessageContext) {

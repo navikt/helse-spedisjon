@@ -145,7 +145,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     private fun lagreMelding(fnr: String = FØDSELSNUMMER, orgnummer: String = ORGNUMMER, arbeidsforholdId: String? = null, arkivreferanse: String, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime = LocalDateTime.now()) : String{
         val inntektsmeldingDao = InntektsmeldingDao(dataSource)
-        val meldingDao = MeldingDao(dataSource)
+        val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(relaxed = true), mockk(relaxed = true))
 
         val detaljer = Meldingsdetaljer(
             type = "inntektsmelding",
@@ -156,7 +156,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
             jsonBody = """{ "mottattDato": "${LocalDateTime.now()}" }"""
         )
 
-        val internId = meldingDao.leggInn(detaljer) ?: fail { "skulle legge inn melding" }
+        val internId = meldingMediator.leggInnMelding(detaljer) ?: fail { "skulle legge inn melding" }
         val melding = Melding.Inntektsmelding(internId, orgnummer, arbeidsforholdId, detaljer)
         inntektsmeldingDao.leggInn(melding, ønsketPublisert, mottatt = mottatt)
         return melding.meldingsdetaljer.duplikatkontroll
