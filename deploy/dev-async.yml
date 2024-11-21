@@ -32,6 +32,7 @@ spec:
   accessPolicy:
     outbound:
       rules:
+        - application: spedisjon
         - application: speed-api
   kafka:
     pool: nav-dev

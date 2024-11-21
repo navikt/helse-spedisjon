@@ -9,7 +9,7 @@ spec:
   image: {{image}}
   port: 8080
   strategy:
-    type: Recreate
+    type: RollingUpdate
   liveness:
     path: isalive
     initialDelay: 5
@@ -23,13 +23,8 @@ spec:
       cpu: 50m
       memory: 64Mi
   replicas:
-    min: 1
+    min: 2
     max: 2
-    scalingStrategy:
-      kafka:
-        topic: flex.sykepengesoknad
-        consumerGroup: spedisjon-v1
-        threshold: 200
   azure:
     application:
       enabled: true
@@ -38,11 +33,6 @@ spec:
     inbound:
       rules:
         - application: spedisjon-async
-    outbound:
-      rules:
-        - application: speed-api
-  kafka:
-    pool: nav-dev
   prometheus:
     enabled: true
     path: /metrics
@@ -60,12 +50,3 @@ spec:
               - name: spedisjon-opprydding-dev
   secureLogs:
     enabled: true
-  env:
-  - name: KAFKA_CONSUMER_GROUP_ID
-    value: spedisjon-v1
-  - name: KAFKA_RAPID_TOPIC
-    value: tbd.rapid.v1
-  - name: KAFKA_EXTRA_TOPIC
-    value: flex.sykepengesoknad,helsearbeidsgiver.privat-sykepenger-inntektsmelding
-
-

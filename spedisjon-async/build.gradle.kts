@@ -9,6 +9,12 @@ val tbdLibsVersion: String by project
 dependencies {
     implementation("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
 
+    implementation("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
+    api("org.flywaydb:flyway-database-postgresql:$flywayCoreVersion")
+    implementation("com.zaxxer:HikariCP:$hikariCPVersion")
+    implementation("org.postgresql:postgresql:$postgresqlVersion")
+    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+
     api("com.github.navikt.tbd-libs:azure-token-client-default:$tbdLibsVersion")
     api("com.github.navikt.tbd-libs:retry:$tbdLibsVersion")
     api("com.github.navikt.tbd-libs:speed-client:$tbdLibsVersion")

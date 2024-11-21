@@ -9,7 +9,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.getOrFail
-import no.nav.helse.spedisjon.Meldingtjeneste
+import no.nav.helse.spedisjon.api.tjeneste.Meldingtjeneste
 import java.net.URI
 import java.time.LocalDateTime
 import java.util.*
@@ -24,7 +24,7 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
          */
         post {
             val request = call.receive<NyMeldingRequest>()
-            val dto = no.nav.helse.spedisjon.NyMeldingRequest(
+            val dto = no.nav.helse.spedisjon.api.tjeneste.NyMeldingRequest(
                 type = request.type,
                 fnr = request.fnr,
                 eksternDokumentId = request.eksternDokumentId,
@@ -33,7 +33,7 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
                 jsonBody = request.jsonBody
             )
             when (val response = meldingtjeneste.nyMelding(dto)) {
-                no.nav.helse.spedisjon.NyMeldingResponse.Duplikatkontroll -> call.respond(HttpStatusCode.Conflict, FeilResponse(
+                no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse.Duplikatkontroll -> call.respond(HttpStatusCode.Conflict, FeilResponse(
                     status = HttpStatusCode.Conflict,
                     type = URI("urn:error:duplikatkontroll"),
                     detail = "Meldingen med oppgitt duplikatkontroll finnes i databasen fra før",
@@ -41,7 +41,7 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
                     callId = call.callId,
                     stacktrace = null
                 ))
-                is no.nav.helse.spedisjon.NyMeldingResponse.OK -> call.respond(HttpStatusCode.OK, NyMeldingResponse(
+                is no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse.OK -> call.respond(HttpStatusCode.OK, NyMeldingResponse(
                     internDokumentId = response.internDokumentId
                 ))
             }

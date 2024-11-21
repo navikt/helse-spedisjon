@@ -16,8 +16,7 @@ import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.mockk.every
 import io.mockk.mockk
-import no.nav.helse.spedisjon.MeldingDto
-import no.nav.helse.spedisjon.Meldingtjeneste
+import no.nav.helse.spedisjon.api.tjeneste.Meldingtjeneste
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -36,7 +35,7 @@ class ApiTest {
     fun `ny melding - ok`() = e2e(meldingstjeneste) {
         every {
             meldingstjeneste.nyMelding(any())
-        } returns no.nav.helse.spedisjon.NyMeldingResponse.OK(UUID.randomUUID())
+        } returns no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse.OK(UUID.randomUUID())
 
         client.post("/api/melding") {
             contentType(Json)
@@ -57,7 +56,7 @@ class ApiTest {
     fun `ny melding - duplikat`() = e2e(meldingstjeneste) {
         every {
             meldingstjeneste.nyMelding(any())
-        } returns no.nav.helse.spedisjon.NyMeldingResponse.Duplikatkontroll
+        } returns no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse.Duplikatkontroll
 
         client.post("/api/melding") {
             contentType(Json)
@@ -80,7 +79,7 @@ class ApiTest {
         val eksternDokumentId = UUID.randomUUID()
         every {
             meldingstjeneste.hentMeldinger(eq(listOf(internDokumentId)))
-        } returns no.nav.helse.spedisjon.HentMeldingerResponse(listOf(MeldingDto(
+        } returns no.nav.helse.spedisjon.api.tjeneste.HentMeldingerResponse(listOf(MeldingDto(
             type = "ny_søknad",
             fnr = "fnr",
             internDokumentId = internDokumentId,
@@ -108,7 +107,7 @@ class ApiTest {
         val eksternDokumentId = UUID.randomUUID()
         every {
             meldingstjeneste.hentMeldinger(eq(listOf(internDokumentId)))
-        } returns no.nav.helse.spedisjon.HentMeldingerResponse(listOf(MeldingDto(
+        } returns no.nav.helse.spedisjon.api.tjeneste.HentMeldingerResponse(listOf(MeldingDto(
             type = "ny_søknad",
             fnr = "fnr",
             internDokumentId = internDokumentId,
