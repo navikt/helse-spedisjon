@@ -192,7 +192,8 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         val speedClient = mockSpeed()
         val dokumentAliasProducer = DokumentAliasProducer("tøysetopic", dokumentProducerMock)
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, dokumentAliasProducer)
-        inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, dokumentAliasProducer = dokumentAliasProducer)
+        val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSource)
+        inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao, dokumentAliasProducer = dokumentAliasProducer)
         LogWrapper(testRapid, meldingMediator).apply {
             Inntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
         }

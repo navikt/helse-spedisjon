@@ -15,7 +15,32 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
         private val log = LoggerFactory.getLogger("tjenestekall")
     }
 
-    fun leggInn(meldingsdetaljer: MeldingDto): UUID? {
+    fun hentMeldinger(internDokumentIder: List<UUID>): List<MeldingDto> {
+        return sessionOf(dataSource).use { session ->
+            @Language("PostgreSQL")
+            val stmt = """
+                select fnr,type,intern_dokument_id,ekstern_dokument_id,duplikatkontroll,data,opprettet 
+                from melding 
+                where 
+                    ${internDokumentIder.joinToString(separator = " OR ") {
+                        "intern_dokument_id = ?"
+                    }}
+            ;"""
+            session.run(queryOf(stmt, *internDokumentIder.toTypedArray()).map { row ->
+                MeldingDto(
+                    type = row.string("type"),
+                    fnr = row.string("fnr"),
+                    internDokumentId = row.uuid("intern_dokument_id"),
+                    eksternDokumentId = row.uuid("ekstern_dokument_id"),
+                    rapportertDato = row.localDateTime("opprettet"),
+                    duplikatkontroll = row.string("duplikatkontroll"),
+                    jsonBody = row.string("data")
+                )
+            }.asList)
+        }
+    }
+
+    fun leggInn(meldingsdetaljer: NyMeldingDto): UUID? {
         log.info("legger inn melding, rapportertDato=${meldingsdetaljer.rapportertDato},duplikatkontroll=${meldingsdetaljer.duplikatkontroll}\n${meldingsdetaljer.jsonBody}")
         return insertDokument(meldingsdetaljer)
             .takeIf { it.utfall == Resultat.Utfall.SATT_INN_NY }
@@ -35,7 +60,7 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
             HENTET_EKSISTERENDE
         }
     }
-    private fun insertDokument(meldingsdetaljer: MeldingDto): Resultat {
+    private fun insertDokument(meldingsdetaljer: NyMeldingDto): Resultat {
         return sessionOf(dataSource).use { session ->
             @Language("PostgreSQL")
             val insertStmt = """
@@ -78,9 +103,19 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
     }
 }
 
+data class NyMeldingDto(
+    val type: String,
+    val fnr: String,
+    val eksternDokumentId: UUID,
+    val rapportertDato: LocalDateTime,
+    val duplikatkontroll: String,
+    val jsonBody: String
+)
+
 data class MeldingDto(
     val type: String,
     val fnr: String,
+    val internDokumentId: UUID,
     val eksternDokumentId: UUID,
     val rapportertDato: LocalDateTime,
     val duplikatkontroll: String,

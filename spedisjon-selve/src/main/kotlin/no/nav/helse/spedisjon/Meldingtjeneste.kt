@@ -4,13 +4,13 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 sealed interface Meldingtjeneste {
-
     fun nyMelding(meldingsdetaljer: NyMeldingRequest): NyMeldingResponse
+    fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse
 }
 
 internal class LokalMeldingtjeneste(private val dao: MeldingDao) : Meldingtjeneste {
     override fun nyMelding(request: NyMeldingRequest): NyMeldingResponse {
-        val dto = MeldingDto(
+        val dto = NyMeldingDto(
             type = request.type,
             fnr = request.fnr,
             eksternDokumentId = request.eksternDokumentId,
@@ -20,6 +20,12 @@ internal class LokalMeldingtjeneste(private val dao: MeldingDao) : Meldingtjenes
         )
         val internId = dao.leggInn(dto) ?: return NyMeldingResponse.Duplikatkontroll
         return NyMeldingResponse.OK(internId)
+    }
+
+    override fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse {
+        return HentMeldingerResponse(
+            meldinger = dao.hentMeldinger(interneDokumentIder)
+        )
     }
 }
 
@@ -35,4 +41,8 @@ data class NyMeldingRequest(
     val rapportertDato: LocalDateTime,
     val duplikatkontroll: String,
     val jsonBody: String
+)
+
+class HentMeldingerResponse(
+    val meldinger: List<MeldingDto>
 )

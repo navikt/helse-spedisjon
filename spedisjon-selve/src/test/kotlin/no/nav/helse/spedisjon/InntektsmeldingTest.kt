@@ -18,11 +18,14 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     private lateinit var meldingMediator: MeldingMediator
     private lateinit var mediator: InntektsmeldingMediator
+    private lateinit var inntektsmeldingDao: InntektsmeldingDao
 
     @BeforeEach
     fun before() {
-        meldingMediator = MeldingMediator(LokalMeldingtjeneste(MeldingDao(dataSource)), mockk(), mockk(relaxed = true))
-        mediator = InntektsmeldingMediator(dataSource, mockk(), dokumentAliasProducer = mockk(relaxed = true))
+        val meldingtjeneste = LokalMeldingtjeneste(MeldingDao(dataSource))
+        inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSource)
+        meldingMediator = MeldingMediator(meldingtjeneste, mockk(), mockk(relaxed = true))
+        mediator = InntektsmeldingMediator(mockk(), inntektsmeldingDao, dokumentAliasProducer = mockk(relaxed = true))
 
     }
 
@@ -70,12 +73,9 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
         val b = lagreMelding(arkivreferanse = "b", ønsketPublisert = LocalDateTime.now().minusMinutes(1))
         lagreMelding(arkivreferanse = "a", ønsketPublisert = LocalDateTime.now().plusMinutes(1))
         lagreMelding(arkivreferanse = "c", ønsketPublisert = LocalDateTime.now().minusMinutes(1))
-        val inntektsmeldingDao = InntektsmeldingDao(dataSource)
-        val metaInntektsmeldinger = sessionOf(dataSource).use {
-            buildList {
-                inntektsmeldingDao.hentSendeklareMeldinger(0) { im, _ ->
-                    add(im)
-                }
+        val metaInntektsmeldinger = buildList {
+            inntektsmeldingDao.hentSendeklareMeldinger(0) { im, _ ->
+                add(im)
             }
         }
         assertEquals(2, metaInntektsmeldinger.size)
@@ -84,7 +84,6 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
     fun `teller flere inntektsmeldinger`() {
-        val inntektsmeldingDao = InntektsmeldingDao(dataSource)
         val mottatt = LocalDateTime.of(2022, 11, 3, 3, 3)
         val ønsetPublisert = LocalDateTime.now().minusHours(1)
 
@@ -109,11 +108,9 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     }
 
     private fun tellInntektsmeldinger(inntektsmeldingDao: InntektsmeldingDao, timeout: Long) =
-        sessionOf(dataSource).use {
-            buildList {
-                inntektsmeldingDao.hentSendeklareMeldinger(timeout) { im, antall ->
-                    add(im to antall)
-                }
+        buildList {
+            inntektsmeldingDao.hentSendeklareMeldinger(timeout) { im, antall ->
+                add(im to antall)
             }
         }
 

@@ -28,7 +28,7 @@ internal class DuplikateMeldingerTest {
     @Test
     fun `duplikat inntektsmelding slipper ikke igjennom`() {
         val duplikatnøkkel = "unik nøkkel"
-        val im1 = MeldingDto(
+        val im1 = NyMeldingDto(
             type = "inntektsmelding",
             fnr = "123",
             eksternDokumentId = UUID.randomUUID(),
@@ -36,7 +36,7 @@ internal class DuplikateMeldingerTest {
             duplikatkontroll = duplikatnøkkel,
             jsonBody = "{}"
         )
-        val im2 = MeldingDto(
+        val im2 = NyMeldingDto(
             type = "inntektsmelding",
             fnr = "567",
             eksternDokumentId = UUID.randomUUID(),

@@ -11,10 +11,9 @@ import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
-internal class InntektsmeldingMediator (
-    dataSource: DataSource,
+internal class InntektsmeldingMediator(
     private val speedClient: SpeedClient,
-    private val inntektsmeldingDao: InntektsmeldingDao = InntektsmeldingDao(dataSource),
+    private val inntektsmeldingDao: InntektsmeldingDao,
     private val dokumentAliasProducer: DokumentAliasProducer,
     private val inntektsmeldingTimeoutSekunder: Long = 1
 ) {

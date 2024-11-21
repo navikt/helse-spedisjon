@@ -27,7 +27,7 @@ fun main() {
     val dataSourceBuilder = DataSourceBuilder(env)
     val dataSource = dataSourceBuilder.getDataSource()
     val meldingtjeneste = LokalMeldingtjeneste(MeldingDao(dataSource))
-    val inntektsmeldingDao = InntektsmeldingDao(dataSource)
+    val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSource)
 
     val factory = ConsumerProducerFactory(AivenConfig.default)
     val dokumentaliasproducer = DokumentAliasProducer("tbd.subsumsjon.v1", factory.createProducer())
@@ -39,7 +39,6 @@ fun main() {
         LoggerFactory.getLogger("tjenestekall").info(loggtekst)
     }
     val inntektsmeldingMediator = InntektsmeldingMediator(
-        dataSource,
         speedClient,
         inntektsmeldingDao,
         dokumentaliasproducer,

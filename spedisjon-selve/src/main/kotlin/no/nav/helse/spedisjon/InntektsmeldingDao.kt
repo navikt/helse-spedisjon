@@ -10,9 +10,13 @@ import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
+import java.util.UUID
 import javax.sql.DataSource
 
-internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
+internal class InntektsmeldingDao(
+    private val meldingtjeneste: Meldingtjeneste,
+    dataSource: DataSource
+): AbstractDao(dataSource) {
 
     private companion object {
         private val logg = LoggerFactory.getLogger(Puls::class.java)
@@ -33,38 +37,59 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
             .update(session, mapOf("ekspedert" to LocalDateTime.now(), "duplikatkontroll" to melding.meldingsdetaljer.duplikatkontroll))
     }
 
-    fun hentSendeklareMeldinger(inntektsmeldingTimeoutSekunder: Long, onEach: (SendeklarInntektsmelding, Int) -> Unit) {
+    private data class SendeklarInntektsmeldingDto(
+        val fnr: String,
+        val orgnummer: String,
+        val internDokumentId: UUID,
+        val arbeidsforholdId: String?,
+        val mottatt: LocalDateTime,
+        val duplikatkontroll: String
+    )
+    fun hentSendeklareMeldinger(inntektsmeldingTimeoutSekunder: Long, timeout: LocalDateTime = LocalDateTime.now(), onEach: (SendeklarInntektsmelding, Int) -> Unit) {
         sessionOf(dataSource).use { session ->
             @Language("PostgreSQL")
-            val stmt = """SELECT i.fnr, i.orgnummer, i.arbeidsforhold_id, i.mottatt, i.duplikatkontroll, i.intern_dokument_id, m.ekstern_dokument_id, m.data
-            FROM inntektsmelding i 
-            JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
-            WHERE i.ekspedert IS NULL AND i.timeout < :timeout
+            val stmt = """SELECT fnr, orgnummer, arbeidsforhold_id, mottatt, duplikatkontroll, intern_dokument_id
+            FROM inntektsmelding 
+            WHERE ekspedert IS NULL AND timeout < :timeout
             LIMIT 500
             FOR UPDATE
             SKIP LOCKED"""
 
-            stmt
-                .listQuery(session, mapOf("timeout" to LocalDateTime.now())) { row ->
-                    SendeklarInntektsmelding(
+            val sendeklareInntektsmeldinger = stmt
+                .listQuery(session, mapOf("timeout" to timeout)) { row ->
+                    SendeklarInntektsmeldingDto(
                         fnr = row.string("fnr"),
                         orgnummer = row.string("orgnummer"),
-                        melding = Inntektsmelding(
-                            internId = row.uuid("intern_dokument_id"),
-                            orgnummer = row.string("orgnummer"),
-                            arbeidsforholdId = row.stringOrNull("arbeidsforhold_id"),
-                            meldingsdetaljer = Meldingsdetaljer(
-                                type = "inntektsmelding",
-                                fnr = row.string("fnr"),
-                                eksternDokumentId = row.uuid("ekstern_dokument_id"),
-                                rapportertDato = objectMapper.readTree(row.string("data")).path("mottattDato").asLocalDateTime(),
-                                duplikatkontroll = row.string("duplikatkontroll"),
-                                jsonBody = row.string("data")
-                            )
-                        ),
-                        mottatt = row.localDateTime("mottatt")
+                        internDokumentId = row.uuid("intern_dokument_id"),
+                        arbeidsforholdId = row.stringOrNull("arbeidsforhold_id"),
+                        mottatt = row.localDateTime("mottatt"),
+                        duplikatkontroll = row.string("duplikatkontroll")
                     )
                 }
+
+            val inntektsmeldinger = meldingtjeneste.hentMeldinger(sendeklareInntektsmeldinger.map { it.internDokumentId })
+
+            sendeklareInntektsmeldinger.map { dto ->
+                val inntektsmelding = inntektsmeldinger.meldinger.first { it.internDokumentId == dto.internDokumentId }
+                SendeklarInntektsmelding(
+                    fnr = dto.fnr,
+                    orgnummer = dto.orgnummer,
+                    melding = Inntektsmelding(
+                        internId = dto.internDokumentId,
+                        orgnummer = dto.orgnummer,
+                        arbeidsforholdId = dto.arbeidsforholdId,
+                        meldingsdetaljer = Meldingsdetaljer(
+                            type = "inntektsmelding",
+                            fnr = dto.fnr,
+                            eksternDokumentId = inntektsmelding.eksternDokumentId,
+                            rapportertDato = objectMapper.readTree(inntektsmelding.jsonBody).path("mottattDato").asLocalDateTime(),
+                            duplikatkontroll = dto.duplikatkontroll,
+                            jsonBody = inntektsmelding.jsonBody
+                        )
+                    ),
+                    mottatt = dto.mottatt
+                )
+            }
                 .sorter()
                 .also {
                     sikkerlogg.info("Ekspederer ${it.size} fra databasen")
