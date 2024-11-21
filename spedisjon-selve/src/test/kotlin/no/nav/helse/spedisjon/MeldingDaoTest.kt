@@ -27,17 +27,18 @@ class MeldingDaoTest {
             jsonBody = "{}"
         )
         val internDokumentId = dao.leggInn(nyMeldingDto) ?: fail { "forventet å sette inn melding" }
-        assertEquals(listOf(
-            MeldingDto(
-                type = nyMeldingDto.type,
-                fnr = nyMeldingDto.fnr,
-                internDokumentId = internDokumentId,
-                eksternDokumentId = nyMeldingDto.eksternDokumentId,
-                rapportertDato = nyMeldingDto.rapportertDato.truncatedTo(ChronoUnit.MICROS),
-                duplikatkontroll = nyMeldingDto.duplikatkontroll.padEnd(128, ' '),
-                jsonBody = nyMeldingDto.jsonBody
-            )
-        ), dao.hentMeldinger(listOf(internDokumentId)))
+        val actual = dao.hentMeldinger(listOf(internDokumentId)).single()
+        assertEquals(MeldingDto(
+            type = nyMeldingDto.type,
+            fnr = nyMeldingDto.fnr,
+            internDokumentId = internDokumentId,
+            eksternDokumentId = nyMeldingDto.eksternDokumentId,
+            rapportertDato = LocalDateTime.MIN,
+            duplikatkontroll = nyMeldingDto.duplikatkontroll.padEnd(128, ' '),
+            jsonBody = nyMeldingDto.jsonBody
+        ), actual.copy(
+            rapportertDato = LocalDateTime.MIN
+        ))
     }
 
     private fun databaseTest(testblokk: (DataSource) -> Unit) {
