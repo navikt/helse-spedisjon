@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 internal class DataSourceBuilder(env: Map<String, String>) {
 
     private val baseConnectionConfig = HikariConfig().apply {
-        jdbcUrl = cloudSqlProxyConnectionString(env.getValue("DATABASE_DATABASE"))
+        jdbcUrl = cloudSqlProxyConnectionString(env.getValue("DATABASE_HOST"), env.getValue("DATABASE_PORT").toInt(), env.getValue("DATABASE_DATABASE"))
         username = env.getValue("DATABASE_USERNAME")
         password = env.getValue("DATABASE_PASSWORD")
     }
@@ -39,8 +39,8 @@ internal class DataSourceBuilder(env: Map<String, String>) {
     private companion object {
         private val logger = LoggerFactory.getLogger(DataSourceBuilder::class.java)
 
-        private fun cloudSqlProxyConnectionString(databaseName: String): String {
-            return String.format("jdbc:postgresql://127.0.0.1:5432/%s", databaseName)
+        private fun cloudSqlProxyConnectionString(databaseHost: String, databasePort: Int, databaseName: String): String {
+            return String.format("jdbc:postgresql://%s:%d/%s", databaseHost, databasePort, databaseName)
         }
     }
 }
