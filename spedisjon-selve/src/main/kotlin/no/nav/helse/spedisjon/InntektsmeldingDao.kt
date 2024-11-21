@@ -2,7 +2,6 @@ package no.nav.helse.spedisjon
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
-import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
 import kotliquery.Session
 import kotliquery.sessionOf
 import net.logstash.logback.argument.StructuredArguments.keyValue
@@ -37,7 +36,7 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
     fun hentSendeklareMeldinger(inntektsmeldingTimeoutSekunder: Long, onEach: (SendeklarInntektsmelding, Int) -> Unit) {
         sessionOf(dataSource).use { session ->
             @Language("PostgreSQL")
-            val stmt = """SELECT i.fnr, i.orgnummer, i.arbeidsforhold_id, i.mottatt, m.ekstern_dokument_id, m.duplikatkontroll, m.intern_dokument_id, m.data
+            val stmt = """SELECT i.fnr, i.orgnummer, i.arbeidsforhold_id, i.mottatt, i.duplikatkontroll, i.intern_dokument_id, m.ekstern_dokument_id, m.data
             FROM inntektsmelding i 
             JOIN melding m ON i.duplikatkontroll = m.duplikatkontroll 
             WHERE i.ekspedert IS NULL AND i.timeout < :timeout
@@ -88,9 +87,10 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
     }
 
     private fun leggInnUtenDuplikat(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime) =
-        """INSERT INTO inntektsmelding (fnr, orgnummer, arbeidsforhold_id, mottatt, timeout, duplikatkontroll) VALUES (:fnr, :orgnummer, :arbeidsforhold_id, :mottatt, :timeout, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""
+        """INSERT INTO inntektsmelding (fnr, orgnummer, intern_dokument_id, arbeidsforhold_id, mottatt, timeout, duplikatkontroll) VALUES (:fnr, :orgnummer, :internDokumentId, :arbeidsforhold_id, :mottatt, :timeout, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""
             .update(mapOf(  "fnr" to melding.meldingsdetaljer.fnr,
                             "orgnummer" to melding.orgnummer,
+                            "internDokumentId" to melding.internId,
                             "arbeidsforhold_id" to melding.arbeidsforholdId,
                             "mottatt" to mottatt,
                             "timeout" to ønsketPublisert,
