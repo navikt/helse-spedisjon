@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.UUID
-import javax.sql.DataSource
 
 internal class PersonStøttesIkkeTest : AbstractRiverTest() {
 
@@ -77,9 +76,9 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
         assertSendteEvents()
     }
 
-    override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
+    override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         val speedClient = mockSpeed(støttes = false)
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
+        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, mockk(relaxed = true))
         val inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, dokumentAliasProducer = mockk(relaxed = true))
         LogWrapper(testRapid, meldingMediator).apply {
             Inntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)

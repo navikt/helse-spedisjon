@@ -8,6 +8,7 @@ import kotliquery.using
 import no.nav.helse.spedisjon.Meldingsdetaljer.Companion.sha512
 import no.nav.helse.spedisjon.SendeklarInntektsmelding.Companion.sorter
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.time.LocalDateTime
@@ -15,11 +16,18 @@ import java.util.*
 
 class InntektsmeldingTest : AbstractDatabaseTest() {
 
+    private lateinit var meldingMediator: MeldingMediator
+    private lateinit var mediator: InntektsmeldingMediator
+
+    @BeforeEach
+    fun before() {
+        meldingMediator = MeldingMediator(LokalMeldingtjeneste(MeldingDao(dataSource)), mockk(), mockk(relaxed = true))
+        mediator = InntektsmeldingMediator(dataSource, mockk(), dokumentAliasProducer = mockk(relaxed = true))
+
+    }
+
     @Test
     fun `tar imot inntektsmelding`() {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(), mockk(relaxed = true))
-        val mediator = InntektsmeldingMediator(dataSource, mockk(), dokumentAliasProducer = mockk(relaxed = true))
-
         val detaljer = Meldingsdetaljer(
             type = "inntektsmelding",
             fnr = FØDSELSNUMMER,
@@ -39,8 +47,6 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @Test
     fun `lagrer inntektsmelding bare en gang`() {
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(), mockk(relaxed = true))
-        val mediator = InntektsmeldingMediator(dataSource, mockk(), dokumentAliasProducer = mockk(relaxed = true))
         val detaljer = Meldingsdetaljer(
             type = "inntektsmelding",
             fnr = FØDSELSNUMMER,
@@ -144,9 +150,6 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     }
 
     private fun lagreMelding(fnr: String = FØDSELSNUMMER, orgnummer: String = ORGNUMMER, arbeidsforholdId: String? = null, arkivreferanse: String, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime = LocalDateTime.now()) : String{
-        val inntektsmeldingDao = InntektsmeldingDao(dataSource)
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), mockk(relaxed = true), mockk(relaxed = true))
-
         val detaljer = Meldingsdetaljer(
             type = "inntektsmelding",
             fnr = fnr,
@@ -158,7 +161,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
         val internId = meldingMediator.leggInnMelding(detaljer) ?: fail { "skulle legge inn melding" }
         val melding = Melding.Inntektsmelding(internId, orgnummer, arbeidsforholdId, detaljer)
-        inntektsmeldingDao.leggInn(melding, ønsketPublisert, mottatt = mottatt)
+        mediator.lagreInntektsmelding(melding, TestRapid(), ønsketPublisert = ønsketPublisert, mottatt = mottatt)
         return melding.meldingsdetaljer.duplikatkontroll
     }
 

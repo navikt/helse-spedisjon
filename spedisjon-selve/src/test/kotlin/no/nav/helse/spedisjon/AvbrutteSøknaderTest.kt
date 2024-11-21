@@ -7,13 +7,12 @@ import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
-import java.util.UUID
-import javax.sql.DataSource
+import java.util.*
 
 internal class AvbrutteSøknaderTest : AbstractRiverTest() {
-    override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
+    override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         val speedClient = mockSpeed()
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
+        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, mockk(relaxed = true))
         AvbrutteSøknader(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator

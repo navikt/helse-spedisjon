@@ -27,9 +27,13 @@ internal class InntektsmeldingMediator (
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     }
 
-    fun lagreInntektsmelding(inntektsmelding: Melding.Inntektsmelding, messageContext: MessageContext) {
-        val ønsketPublisert = LocalDateTime.now().plusSeconds(inntektsmeldingTimeoutSekunder)
-        if (!inntektsmeldingDao.leggInn(inntektsmelding, ønsketPublisert)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
+    fun lagreInntektsmelding(
+        inntektsmelding: Melding.Inntektsmelding,
+        messageContext: MessageContext,
+        ønsketPublisert: LocalDateTime = LocalDateTime.now().plusSeconds(inntektsmeldingTimeoutSekunder),
+        mottatt: LocalDateTime = LocalDateTime.now()
+    ) {
+        if (!inntektsmeldingDao.leggInn(inntektsmelding, ønsketPublisert, mottatt)) return // Melding ignoreres om det er duplikat av noe vi allerede har i basen
 
         if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp") {
             logg.info("ekspederer inntektsmeldinger på direkten fordi vi er i dev")

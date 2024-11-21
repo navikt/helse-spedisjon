@@ -30,19 +30,21 @@ internal class LogWrapperTest {
         addAppender(appender)
     }
 
-    private val meldingMock:MeldingDao = mockk()
+    private val meldingtjeneste = mockk<Meldingtjeneste>()
     private val speedClient = mockk<SpeedClient> {
         every { hentPersoninfo(any(), any()) } returns Result.Ok(mockk(relaxed = true))
         every { hentHistoriskeFødselsnumre(any(), any()) } returns Result.Ok(mockk(relaxed = true))
         every { hentFødselsnummerOgAktørId(any(), any()) } returns Result.Ok(mockk(relaxed = true))
     }
-    private val mediator = MeldingMediator(meldingMock, speedClient, mockk(relaxed = true))
+    private val mediator = MeldingMediator(meldingtjeneste, speedClient, mockk(relaxed = true))
 
     @BeforeEach
     fun setup() {
         appender.list.clear()
         rapid.reset()
-        every { meldingMock.leggInn(any()) }.answers { UUID.randomUUID() }
+        every { meldingtjeneste.nyMelding(any()) }.answers {
+            NyMeldingResponse.OK(UUID.randomUUID())
+        }
     }
 
     @Test

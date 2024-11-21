@@ -8,12 +8,11 @@ import io.mockk.clearAllMocks
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
-import javax.sql.DataSource
 
 internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
     protected val testRapid = TestRapid()
 
-    protected abstract fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource)
+    protected abstract fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste)
 
     protected companion object {
         private val objectMapper = jacksonObjectMapper()
@@ -27,7 +26,7 @@ internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
 
     @BeforeEach
     fun `create river`() {
-        createRiver(testRapid, dataSource)
+        createRiver(testRapid, LokalMeldingtjeneste(MeldingDao(dataSource)))
     }
 
     protected fun assertSendteEvents(vararg events: String) {

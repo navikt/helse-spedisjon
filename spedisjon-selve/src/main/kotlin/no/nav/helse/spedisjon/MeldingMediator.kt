@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 import java.util.*
 
 internal class MeldingMediator(
-    private val meldingDao: MeldingDao,
+    private val meldingtjeneste: Meldingtjeneste,
     private val speedClient: SpeedClient,
     private val dokumentAliasProducer: DokumentAliasProducer
 ) {
@@ -38,7 +38,7 @@ internal class MeldingMediator(
             .tag("type", meldingsdetaljer.type)
             .register(registry)
             .increment()
-        val dto = MeldingDto(
+        val request = NyMeldingRequest(
             type = meldingsdetaljer.type,
             fnr = meldingsdetaljer.fnr,
             eksternDokumentId = meldingsdetaljer.eksternDokumentId,
@@ -46,7 +46,10 @@ internal class MeldingMediator(
             duplikatkontroll = meldingsdetaljer.duplikatkontroll,
             jsonBody = meldingsdetaljer.jsonBody
         )
-        return meldingDao.leggInn(dto)
+        return when (val response = meldingtjeneste.nyMelding(request)) {
+            NyMeldingResponse.Duplikatkontroll -> null
+            is NyMeldingResponse.OK -> response.internDokumentId
+        }
     }
 
     fun onMelding(melding: Melding, context: MessageContext) {

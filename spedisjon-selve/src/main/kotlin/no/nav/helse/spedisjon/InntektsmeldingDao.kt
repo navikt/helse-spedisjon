@@ -21,7 +21,7 @@ internal class InntektsmeldingDao(dataSource: DataSource): AbstractDao(dataSourc
         private val objectMapper = jacksonObjectMapper()
     }
 
-    fun leggInn(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime = LocalDateTime.now()): Boolean {
+    fun leggInn(melding: Melding.Inntektsmelding, ønsketPublisert: LocalDateTime, mottatt: LocalDateTime): Boolean {
         sikkerlogg.info("legger inn ekstra info om inntektsmelding")
         return leggInnUtenDuplikat(melding, ønsketPublisert, mottatt).also {
             if (!it) sikkerlogg.info("Duplikat melding: {} melding={}", keyValue("duplikatkontroll", melding.meldingsdetaljer.duplikatkontroll), melding.meldingsdetaljer.jsonBody)

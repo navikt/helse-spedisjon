@@ -6,7 +6,6 @@ import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.*
-import javax.sql.DataSource
 
 internal class FremtidigSøknaderTest: AbstractRiverTest() {
 
@@ -28,9 +27,9 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         assertSendteEvents("ny_søknad")
     }
 
-    override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
+    override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         val speedClient = mockSpeed()
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, mockk(relaxed = true))
+        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, mockk(relaxed = true))
         FremtidigSøknaderRiver(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator

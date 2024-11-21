@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.UUID
-import javax.sql.DataSource
 
 internal class InntektsmeldingerTest : AbstractRiverTest() {
 
@@ -188,11 +187,11 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 
     private lateinit var inntektsmeldingMediator: InntektsmeldingMediator
     private val dokumentProducerMock = mockk<KafkaProducer<String, String>>(relaxed = true)
-    override fun createRiver(rapidsConnection: RapidsConnection, dataSource: DataSource) {
+    override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         clearMocks(dokumentProducerMock)
         val speedClient = mockSpeed()
         val dokumentAliasProducer = DokumentAliasProducer("tøysetopic", dokumentProducerMock)
-        val meldingMediator = MeldingMediator(MeldingDao(dataSource), speedClient, dokumentAliasProducer)
+        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, dokumentAliasProducer)
         inntektsmeldingMediator = InntektsmeldingMediator(dataSource, speedClient, dokumentAliasProducer = dokumentAliasProducer)
         LogWrapper(testRapid, meldingMediator).apply {
             Inntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
