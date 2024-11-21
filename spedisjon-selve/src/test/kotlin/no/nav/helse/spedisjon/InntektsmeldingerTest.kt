@@ -18,6 +18,11 @@ import java.util.UUID
 internal class InntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
+    fun `ingen sendeklare inntektsmeldinger`() {
+        manipulerTimeoutOgPubliser()
+        assertEquals(0, testRapid.inspektør.size)
+    }
+    @Test
     fun `leser inntektsmeldinger`() {
         testRapid.sendTestMessage("""
 {

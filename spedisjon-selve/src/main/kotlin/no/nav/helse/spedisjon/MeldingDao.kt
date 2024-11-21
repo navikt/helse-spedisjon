@@ -16,6 +16,7 @@ internal class MeldingDao(dataSource: DataSource): AbstractDao(dataSource) {
     }
 
     fun hentMeldinger(internDokumentIder: List<UUID>): List<MeldingDto> {
+        if (internDokumentIder.isEmpty()) return emptyList()
         return sessionOf(dataSource).use { session ->
             @Language("PostgreSQL")
             val stmt = """

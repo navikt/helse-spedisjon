@@ -67,6 +67,8 @@ internal class InntektsmeldingDao(
                     )
                 }
 
+            //if (sendeklareInntektsmeldinger.isEmpty()) return@use
+
             val inntektsmeldinger = meldingtjeneste.hentMeldinger(sendeklareInntektsmeldinger.map { it.internDokumentId })
 
             sendeklareInntektsmeldinger.map { dto ->
