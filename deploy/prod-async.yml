@@ -1,0 +1,64 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: spedisjon-async
+  namespace: tbd
+  labels:
+    team: tbd
+spec:
+  image: {{image}}
+  port: 8080
+  strategy:
+    type: Recreate
+  liveness:
+    path: isalive
+    initialDelay: 5
+  readiness:
+    path: isready
+    initialDelay: 5
+  preStopHook:
+    http:
+      path: /stop
+  resources:
+    limits:
+      memory: 1024Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  replicas:
+    min: 2
+    max: 3
+  azure:
+    application:
+      enabled: true
+      tenant: nav.no
+  accessPolicy:
+    outbound:
+      rules:
+        - application: speed-api
+  kafka:
+    pool: nav-prod
+  prometheus:
+    enabled: true
+    path: /metrics
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_16
+        diskAutoresize: true
+        tier: db-custom-1-3840
+        name: spedisjon-async
+        databases:
+          - name: spedisjon-async
+            envVarPrefix: DATABASE
+  secureLogs:
+    enabled: true
+  env:
+  - name: KAFKA_CONSUMER_GROUP_ID
+    value: tbd-spedisjon-v1
+  - name: KAFKA_RAPID_TOPIC
+    value: tbd.rapid.v1
+  - name: KAFKA_EXTRA_TOPIC
+    value: flex.sykepengesoknad,helsearbeidsgiver.privat-sykepenger-inntektsmelding
+  - name: KARANTENE_TID
+    value: "1800"
+
