@@ -3,7 +3,7 @@ package no.nav.helse.spedisjon
 import java.time.LocalDateTime
 import java.util.UUID
 
-sealed interface Meldingtjeneste {
+interface Meldingtjeneste {
     fun nyMelding(meldingsdetaljer: NyMeldingRequest): NyMeldingResponse
     fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse
 }

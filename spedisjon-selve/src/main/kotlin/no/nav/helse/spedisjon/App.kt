@@ -1,24 +1,38 @@
 package no.nav.helse.spedisjon
 
+import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.azure.createAzureTokenClientFromEnvironment
 import com.github.navikt.tbd_libs.kafka.AivenConfig
 import com.github.navikt.tbd_libs.kafka.ConsumerProducerFactory
+import com.github.navikt.tbd_libs.naisful.standardApiModule
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection.MessageListener
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection.StatusListener
 import com.github.navikt.tbd_libs.speed.SpeedClient
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.authentication
+import io.ktor.server.routing.routing
 import io.micrometer.core.instrument.MeterRegistry
 import no.nav.helse.rapids_rivers.RapidApplication
+import no.nav.helse.spedisjon.api.AzureApp
+import no.nav.helse.spedisjon.api.api
 import org.slf4j.LoggerFactory
+import java.net.URI
 import java.net.http.HttpClient
 
 fun main() {
     val env = System.getenv()
     val erUtvikling = env["NAIS_CLUSTER_NAME"] == "dev-gcp"
+
+    val azureApp = AzureApp(
+        jwkProvider = JwkProviderBuilder(URI(env.getValue("AZURE_OPENID_CONFIG_JWKS_URI")).toURL()).build(),
+        issuer = env.getValue("AZURE_OPENID_CONFIG_ISSUER"),
+        clientId = env.getValue("AZURE_APP_CLIENT_ID"),
+    )
 
     val azure = createAzureTokenClientFromEnvironment(env)
     val speedClient = SpeedClient(HttpClient.newHttpClient(), jacksonObjectMapper().registerModule(JavaTimeModule()), azure)
@@ -43,7 +57,16 @@ fun main() {
         inntektsmeldingTimeoutSekunder = inntektsmeldingTimeoutSekunder
     )
 
-    LogWrapper(RapidApplication.create(env, factory), meldingMediator).apply {
+    LogWrapper(RapidApplication.create(env, factory, builder = {
+        withKtorModule {
+            authentication { azureApp.konfigurerJwtAuth(this) }
+            routing {
+                authenticate {
+                    api(meldingtjeneste)
+                }
+            }
+        }
+    }), meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
         if (erUtvikling) NyeFrilansSøknader(this, meldingMediator)
         if (erUtvikling) NyeSelvstendigSøknader(this, meldingMediator)

@@ -3,10 +3,14 @@ val hikariCPVersion = "6.1.0"
 val postgresqlVersion = "42.7.4"
 val kotliqueryVersion = "1.9.0"
 val mockkVersion = "1.13.9"
+val ktorVersion = "3.0.1" // bør være samme som i <com.github.navikt.tbd-libs:naisful-app>
 val rapidsAndRiversVersion: String by project
 val tbdLibsVersion: String by project
 
 dependencies {
+    api("io.ktor:ktor-server-auth:$ktorVersion")
+    api("io.ktor:ktor-server-auth-jwt:$ktorVersion")
+
     implementation("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
     api("org.flywaydb:flyway-database-postgresql:$flywayCoreVersion")
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
@@ -17,6 +21,7 @@ dependencies {
     api("com.github.navikt.tbd-libs:retry:$tbdLibsVersion")
     api("com.github.navikt.tbd-libs:speed-client:$tbdLibsVersion")
 
+    testImplementation("com.github.navikt.tbd-libs:naisful-test-app:$tbdLibsVersion")
     testImplementation("com.github.navikt.tbd-libs:rapids-and-rivers-test:$tbdLibsVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
 }
