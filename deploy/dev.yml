@@ -16,6 +16,9 @@ spec:
   readiness:
     path: isready
     initialDelay: 5
+  ingresses:
+    - "https://spedisjon.ansatt.dev.nav.no"
+    - "https://spedisjon.intern.dev.nav.no"
   resources:
     limits:
       memory: 512Mi

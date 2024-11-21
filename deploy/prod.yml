@@ -19,6 +19,9 @@ spec:
   preStopHook:
     http:
       path: /stop
+  ingresses:
+    - "https://spedisjon.ansatt.nav.no"
+    - "https://spedisjon.intern.nav.no"
   resources:
     limits:
       memory: 1024Mi
