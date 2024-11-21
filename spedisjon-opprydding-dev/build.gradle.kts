@@ -16,7 +16,6 @@ dependencies {
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
 
-    testImplementation(project(":spedisjon-selve")) // for å få  tilgang på db/migrations-filene
     testImplementation("com.github.navikt.tbd-libs:rapids-and-rivers-test:$tbdLibsVersion")
 }
 

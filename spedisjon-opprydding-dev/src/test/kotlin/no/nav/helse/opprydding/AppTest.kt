@@ -81,39 +81,17 @@ internal class AppTest: DataSourceBuilderTest() {
     }
 
     private fun opprettMelding(fødselsnummer: String) {
-        val query = """INSERT INTO melding (type, fnr, data, opprettet, duplikatkontroll) VALUES (:type, :fnr, :json::json, :rapportert, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""
-        val params = mapOf<String, Any>(
-            "type" to "type",
-            "fnr" to fødselsnummer,
-            "json" to "{}",
-            "rapportert" to LocalDateTime.now(),
-            "duplikatkontroll" to "${UUID.randomUUID()}"
-        )
-        sessionOf(testDataSource.ds).use { it.run(queryOf(query, params).asUpdate)}
+        val query = """INSERT INTO melding (fnr) VALUES (?)"""
+        sessionOf(testDataSource.ds).use { it.run(queryOf(query, fødselsnummer).asUpdate)}
     }
 
     private fun opprettBerikelse(fødselsnummer: String) {
-        val query = "INSERT INTO berikelse (fnr, duplikatkontroll, behov, opprettet) values(:fnr, :duplikatkontroll, :behov, :opprettet) ON CONFLICT(duplikatkontroll) DO NOTHING"
-        val params = mapOf(
-            "fnr" to fødselsnummer,
-            "duplikatkontroll" to "${UUID.randomUUID()}",
-            "behov" to "{}",
-            "opprettet" to LocalDate.EPOCH.atStartOfDay()
-        )
-        sessionOf(testDataSource.ds).use { it.run(queryOf(query, params).asUpdate)}
+        val query = "INSERT INTO berikelse (fnr) VALUES (?)"
+        sessionOf(testDataSource.ds).use { it.run(queryOf(query, fødselsnummer).asUpdate)}
     }
 
     private fun opprettInntektsmelding(fødselsnummer: String) {
-        val query = """INSERT INTO inntektsmelding (fnr, orgnummer, arbeidsforhold_id, mottatt, timeout, duplikatkontroll) VALUES (:fnr, :orgnummer, :arbeidsforhold_id, :mottatt, :timeout, :duplikatkontroll) ON CONFLICT(duplikatkontroll) do nothing"""
-        val params = mapOf(
-                "fnr" to fødselsnummer,
-                "orgnummer" to "orgnummer",
-                "arbeidsforhold_id" to null,
-                "mottatt" to LocalDate.EPOCH.atStartOfDay(),
-                "timeout" to LocalDate.EPOCH.atStartOfDay(),
-                "duplikatkontroll" to "${UUID.randomUUID()}"
-        )
-
-        sessionOf(testDataSource.ds).use { it.run(queryOf(query, params).asUpdate)}
+        val query = """INSERT INTO inntektsmelding (fnr) VALUES (?)"""
+        sessionOf(testDataSource.ds).use { it.run(queryOf(query, fødselsnummer).asUpdate)}
     }
 }
