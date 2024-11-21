@@ -19,7 +19,7 @@ internal class DataSourceBuilder(env: Map<String, String>) {
     }
     private val appConfig = HikariConfig().apply {
         baseConnectionConfig.copyStateTo(this)
-        maximumPoolSize = 1
+        maximumPoolSize = 2
     }
 
     val dataSource by lazy { HikariDataSource(appConfig) }
