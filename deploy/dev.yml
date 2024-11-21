@@ -35,6 +35,9 @@ spec:
       enabled: true
       tenant: trygdeetaten.no
   accessPolicy:
+    inbound:
+      rules:
+        - application: spedisjon-async
     outbound:
       rules:
         - application: speed-api
