@@ -20,9 +20,8 @@ fun main() {
     val env = System.getenv()
     val erUtvikling = env["NAIS_CLUSTER_NAME"] == "dev-gcp"
 
-    val httpClient = HttpClient.newHttpClient()
     val azure = createAzureTokenClientFromEnvironment(env)
-    val speedClient = SpeedClient(httpClient, jacksonObjectMapper().registerModule(JavaTimeModule()), azure)
+    val speedClient = SpeedClient(HttpClient.newHttpClient(), jacksonObjectMapper().registerModule(JavaTimeModule()), azure)
 
     val dataSourceBuilder = DataSourceBuilder(env)
     val meldingtjeneste = LokalMeldingtjeneste(MeldingDao(dataSourceBuilder.dataSource))
