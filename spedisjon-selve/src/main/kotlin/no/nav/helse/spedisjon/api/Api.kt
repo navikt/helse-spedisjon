@@ -1,12 +1,16 @@
 package no.nav.helse.spedisjon.api
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.github.navikt.tbd_libs.naisful.FeilResponse
 import io.ktor.http.*
+import io.ktor.server.plugins.NotFoundException
+import io.ktor.server.plugins.callid.callId
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.getOrFail
 import no.nav.helse.spedisjon.Meldingtjeneste
+import java.net.URI
 import java.time.LocalDateTime
 import java.util.*
 
@@ -29,7 +33,14 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
                 jsonBody = request.jsonBody
             )
             when (val response = meldingtjeneste.nyMelding(dto)) {
-                no.nav.helse.spedisjon.NyMeldingResponse.Duplikatkontroll -> call.respond(HttpStatusCode.Conflict)
+                no.nav.helse.spedisjon.NyMeldingResponse.Duplikatkontroll -> call.respond(HttpStatusCode.Conflict, FeilResponse(
+                    status = HttpStatusCode.Conflict,
+                    type = URI("urn:error:duplikatkontroll"),
+                    detail = "Meldingen med oppgitt duplikatkontroll finnes i databasen fra før",
+                    instance = URI(call.request.uri),
+                    callId = call.callId,
+                    stacktrace = null
+                ))
                 is no.nav.helse.spedisjon.NyMeldingResponse.OK -> call.respond(HttpStatusCode.OK, NyMeldingResponse(
                     internDokumentId = response.internDokumentId
                 ))
@@ -40,20 +51,17 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
             val internDokumentId = UUID.fromString(call.parameters.getOrFail("internDokumentId"))
             val response = meldingtjeneste.hentMeldinger(listOf(internDokumentId))
 
-            if (response.meldinger.size != 1) {
-                call.respond(HttpStatusCode.NotFound)
-            } else {
-                val melding = response.meldinger.single()
-                call.respond(HttpStatusCode.OK, MeldingResponse(
-                    type = melding.type,
-                    fnr = melding.fnr,
-                    internDokumentId = melding.internDokumentId,
-                    eksternDokumentId = melding.eksternDokumentId,
-                    rapportertDato = melding.rapportertDato,
-                    duplikatkontroll = melding.duplikatkontroll,
-                    jsonBody = melding.jsonBody
-                ))
-            }
+            if (response.meldinger.size != 1) throw NotFoundException()
+            val melding = response.meldinger.single()
+            call.respond(HttpStatusCode.OK, MeldingResponse(
+                type = melding.type,
+                fnr = melding.fnr,
+                internDokumentId = melding.internDokumentId,
+                eksternDokumentId = melding.eksternDokumentId,
+                rapportertDato = melding.rapportertDato,
+                duplikatkontroll = melding.duplikatkontroll,
+                jsonBody = melding.jsonBody
+            ))
         }
     }
     /* hente meldinger (flertall) */

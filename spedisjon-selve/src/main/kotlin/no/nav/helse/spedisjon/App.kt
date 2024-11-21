@@ -35,16 +35,23 @@ fun main() {
     )
 
     val azure = createAzureTokenClientFromEnvironment(env)
-    val speedClient = SpeedClient(HttpClient.newHttpClient(), jacksonObjectMapper().registerModule(JavaTimeModule()), azure)
+    val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
+    val speedClient = SpeedClient(HttpClient.newHttpClient(), objectMapper, azure)
 
     val dataSourceBuilder = DataSourceBuilder(env)
-    val meldingtjeneste = LokalMeldingtjeneste(MeldingDao(dataSourceBuilder.dataSource))
-    val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSourceBuilder.dataSource)
+    val lokalMeldingtjeneste = LokalMeldingtjeneste(MeldingDao(dataSourceBuilder.dataSource))
+    val httpMeldingtjeneste = if (erUtvikling) HttpMeldingtjeneste(
+        httpClient = HttpClient.newHttpClient(),
+        tokenProvider = azure,
+        objectMapper = objectMapper
+    ) else lokalMeldingtjeneste
+
+    val inntektsmeldingDao = InntektsmeldingDao(httpMeldingtjeneste, dataSourceBuilder.dataSource)
 
     val factory = ConsumerProducerFactory(AivenConfig.default)
     val dokumentaliasproducer = DokumentAliasProducer("tbd.subsumsjon.v1", factory.createProducer())
 
-    val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, dokumentaliasproducer)
+    val meldingMediator = MeldingMediator(httpMeldingtjeneste, speedClient, dokumentaliasproducer)
     val inntektsmeldingTimeoutSekunder = env["KARANTENE_TID"]?.toLong() ?: 0L.also {
         val loggtekst = "KARANTENE_TID er tom; defaulter til ingen karantene"
         LoggerFactory.getLogger(::main.javaClass).info(loggtekst)
@@ -62,7 +69,7 @@ fun main() {
             authentication { azureApp.konfigurerJwtAuth(this) }
             routing {
                 authenticate {
-                    api(meldingtjeneste)
+                    api(lokalMeldingtjeneste)
                 }
             }
         }
