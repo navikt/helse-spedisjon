@@ -25,9 +25,8 @@ fun main() {
     val speedClient = SpeedClient(httpClient, jacksonObjectMapper().registerModule(JavaTimeModule()), azure)
 
     val dataSourceBuilder = DataSourceBuilder(env)
-    val dataSource = dataSourceBuilder.getDataSource()
-    val meldingtjeneste = LokalMeldingtjeneste(MeldingDao(dataSource))
-    val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSource)
+    val meldingtjeneste = LokalMeldingtjeneste(MeldingDao(dataSourceBuilder.dataSource))
+    val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSourceBuilder.dataSource)
 
     val factory = ConsumerProducerFactory(AivenConfig.default)
     val dokumentaliasproducer = DokumentAliasProducer("tbd.subsumsjon.v1", factory.createProducer())

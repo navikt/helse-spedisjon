@@ -3,7 +3,6 @@ val hikariCPVersion = "6.1.0"
 val postgresqlVersion = "42.7.4"
 val kotliqueryVersion = "1.9.0"
 val mockkVersion = "1.13.9"
-val wiremockVersion = "3.9.2"
 val rapidsAndRiversVersion: String by project
 val tbdLibsVersion: String by project
 
@@ -20,10 +19,6 @@ dependencies {
 
     testImplementation("com.github.navikt.tbd-libs:rapids-and-rivers-test:$tbdLibsVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("org.wiremock:wiremock:$wiremockVersion") {
-        exclude(group = "junit")
-        exclude("com.github.jknack.handlebars.java")
-    }
 }
 
 tasks {
