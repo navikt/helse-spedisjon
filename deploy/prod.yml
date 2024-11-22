@@ -39,6 +39,8 @@ spec:
     inbound:
       rules:
         - application: spedisjon-async
+        - application: sporbar
+        - application: spre-subsumsjon
   prometheus:
     enabled: true
     path: /metrics
