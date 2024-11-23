@@ -16,6 +16,7 @@ spec:
   readiness:
     path: isready
     initialDelay: 5
+    periodSeconds: 1
   ingresses:
     - "https://spedisjon.ansatt.dev.nav.no"
     - "https://spedisjon.intern.dev.nav.no"
