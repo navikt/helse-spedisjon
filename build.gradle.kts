@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 val junitJupiterVersion = "5.11.3"
-val rapidsAndRiversVersion = "2024112314381732369102.862439a7a5ae"
+val rapidsAndRiversVersion = "2024112412131732446804.1b3dcc636bed"
 val tbdLibsVersion = "2024.11.23-15.13-445aac85"
 
 plugins {
