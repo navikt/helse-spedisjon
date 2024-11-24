@@ -1,24 +1,27 @@
 package no.nav.helse.spedisjon.api
 
+import com.github.navikt.tbd_libs.naisful.postgres.defaultJdbcUrl
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
 
-internal class DataSourceBuilder(env: Map<String, String>) {
+internal class DataSourceBuilder(private val meterRegistry: PrometheusMeterRegistry) {
 
     private val baseConnectionConfig = HikariConfig().apply {
-        jdbcUrl = cloudSqlProxyConnectionString(env.getValue("DATABASE_DATABASE"))
-        username = env.getValue("DATABASE_USERNAME")
-        password = env.getValue("DATABASE_PASSWORD")
+        jdbcUrl = defaultJdbcUrl()
+        metricRegistry = meterRegistry
     }
 
     private val migrationConfig = HikariConfig().apply {
         baseConnectionConfig.copyStateTo(this)
+        poolName = "flyway"
         maximumPoolSize = 2
     }
     private val appConfig = HikariConfig().apply {
         baseConnectionConfig.copyStateTo(this)
+        poolName = "app"
         maximumPoolSize = 2
     }
 
@@ -38,9 +41,5 @@ internal class DataSourceBuilder(env: Map<String, String>) {
 
     private companion object {
         private val logger = LoggerFactory.getLogger(DataSourceBuilder::class.java)
-
-        private fun cloudSqlProxyConnectionString(databaseName: String): String {
-            return String.format("jdbc:postgresql://127.0.0.1:5432/%s", databaseName)
-        }
     }
 }

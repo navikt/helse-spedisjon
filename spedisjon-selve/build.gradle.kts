@@ -13,6 +13,7 @@ dependencies {
     api("net.logstash.logback:logstash-logback-encoder:$logbackEncoderVersion")
 
     api("com.github.navikt.tbd-libs:naisful-app:$tbdLibsVersion")
+    api("com.github.navikt.tbd-libs:naisful-postgres:$tbdLibsVersion")
 
     api("io.ktor:ktor-server-auth:$ktorVersion")
     api("io.ktor:ktor-server-auth-jwt:$ktorVersion")

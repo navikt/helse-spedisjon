@@ -42,10 +42,11 @@ private fun launchApp(env: Map<String, String>) {
         clientId = env.getValue("AZURE_APP_CLIENT_ID"),
     )
 
-    val dataSourceBuilder = DataSourceBuilder(env)
+    val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
+
+    val dataSourceBuilder = DataSourceBuilder(meterRegistry)
     val lokalMeldingtjeneste = LokalMeldingtjeneste(MeldingDao(dataSourceBuilder.dataSource))
 
-    val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
     val app = naisApp(
         meterRegistry = meterRegistry,
         objectMapper = objectMapper,
