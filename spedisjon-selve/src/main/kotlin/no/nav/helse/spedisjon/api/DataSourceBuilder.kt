@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon.api
 
+import com.github.navikt.tbd_libs.naisful.postgres.ConnectionConfigFactory
 import com.github.navikt.tbd_libs.naisful.postgres.defaultJdbcUrl
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory
 internal class DataSourceBuilder(private val meterRegistry: PrometheusMeterRegistry) {
 
     private val baseConnectionConfig = HikariConfig().apply {
-        jdbcUrl = defaultJdbcUrl()
+        jdbcUrl = defaultJdbcUrl(ConnectionConfigFactory.Env(envVarPrefix = "DATABASE"))
         metricRegistry = meterRegistry
     }
 
