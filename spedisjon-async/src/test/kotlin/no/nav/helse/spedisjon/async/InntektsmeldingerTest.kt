@@ -7,8 +7,6 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearMocks
 import io.mockk.mockk
 import io.mockk.verify
-import kotliquery.queryOf
-import kotliquery.sessionOf
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
@@ -98,13 +96,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse") )
         manipulerTimeoutOgPubliser()
         val id = testRapid.inspektør.field(0, "@id").asText()
-        verify {
-            dokumentProducerMock.send(match { record ->
-                objectMapper.readTree(record.value()).path("intern_dokument_id").asText() == id
-            })
-        }
         val inntetsmeldingFrånDatabasen = inntektsmeldingFrånDatabasen()
-        println(inntetsmeldingFrånDatabasen)
         assertEquals(id, inntetsmeldingFrånDatabasen.first.toString())
         assertFalse(inntetsmeldingFrånDatabasen.second.hasNonNull("@id"))
     }
@@ -190,10 +182,9 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         clearMocks(dokumentProducerMock)
         val speedClient = mockSpeed()
-        val dokumentAliasProducer = DokumentAliasProducer("tøysetopic", dokumentProducerMock)
-        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, dokumentAliasProducer)
+        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient)
         val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSource)
-        inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao, dokumentAliasProducer = dokumentAliasProducer)
+        inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao)
         LogWrapper(testRapid, meldingMediator).apply {
             Inntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
         }

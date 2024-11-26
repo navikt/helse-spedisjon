@@ -10,8 +10,7 @@ import java.util.*
 
 internal class MeldingMediator(
     private val meldingtjeneste: Meldingtjeneste,
-    private val speedClient: SpeedClient,
-    private val dokumentAliasProducer: DokumentAliasProducer
+    private val speedClient: SpeedClient
 ) {
     internal companion object {
         private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
@@ -79,7 +78,6 @@ internal class MeldingMediator(
 
         Personinformasjon.Companion.berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
             val beriketMelding = berikelse.berik(melding)
-            dokumentAliasProducer.send(melding)
             context.publish(melding.meldingsdetaljer.fnr, beriketMelding.json)
         }
     }

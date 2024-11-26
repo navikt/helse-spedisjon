@@ -12,7 +12,6 @@ import java.time.LocalDateTime
 internal class InntektsmeldingMediator(
     private val speedClient: SpeedClient,
     private val inntektsmeldingDao: InntektsmeldingDao,
-    private val dokumentAliasProducer: DokumentAliasProducer,
     private val inntektsmeldingTimeoutSekunder: Long = 1
 ) {
 
@@ -51,7 +50,6 @@ internal class InntektsmeldingMediator(
         val beriketMelding = berikelse.berik(inntektsmelding.melding)
         sikkerlogg.info("Ekspederer inntektsmelding med fødselsnummer: ${inntektsmelding.fnr} og orgnummer: ${inntektsmelding.orgnummer}")
         val beriketMeldingMedFlagg = flaggFlereInntektsmeldinger(beriketMelding, antallInntektsmeldingMottatt)
-        dokumentAliasProducer.send(inntektsmelding.melding)
         messageContext.publish(inntektsmelding.fnr, beriketMeldingMedFlagg.json)
     }
 

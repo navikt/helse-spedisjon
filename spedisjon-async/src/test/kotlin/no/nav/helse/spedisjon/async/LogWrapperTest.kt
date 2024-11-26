@@ -37,7 +37,7 @@ internal class LogWrapperTest {
         every { hentHistoriskeFødselsnumre(any(), any()) } returns Result.Ok(mockk(relaxed = true))
         every { hentFødselsnummerOgAktørId(any(), any()) } returns Result.Ok(mockk(relaxed = true))
     }
-    private val mediator = MeldingMediator(meldingtjeneste, speedClient, mockk(relaxed = true))
+    private val mediator = MeldingMediator(meldingtjeneste, speedClient)
 
     @BeforeEach
     fun setup() {

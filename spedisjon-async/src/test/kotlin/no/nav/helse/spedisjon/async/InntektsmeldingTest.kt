@@ -24,8 +24,8 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     @BeforeEach
     fun before() {
         inntektsmeldingDao = InntektsmeldingDao(meldingstjeneste, dataSource)
-        meldingMediator = MeldingMediator(meldingstjeneste, mockk(), mockk(relaxed = true))
-        mediator = InntektsmeldingMediator(mockk(), inntektsmeldingDao, dokumentAliasProducer = mockk(relaxed = true))
+        meldingMediator = MeldingMediator(meldingstjeneste, mockk())
+        mediator = InntektsmeldingMediator(mockk(), inntektsmeldingDao)
 
     }
 
