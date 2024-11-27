@@ -30,7 +30,7 @@ internal class MeldingMediator(
         riverErrors.add(error)
     }
 
-    fun leggInnMelding(meldingsdetaljer: Meldingsdetaljer): UUID? {
+    fun leggInnMelding(meldingsdetaljer: Meldingsdetaljer): UUID {
         Counter.builder("melding_totals")
             .description("Antall meldinger mottatt")
             .tag("type", meldingsdetaljer.type)
@@ -44,10 +44,7 @@ internal class MeldingMediator(
             duplikatkontroll = meldingsdetaljer.duplikatkontroll,
             jsonBody = meldingsdetaljer.jsonBody
         )
-        return when (val response = meldingtjeneste.nyMelding(request)) {
-            NyMeldingResponse.Duplikatkontroll -> null
-            is NyMeldingResponse.OK -> response.internDokumentId
-        }
+        return meldingtjeneste.nyMelding(request).internDokumentId
     }
 
     fun onMelding(melding: Melding) {

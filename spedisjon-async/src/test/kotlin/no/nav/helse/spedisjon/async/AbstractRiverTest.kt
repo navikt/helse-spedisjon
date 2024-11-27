@@ -50,18 +50,17 @@ class LokalMeldingtjeneste : Meldingtjeneste {
     val meldinger get() = meldingsliste.toList()
 
     override fun nyMelding(meldingsdetaljer: NyMeldingRequest): NyMeldingResponse {
-        if (meldingsliste.any { it.duplikatkontroll == meldingsdetaljer.duplikatkontroll }) return NyMeldingResponse.Duplikatkontroll
-        val melding = MeldingDto(
-            type = meldingsdetaljer.type,
-            fnr = meldingsdetaljer.fnr,
-            internDokumentId = UUID.randomUUID(),
-            eksternDokumentId = meldingsdetaljer.eksternDokumentId,
-            rapportertDato = meldingsdetaljer.rapportertDato,
-            duplikatkontroll = meldingsdetaljer.duplikatkontroll,
-            jsonBody = meldingsdetaljer.jsonBody
-        )
-        meldingsliste.add(melding)
-        return NyMeldingResponse.OK(melding.internDokumentId)
+        val melding = meldingsliste.firstOrNull { it.duplikatkontroll == meldingsdetaljer.duplikatkontroll } ?:
+            MeldingDto(
+                type = meldingsdetaljer.type,
+                fnr = meldingsdetaljer.fnr,
+                internDokumentId = UUID.randomUUID(),
+                eksternDokumentId = meldingsdetaljer.eksternDokumentId,
+                rapportertDato = meldingsdetaljer.rapportertDato,
+                duplikatkontroll = meldingsdetaljer.duplikatkontroll,
+                jsonBody = meldingsdetaljer.jsonBody
+            ).also { meldingsliste.add(it) }
+        return NyMeldingResponse(melding.internDokumentId)
     }
 
     override fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse {

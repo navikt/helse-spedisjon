@@ -38,9 +38,8 @@ internal class AvbrutteSøknader(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
         val detaljer = Meldingsdetaljer.avbruttSøknad(packet)
-        meldingMediator.leggInnMelding(detaljer)?.also { internId ->
-            meldingMediator.onMelding(Melding.AvbruttSøknad(internId, detaljer))
-        }
+        val internId = meldingMediator.leggInnMelding(detaljer)
+        meldingMediator.onMelding(Melding.AvbruttSøknad(internId, detaljer))
         sikkerlogg.info("Mottatt avbrutt søknad: $detaljer")
     }
 

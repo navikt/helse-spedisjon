@@ -67,7 +67,7 @@ internal class SendteSøknaderNavTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         val speedClient = mockSpeed()
         val ekspederingMediator = EkspederingMediator(
-            dao = mockk { every { meldingEkspedert(any()) } returns true },
+            dao = EkspederingDao(dataSource),
             rapidsConnection = rapidsConnection,
         )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)

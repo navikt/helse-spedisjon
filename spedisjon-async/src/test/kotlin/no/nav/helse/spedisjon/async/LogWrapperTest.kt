@@ -48,7 +48,7 @@ internal class LogWrapperTest {
         appender.list.clear()
         rapid.reset()
         every { meldingtjeneste.nyMelding(any()) }.answers {
-            NyMeldingResponse.OK(UUID.randomUUID())
+            NyMeldingResponse(UUID.randomUUID())
         }
     }
 

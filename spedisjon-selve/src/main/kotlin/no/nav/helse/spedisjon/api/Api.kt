@@ -32,19 +32,11 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
                 duplikatkontroll = request.duplikatkontroll,
                 jsonBody = request.jsonBody
             )
-            when (val response = meldingtjeneste.nyMelding(dto)) {
-                no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse.Duplikatkontroll -> call.respond(HttpStatusCode.Conflict, FeilResponse(
-                    status = HttpStatusCode.Conflict,
-                    type = URI("urn:error:duplikatkontroll"),
-                    detail = "Meldingen med oppgitt duplikatkontroll finnes i databasen fra før",
-                    instance = URI(call.request.uri),
-                    callId = call.callId,
-                    stacktrace = null
-                ))
-                is no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse.OK -> call.respond(HttpStatusCode.OK, NyMeldingResponse(
-                    internDokumentId = response.internDokumentId
-                ))
-            }
+            val response = meldingtjeneste.nyMelding(dto)
+
+            call.respond(if (response.lagtInnNå) HttpStatusCode.OK else HttpStatusCode.Conflict, NyMeldingResponse(
+                internDokumentId = response.internDokumentId
+            ))
         }
         /* hente melding */
         get("/{internDokumentId}") {

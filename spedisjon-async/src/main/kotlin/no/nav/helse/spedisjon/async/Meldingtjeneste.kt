@@ -35,9 +35,11 @@ internal class HttpMeldingtjeneste(
             .map {  response ->
                 when (response.statusCode()) {
                     200 -> convertResponseBody<NyMeldingOkResponse>(response).map {
-                        NyMeldingResponse.OK(internDokumentId = it.internDokumentId).ok()
+                        NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
                     }
-                    409 -> NyMeldingResponse.Duplikatkontroll.ok()
+                    409 -> convertResponseBody<NyMeldingOkResponse>(response).map {
+                        NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
+                    }
                     else -> convertResponseBody<Feilresponse>(response).map {
                         Result.Error("Feil fra Spedisjon: ${it.detail}")
                     }
@@ -115,10 +117,7 @@ internal class HttpMeldingtjeneste(
     )
 }
 
-sealed interface NyMeldingResponse {
-    data object Duplikatkontroll : NyMeldingResponse
-    data class OK(val internDokumentId: UUID) : NyMeldingResponse
-}
+data class NyMeldingResponse(val internDokumentId: UUID)
 
 data class NyMeldingRequest(
     val type: String,

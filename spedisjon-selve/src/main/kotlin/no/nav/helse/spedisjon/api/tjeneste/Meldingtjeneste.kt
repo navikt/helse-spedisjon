@@ -21,8 +21,11 @@ internal class LokalMeldingtjeneste(private val dao: MeldingDao) : Meldingtjenes
             duplikatkontroll = request.duplikatkontroll,
             jsonBody = request.jsonBody
         )
-        val internId = dao.leggInn(dto) ?: return NyMeldingResponse.Duplikatkontroll
-        return NyMeldingResponse.OK(internId)
+        val result = dao.leggInn(dto)
+        return NyMeldingResponse(
+            internDokumentId = result.internId,
+            lagtInnNå = result.utfall == MeldingDao.Resultat.Utfall.SATT_INN_NY
+        )
     }
 
     override fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse {
@@ -32,10 +35,7 @@ internal class LokalMeldingtjeneste(private val dao: MeldingDao) : Meldingtjenes
     }
 }
 
-sealed interface NyMeldingResponse {
-    data object Duplikatkontroll : NyMeldingResponse
-    data class OK(val internDokumentId: UUID) : NyMeldingResponse
-}
+data class NyMeldingResponse(val internDokumentId: UUID, val lagtInnNå: Boolean)
 
 data class NyMeldingRequest(
     val type: String,

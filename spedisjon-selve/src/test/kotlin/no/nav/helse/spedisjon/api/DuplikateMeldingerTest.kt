@@ -2,6 +2,7 @@ package no.nav.helse.spedisjon.api
 
 import com.github.navikt.tbd_libs.test_support.TestDataSource
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
@@ -44,7 +45,7 @@ internal class DuplikateMeldingerTest {
             duplikatkontroll = duplikatnøkkel,
             jsonBody = "{}"
         )
-        assertNotNull(meldingDao.leggInn(im1))
-        assertNull(meldingDao.leggInn(im2))
+        assertEquals(MeldingDao.Resultat.Utfall.SATT_INN_NY, meldingDao.leggInn(im1).utfall)
+        assertEquals(MeldingDao.Resultat.Utfall.HENTET_EKSISTERENDE, meldingDao.leggInn(im2).utfall)
     }
 }

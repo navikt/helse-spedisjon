@@ -33,9 +33,8 @@ internal class NyeSelvstendigSøknader(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
         val detaljer = Meldingsdetaljer.nySøknadSelvstendig(packet)
-        meldingMediator.leggInnMelding(detaljer)?.also { internId ->
-            meldingMediator.onMelding(Melding.NySøknad(internId, detaljer))
-        }
+        val internId = meldingMediator.leggInnMelding(detaljer)
+        meldingMediator.onMelding(Melding.NySøknad(internId, detaljer))
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {

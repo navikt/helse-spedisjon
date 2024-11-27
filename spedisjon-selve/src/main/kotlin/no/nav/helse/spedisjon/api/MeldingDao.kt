@@ -41,18 +41,17 @@ internal class MeldingDao(private val dataSource: DataSource) {
         }
     }
 
-    fun leggInn(meldingsdetaljer: NyMeldingDto): UUID? {
+    fun leggInn(meldingsdetaljer: NyMeldingDto): Resultat {
         log.info("legger inn melding, rapportertDato=${meldingsdetaljer.rapportertDato},duplikatkontroll=${meldingsdetaljer.duplikatkontroll}\n${meldingsdetaljer.jsonBody}")
-        return insertDokument(meldingsdetaljer)
-            .takeIf { it.utfall == Resultat.Utfall.SATT_INN_NY }
-            ?.internId
-            ?: null.also {
+        return insertDokument(meldingsdetaljer).also { resultat ->
+            if (resultat.utfall == Resultat.Utfall.HENTET_EKSISTERENDE) {
                 log.info("Duplikat melding: {} melding={}", keyValue("duplikatkontroll", meldingsdetaljer.duplikatkontroll), meldingsdetaljer.jsonBody)
             }
+        }
     }
 
     /** inserter, eller henter, et dokument og returnerer intern ID i én atomisk operasjon **/
-    private data class Resultat(
+    data class Resultat(
         val utfall: Utfall,
         val internId: UUID,
     ) {

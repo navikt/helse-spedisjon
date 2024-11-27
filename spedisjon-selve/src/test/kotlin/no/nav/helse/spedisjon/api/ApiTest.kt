@@ -33,9 +33,10 @@ class ApiTest {
 
     @Test
     fun `ny melding - ok`() = e2e(meldingstjeneste) {
+        val internDokumentId = UUID.randomUUID()
         every {
             meldingstjeneste.nyMelding(any())
-        } returns no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse.OK(UUID.randomUUID())
+        } returns no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse(internDokumentId, true)
 
         client.post("/api/melding") {
             contentType(Json)
@@ -49,14 +50,17 @@ class ApiTest {
             ))
         }.also { response ->
             assertEquals(HttpStatusCode.OK, response.status)
+            val body = response.body<ForventetNyMeldingResponse>()
+            assertEquals(internDokumentId, body.internDokumentId)
         }
     }
 
     @Test
     fun `ny melding - duplikat`() = e2e(meldingstjeneste) {
+        val internDokumentId = UUID.randomUUID()
         every {
             meldingstjeneste.nyMelding(any())
-        } returns no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse.Duplikatkontroll
+        } returns no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse(internDokumentId, false)
 
         client.post("/api/melding") {
             contentType(Json)
@@ -70,6 +74,8 @@ class ApiTest {
             ))
         }.also { response ->
             assertEquals(HttpStatusCode.Conflict, response.status)
+            val body = response.body<ForventetNyMeldingResponse>()
+            assertEquals(internDokumentId, body.internDokumentId)
         }
     }
 
@@ -149,6 +155,8 @@ class ApiTest {
             testblokk = testblokk
         )
     }
+
+    data class ForventetNyMeldingResponse(val internDokumentId: UUID)
 
     data class ForventetHentMeldingerResponse(
         val meldinger: List<ForventetMeldingResponse>

@@ -32,9 +32,8 @@ internal class AvbrutteArbeidsledigSøknader(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
         val detaljer = Meldingsdetaljer.avbruttSøknadArbeidsledig(packet)
-        meldingMediator.leggInnMelding(detaljer)?.also { internId ->
-            meldingMediator.onMelding(Melding.AvbruttSøknad(internId, detaljer))
-        }
+        val internId = meldingMediator.leggInnMelding(detaljer)
+        meldingMediator.onMelding(Melding.AvbruttSøknad(internId, detaljer))
         sikkerlogg.info("Mottatt avbrutt arbeidsledig-søknad: $detaljer")
     }
 

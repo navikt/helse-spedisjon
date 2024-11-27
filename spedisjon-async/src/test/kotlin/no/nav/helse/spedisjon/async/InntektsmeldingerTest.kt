@@ -182,7 +182,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         clearMocks(dokumentProducerMock)
         val ekspederingMediator = EkspederingMediator(
-            dao = mockk { every { meldingEkspedert(any()) } returns true },
+            dao = EkspederingDao(dataSource),
             rapidsConnection = rapidsConnection,
         )
         val speedClient = mockSpeed()

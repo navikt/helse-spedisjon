@@ -25,13 +25,13 @@ class MeldingDaoTest {
             duplikatkontroll = "unik_nøkkel",
             jsonBody = "{}"
         )
-        val internDokumentId = dao.leggInn(nyMeldingDto) ?: fail { "forventet å sette inn melding" }
-        val actual = dao.hentMeldinger(listOf(internDokumentId)).single()
+        val result = dao.leggInn(nyMeldingDto)
+        val actual = dao.hentMeldinger(listOf(result.internId)).single()
         assertEquals(
             MeldingDto(
                 type = nyMeldingDto.type,
                 fnr = nyMeldingDto.fnr,
-                internDokumentId = internDokumentId,
+                internDokumentId = result.internId,
                 eksternDokumentId = nyMeldingDto.eksternDokumentId,
                 rapportertDato = LocalDateTime.MIN,
                 duplikatkontroll = nyMeldingDto.duplikatkontroll.padEnd(128, ' '),
