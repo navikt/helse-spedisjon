@@ -273,14 +273,17 @@ private fun jdbcUrlForPrivateInstance(path: String, certsPath: String): String {
 
     val options = mapOf(
         "username" to username,
-        "password" to password,
         "sslcert" to "$certsPath/cert.pem",
         "sslrootcert" to "$certsPath/root-cert.pem",
         "sslkey" to "$certsPath/key.pk8",
         "sslmode" to sslmode
     )
 
-    val optionsString = optionsString(options)
+    log.info("jdbcurl=jdbc:postgresql://$hostname:$port/$databaseName?${optionsString(options)}")
+
+    val optionsString = optionsString(options + mapOf(
+        "password" to password
+    ))
     return "jdbc:postgresql://$hostname:$port/$databaseName?$optionsString"
 }
 
