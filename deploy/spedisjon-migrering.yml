@@ -21,6 +21,8 @@ spec:
       mountPath: /var/run/secrets/sql/spedisjon
     - secret: google-sql-spedisjon-async
       mountPath: /var/run/secrets/sql/spedisjon_async
+    - secret: sqeletor-spedisjon-async-4caa82fe
+      mountPath: /var/run/secrets/sql/spedisjon_async_certs
   gcp:
     sqlInstances:
       - type: POSTGRES_16

@@ -1,6 +1,7 @@
 package no.nav.helse.spedisjon.migrering
 
 import com.github.navikt.tbd_libs.naisful.postgres.ConnectionConfigFactory
+import com.github.navikt.tbd_libs.naisful.postgres.buildPostgresCompliantJdbcUrl
 import com.github.navikt.tbd_libs.naisful.postgres.defaultJdbcUrl
 import com.github.navikt.tbd_libs.naisful.postgres.jdbcUrlWithGoogleSocketFactory
 import com.zaxxer.hikari.HikariConfig
@@ -19,6 +20,9 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
 import javax.sql.DataSource
+import kotlin.collections.plus
+import kotlin.io.path.Path
+import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.measureTime
 import kotlin.time.toJavaDuration
@@ -59,8 +63,8 @@ private fun workMain() {
         maximumPoolSize = 1
     }
     val spedisjonAsyncConfig = HikariConfig().apply {
-        jdbcUrl = defaultJdbcUrl(ConnectionConfigFactory.MountPath("/var/run/secrets/sql/spedisjon_async"))
-        poolName = "spedisjon"
+        jdbcUrl = jdbcUrlForPrivateInstance("/var/run/secrets/sql/spedisjon_async", "/var/run/secrets/sql/spedisjon_async_certs")
+        poolName = "spedisjon-async"
         maximumPoolSize = 1
     }
 
@@ -257,4 +261,30 @@ private fun testTilkoblinger(vararg config: HikariConfig) {
             log.info("${it.poolName} OK!")
         }
     }
+}
+
+private fun jdbcUrlForPrivateInstance(path: String, certsPath: String): String {
+    val dir = Path(path)
+    val hostname = dir.resolve("DATABASE_HOST").readText()
+    val port = dir.resolve("DATABASE_PORT").readText().toInt()
+    val databaseName = dir.resolve("DATABASE_DATABASE").readText()
+    val username = dir.resolve("DATABASE_USERNAME").readText()
+    val password = dir.resolve("DATABASE_PASSWORD").readText()
+    val sslmode = dir.resolve("DATABASE_SSLMODE").readText()
+
+    val options = mapOf(
+        "username" to username,
+        "password" to password,
+        "sslcert" to "$certsPath/cert.pem",
+        "sslrootcert" to "$certsPath/root-cert.pem",
+        "sslkey" to "$certsPath/key.pk8",
+        "sslmode" to sslmode
+    )
+
+    val optionsString = optionsString(options)
+    return "jdbc:postgresql://$hostname:$port/$databaseName?$optionsString"
+}
+
+private fun optionsString(options: Map<String, String>): String {
+    return options.entries.joinToString(separator = "&") { (k, v) -> "$k=$v" }
 }

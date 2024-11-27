@@ -7,13 +7,10 @@ spec:
   egress:
     - to:
         - ipBlock:
-            cidr: 35.228.170.175/32 # spre-subsumsjon
+            cidr: 100.71.0.167/32 # spedisjon-async
     - to:
         - ipBlock:
             cidr: 34.88.43.173/32 # spedisjon
-    - to:
-        - ipBlock:
-            cidr: 35.228.176.0/32 # spleis
   podSelector:
     matchLabels:
       app: spedisjon-migrate
