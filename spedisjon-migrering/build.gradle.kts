@@ -9,6 +9,7 @@ val hikariCPVersion = "6.1.0"
 val kotliqueryVersion = "1.9.0"
 val jacksonVersion = "2.18.1"
 val kotlinxCoroutinesVersion = "1.9.0"
+val tbdLibsVersion: String by project
 
 tasks.withType<Test> {
     useJUnitPlatform()
@@ -25,6 +26,8 @@ dependencies {
         exclude("com.fasterxml.jackson.core")
         exclude("com.fasterxml.jackson.dataformat")
     }
+
+    api("com.github.navikt.tbd-libs:naisful-postgres:$tbdLibsVersion")
 
     implementation("org.flywaydb:flyway-database-postgresql:$flywayVersion")
     implementation("com.google.cloud.sql:postgres-socket-factory:$cloudSqlVersion")

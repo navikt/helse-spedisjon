@@ -1,8 +1,5 @@
 {
   "parallelism": 1,
-  "gcp_project_id": "tbd-dev-7ff9",
   "spedisjon_instance": "spedisjon",
-  "spre_subsumsjon_instance": "spre-subsumsjon",
-  "spleis_instance": "helse-spleis",
-  "spleis_secret": "google-sql-helse-spleis"
+  "spedisjon_async_instance": "spedisjon-async"
 }

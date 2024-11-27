@@ -19,10 +19,8 @@ spec:
   filesFrom:
     - secret: google-sql-spedisjon
       mountPath: /var/run/secrets/sql/spedisjon
-    - secret: google-sql-spre-subsumsjon
-      mountPath: /var/run/secrets/sql/spre_subsumsjon
-    - secret: {{ spleis_secret }}
-      mountPath: /var/run/secrets/sql/spleis
+    - secret: google-sql-spedisjon-async
+      mountPath: /var/run/secrets/sql/spedisjon_async
   gcp:
     sqlInstances:
       - type: POSTGRES_16
@@ -37,18 +35,11 @@ spec:
       - resource:
           apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
           kind: Project
-          name: {{ gcp_project_id }}
         role: roles/cloudsql.client
   env:
-    - name: GCP_PROJECT_ID
-      value: {{ gcp_project_id }}
-    - name: GCP_SQL_REGION
-      value: "europe-north1"
     - name: SPEDISJON_INSTANCE
       value: {{ spedisjon_instance }}
-    - name: SPRE_SUBSUMSJON_INSTANCE
-      value: {{ spre_subsumsjon_instance }}
-    - name: SPLEIS_INSTANCE
-      value: {{ spleis_instance }}
+    - name: SPEDISJON_ASYNC_INSTANCE
+      value: {{ spedisjon_async_instance }}
     - name: SPEDISJON_MIGRATE_INSTANCE
       value: spedisjon-migrering
