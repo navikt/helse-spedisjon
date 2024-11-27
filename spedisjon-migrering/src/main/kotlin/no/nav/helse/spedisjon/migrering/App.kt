@@ -127,34 +127,36 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spedi
 
         HikariDataSource(spedisjonConfig).use { spedisjonDataSource ->
             sessionOf(spedisjonDataSource).use { spedisjonSession ->
-                HikariDataSource(spedisjonAsyncConfig).use { spreSubsumsjonDataSource ->
-                    utførArbeid(session) { arbeid ->
-                        MDC.putCloseable("arbeidId", arbeid.id.toString()).use {
-                            try {
-                                log.info("henter hendelser for arbeidId=${arbeid.id}")
-                                val hendelser = spedisjonSession.run(queryOf(hentHendelser, arbeid.fnr).map { row ->
-                                    val internId = UUID.fromString(row.string("intern_dokument_id"))
-                                    val opprettet = row.localDateTime("opprettet")
-                                    Hendelse(
-                                        internId = internId,
-                                        opprettet = opprettet
-                                    )
-                                }.asList)
-
-                                log.info("Hentet ${hendelser.size} hendelser for arbeidId=${arbeid.id}")
-                                if (hendelser.isNotEmpty()) {
-                                    val verdier: List<Any> = hendelser.flatMap { hendelse ->
-                                        listOf(
-                                            hendelse.internId,
-                                            hendelse.opprettet.toInstant(ZoneId.of("Europe/Oslo").rules.getOffset(hendelse.opprettet))
+                HikariDataSource(spedisjonAsyncConfig).use { spedisjonAsyncDataSource ->
+                    sessionOf(spedisjonAsyncDataSource).use { spedisjonAsyncSession ->
+                        utførArbeid(session) { arbeid ->
+                            MDC.putCloseable("arbeidId", arbeid.id.toString()).use {
+                                try {
+                                    log.info("henter hendelser for arbeidId=${arbeid.id}")
+                                    val hendelser = spedisjonSession.run(queryOf(hentHendelser, arbeid.fnr).map { row ->
+                                        val internId = UUID.fromString(row.string("intern_dokument_id"))
+                                        val opprettet = row.localDateTime("opprettet")
+                                        Hendelse(
+                                            internId = internId,
+                                            opprettet = opprettet
                                         )
+                                    }.asList)
+
+                                    log.info("Hentet ${hendelser.size} hendelser for arbeidId=${arbeid.id}")
+                                    if (hendelser.isNotEmpty()) {
+                                        val verdier: List<Any> = hendelser.flatMap { hendelse ->
+                                            listOf(
+                                                hendelse.internId,
+                                                hendelse.opprettet.toInstant(ZoneId.of("Europe/Oslo").rules.getOffset(hendelse.opprettet))
+                                            )
+                                        }
+                                        val updateStmt = insertStmt.format(hendelser.joinToString { "(?, ?)" })
+                                        spedisjonAsyncSession.run(queryOf(updateStmt, *verdier.toTypedArray()).asUpdate)
                                     }
-                                    val updateStmt = insertStmt.format(hendelser.joinToString { "(?, ?)" })
-                                    spedisjonSession.run(queryOf(updateStmt, *verdier.toTypedArray()).asUpdate)
+                                } catch (err: Exception) {
+                                    log.error("feil ved migrering: ${err.message}", err)
+                                    throw err
                                 }
-                            } catch (err: Exception) {
-                                log.error("feil ved migrering: ${err.message}", err)
-                                throw err
                             }
                         }
                     }
