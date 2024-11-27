@@ -1,7 +1,6 @@
 package no.nav.helse.spedisjon.migrering
 
 import com.github.navikt.tbd_libs.naisful.postgres.ConnectionConfigFactory
-import com.github.navikt.tbd_libs.naisful.postgres.buildPostgresCompliantJdbcUrl
 import com.github.navikt.tbd_libs.naisful.postgres.defaultJdbcUrl
 import com.github.navikt.tbd_libs.naisful.postgres.jdbcUrlWithGoogleSocketFactory
 import com.zaxxer.hikari.HikariConfig
