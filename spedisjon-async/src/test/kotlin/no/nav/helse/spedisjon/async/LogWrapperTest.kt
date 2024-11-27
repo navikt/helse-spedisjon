@@ -37,7 +37,11 @@ internal class LogWrapperTest {
         every { hentHistoriskeFødselsnumre(any(), any()) } returns Result.Ok(mockk(relaxed = true))
         every { hentFødselsnummerOgAktørId(any(), any()) } returns Result.Ok(mockk(relaxed = true))
     }
-    private val mediator = MeldingMediator(meldingtjeneste, speedClient)
+    private val ekspederingMediator = EkspederingMediator(
+        dao = mockk { every { meldingEkspedert(any()) } returns true },
+        rapidsConnection = TestRapid()
+    )
+    private val mediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
 
     @BeforeEach
     fun setup() {
@@ -91,7 +95,8 @@ internal class LogWrapperTest {
                     duplikatnøkkel = listOf("en_nøkkel"),
                     jsonBody = packet.toJson()
                 )
-            ), context)
+            )
+            )
         }
         override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
             mediator.onRiverError("Ukjent melding:\n$problems")

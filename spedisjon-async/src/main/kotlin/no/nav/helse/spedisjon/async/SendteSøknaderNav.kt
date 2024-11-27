@@ -37,7 +37,7 @@ internal class SendteSøknaderNav(
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
         val detaljer = Meldingsdetaljer.sendtSøknadNav(packet)
         meldingMediator.leggInnMelding(detaljer)?.also { internId ->
-            meldingMediator.onMelding(Melding.SendtSøknad(internId, packet["sykmeldingId"].asText().toUUID(), detaljer), context)
+            meldingMediator.onMelding(Melding.SendtSøknad(internId, packet["sykmeldingId"].asText().toUUID(), detaljer))
         }
     }
 

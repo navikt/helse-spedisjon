@@ -50,7 +50,7 @@ class FremtidigFrilansSøknaderRiver internal constructor(
 
         val detaljer = Meldingsdetaljer.nySøknadFrilans(packet)
         meldingMediator.leggInnMelding(detaljer)?.also { internId ->
-            meldingMediator.onMelding(Melding.NySøknad(internId, detaljer), context)
+            meldingMediator.onMelding(Melding.NySøknad(internId, detaljer))
         }
     }
 

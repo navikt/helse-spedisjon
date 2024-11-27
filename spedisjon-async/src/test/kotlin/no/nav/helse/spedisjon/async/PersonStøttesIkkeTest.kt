@@ -1,6 +1,8 @@
 package no.nav.helse.spedisjon.async
 
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -77,9 +79,13 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
 
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         val speedClient = mockSpeed(støttes = false)
-        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient)
+        val ekspederingMediator = EkspederingMediator(
+            dao = mockk { every { meldingEkspedert(any()) } returns true },
+            rapidsConnection = rapidsConnection,
+        )
+        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSource)
-        val inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao)
+        val inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
             Inntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
             NyeSøknader(this, meldingMediator)

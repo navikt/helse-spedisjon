@@ -35,7 +35,10 @@ fun main() {
 
     val factory = ConsumerProducerFactory(AivenConfig.default)
 
-    val meldingMediator = MeldingMediator(httpMeldingtjeneste, speedClient)
+    val rapidsConnection = RapidApplication.create(env, factory)
+
+    val ekspederingMediator = EkspederingMediator(EkspederingDao(dataSourceBuilder.dataSource), rapidsConnection)
+    val meldingMediator = MeldingMediator(httpMeldingtjeneste, speedClient, ekspederingMediator)
     val inntektsmeldingTimeoutSekunder = env["KARANTENE_TID"]?.toLong() ?: 0L.also {
         val loggtekst = "KARANTENE_TID er tom; defaulter til ingen karantene"
         LoggerFactory.getLogger(::main.javaClass).info(loggtekst)
@@ -44,10 +47,11 @@ fun main() {
     val inntektsmeldingMediator = InntektsmeldingMediator(
         speedClient,
         inntektsmeldingDao,
+        ekspederingMediator,
         inntektsmeldingTimeoutSekunder = inntektsmeldingTimeoutSekunder
     )
 
-    LogWrapper(RapidApplication.create(env, factory), meldingMediator).apply {
+    LogWrapper(rapidsConnection, meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
         if (erUtvikling) NyeFrilansSøknader(this, meldingMediator)
         if (erUtvikling) NyeSelvstendigSøknader(this, meldingMediator)

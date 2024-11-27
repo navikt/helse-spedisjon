@@ -33,7 +33,7 @@ internal class NyeSøknader(
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
         val detaljer = Meldingsdetaljer.nySøknad(packet)
         meldingMediator.leggInnMelding(detaljer)?.also { internId ->
-            meldingMediator.onMelding(Melding.NySøknad(internId, detaljer), context)
+            meldingMediator.onMelding(Melding.NySøknad(internId, detaljer))
         }
     }
 

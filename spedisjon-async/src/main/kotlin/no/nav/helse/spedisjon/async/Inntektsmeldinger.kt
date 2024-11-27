@@ -61,8 +61,8 @@ internal class Inntektsmeldinger(
                 arbeidsforholdId = packet["arbeidsforholdId"].takeIf(JsonNode::isTextual)?.asText(),
                 meldingsdetaljer = detaljer
             )
-            meldingMediator.onMelding(inntektsmelding, context)
-            inntektsmeldingMediator.lagreInntektsmelding(inntektsmelding, context)
+            meldingMediator.onMelding(inntektsmelding)
+            inntektsmeldingMediator.lagreInntektsmelding(inntektsmelding)
         }
     }
 

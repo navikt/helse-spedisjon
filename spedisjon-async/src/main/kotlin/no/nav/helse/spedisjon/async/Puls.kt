@@ -20,6 +20,6 @@ internal class Puls(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
-        inntektsmeldingsMediator.ekspeder(context)
+        inntektsmeldingsMediator.ekspeder()
     }
 }

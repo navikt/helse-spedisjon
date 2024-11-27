@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
@@ -12,6 +11,7 @@ import java.time.LocalDateTime
 internal class InntektsmeldingMediator(
     private val speedClient: SpeedClient,
     private val inntektsmeldingDao: InntektsmeldingDao,
+    private val ekspederingMediator: EkspederingMediator,
     private val inntektsmeldingTimeoutSekunder: Long = 1
 ) {
 
@@ -25,7 +25,6 @@ internal class InntektsmeldingMediator(
 
     fun lagreInntektsmelding(
         inntektsmelding: Melding.Inntektsmelding,
-        messageContext: MessageContext,
         ønsketPublisert: LocalDateTime = LocalDateTime.now().plusSeconds(inntektsmeldingTimeoutSekunder),
         mottatt: LocalDateTime = LocalDateTime.now()
     ) {
@@ -34,23 +33,23 @@ internal class InntektsmeldingMediator(
         if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp") {
             logg.info("ekspederer inntektsmeldinger på direkten fordi vi er i dev")
             sikkerlogg.info("ekspederer inntektsmeldinger på direkten fordi vi er i dev")
-            ekspeder(messageContext)
+            ekspeder()
         }
     }
 
-    fun ekspeder(messageContext: MessageContext) {
+    fun ekspeder() {
         inntektsmeldingDao.hentSendeklareMeldinger(inntektsmeldingTimeoutSekunder) { inntektsmelding, antallInntektsmeldingerMottatt ->
             Personinformasjon.Companion.berikMeldingOgBehandleDen(speedClient, inntektsmelding.melding) { berikelse ->
-                ekspederInntektsmelding(messageContext, berikelse, inntektsmelding, antallInntektsmeldingerMottatt)
+                val beriketMelding = beriketInntektsmelding(berikelse, inntektsmelding, antallInntektsmeldingerMottatt)
+                ekspederingMediator.videresendMelding(inntektsmelding.fnr, inntektsmelding.melding.internId, beriketMelding)
             }
         }
     }
 
-    private fun ekspederInntektsmelding(messageContext: MessageContext, berikelse: Berikelse, inntektsmelding: SendeklarInntektsmelding, antallInntektsmeldingMottatt: Int) {
+    private fun beriketInntektsmelding(berikelse: Berikelse, inntektsmelding: SendeklarInntektsmelding, antallInntektsmeldingMottatt: Int): BeriketMelding {
         val beriketMelding = berikelse.berik(inntektsmelding.melding)
         sikkerlogg.info("Ekspederer inntektsmelding med fødselsnummer: ${inntektsmelding.fnr} og orgnummer: ${inntektsmelding.orgnummer}")
-        val beriketMeldingMedFlagg = flaggFlereInntektsmeldinger(beriketMelding, antallInntektsmeldingMottatt)
-        messageContext.publish(inntektsmelding.fnr, beriketMeldingMedFlagg.json)
+        return flaggFlereInntektsmeldinger(beriketMelding, antallInntektsmeldingMottatt)
     }
 
     private fun flaggFlereInntektsmeldinger(beriketMelding: BeriketMelding, antallInntektsmeldinger: Int) =

@@ -2,6 +2,8 @@ package no.nav.helse.spedisjon.async
 
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import io.mockk.every
+import io.mockk.mockk
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -12,7 +14,11 @@ import java.util.*
 internal class AvbrutteSøknaderTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         val speedClient = mockSpeed()
-        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient)
+        val ekspederingMediator = EkspederingMediator(
+            dao = mockk { every { meldingEkspedert(any()) } returns true },
+            rapidsConnection = rapidsConnection,
+        )
+        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         AvbrutteSøknader(
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator

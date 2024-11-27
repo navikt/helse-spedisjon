@@ -5,8 +5,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearMocks
+import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
@@ -181,10 +181,14 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
     private val dokumentProducerMock = mockk<KafkaProducer<String, String>>(relaxed = true)
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         clearMocks(dokumentProducerMock)
+        val ekspederingMediator = EkspederingMediator(
+            dao = mockk { every { meldingEkspedert(any()) } returns true },
+            rapidsConnection = rapidsConnection,
+        )
         val speedClient = mockSpeed()
-        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient)
+        val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSource)
-        inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao)
+        inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
             Inntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
         }
@@ -192,7 +196,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
 
     private fun manipulerTimeoutOgPubliser() {
         manipulerTimeoutInntektsmelding(FØDSELSNUMMER)
-        inntektsmeldingMediator.ekspeder(testRapid)
+        inntektsmeldingMediator.ekspeder()
     }
 
     private companion object {

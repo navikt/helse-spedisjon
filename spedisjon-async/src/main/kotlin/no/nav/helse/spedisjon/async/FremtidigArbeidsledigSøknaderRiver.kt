@@ -49,7 +49,7 @@ class FremtidigArbeidsledigSøknaderRiver internal constructor(
 
         val detaljer = Meldingsdetaljer.nySøknadArbeidsledig(packet)
         meldingMediator.leggInnMelding(detaljer)?.also { internId ->
-            meldingMediator.onMelding(Melding.NySøknad(internId, detaljer), context)
+            meldingMediator.onMelding(Melding.NySøknad(internId, detaljer))
         }
     }
 

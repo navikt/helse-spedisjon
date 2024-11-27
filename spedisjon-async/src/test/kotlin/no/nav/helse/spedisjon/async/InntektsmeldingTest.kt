@@ -24,8 +24,8 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     @BeforeEach
     fun before() {
         inntektsmeldingDao = InntektsmeldingDao(meldingstjeneste, dataSource)
-        meldingMediator = MeldingMediator(meldingstjeneste, mockk())
-        mediator = InntektsmeldingMediator(mockk(), inntektsmeldingDao)
+        meldingMediator = MeldingMediator(meldingstjeneste, mockk(), mockk())
+        mediator = InntektsmeldingMediator(mockk(), inntektsmeldingDao, mockk())
 
     }
 
@@ -42,7 +42,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
         val internId = meldingMediator.leggInnMelding(detaljer) ?: fail { "skulle legge inn melding" }
         val im = Melding.Inntektsmelding(internId, ORGNUMMER, null, detaljer)
-        mediator.lagreInntektsmelding(im, TestRapid())
+        mediator.lagreInntektsmelding(im)
 
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         Assertions.assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
@@ -61,8 +61,8 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
         val internId = meldingMediator.leggInnMelding(detaljer) ?: fail { "skulle legge inn melding" }
         val im = Melding.Inntektsmelding(internId, ORGNUMMER, null, detaljer)
-        mediator.lagreInntektsmelding(im, TestRapid())
-        mediator.lagreInntektsmelding(im, TestRapid())
+        mediator.lagreInntektsmelding(im)
+        mediator.lagreInntektsmelding(im)
 
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         Assertions.assertEquals(1, antallInntektsmeldinger(FØDSELSNUMMER, ORGNUMMER))
@@ -158,7 +158,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
         val internId = meldingMediator.leggInnMelding(detaljer) ?: fail { "skulle legge inn melding" }
         val melding = Melding.Inntektsmelding(internId, orgnummer, arbeidsforholdId, detaljer)
-        mediator.lagreInntektsmelding(melding, TestRapid(), ønsketPublisert = ønsketPublisert, mottatt = mottatt)
+        mediator.lagreInntektsmelding(melding, ønsketPublisert = ønsketPublisert, mottatt = mottatt)
         return melding.meldingsdetaljer.duplikatkontroll
     }
 
