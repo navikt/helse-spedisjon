@@ -151,11 +151,21 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
         """
         @Language("PostgreSQL")
         val updateSpedisjonStmt = """
-            update melding set intern_dokument_id = ? where id = ?;
+            update melding
+            set intern_dokument_id = v.intern_dokument_id
+            from (values
+                %s
+            ) as v(id, intern_dokument_id)
+            where melding.id = v.id
         """
         @Language("PostgreSQL")
         val updateSpedisjonAsyncStmt = """
-            update ekspedering set intern_dokument_id = ? where intern_dokument_id = ?;
+            update ekspedering
+            set intern_dokument_id = v.ny_intern_dokument_id
+            from (values
+                %s
+            ) as v(ny_intern_dokument_id,gammel_intern_dokument_id)
+            where ekspedering.intern_dokument_id = v.gammel_intern_dokument_id;
         """
 
         HikariDataSource(spedisjonConfig).use { spedisjonDataSource ->
@@ -194,21 +204,50 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
 
                                             log.info("Hentet ${spleishendelser.size} hendelser for arbeidId=${arbeid.id}")
 
-                                            spleishendelser
+                                            val ulikeHendelser = spleishendelser
                                                 .map { spleishendelse ->
                                                     val motpart = spedisjonhendelser.firstOrNull { spedisjonhendelse ->
                                                         spedisjonhendelse.duplikatkontroll == spleishendelse.duplikatkontroll
                                                     }
                                                     spleishendelse to motpart
                                                 }
-                                                .forEach { (spleishendelse, spedisjonhendelse) ->
+                                                .filter { (spleishendelse, spedisjonhendelse) ->
+                                                    spleishendelse.internDokumentId != spedisjonhendelse?.internDokumentId
+                                                }
+                                                .onEach { (spleishendelse, spedisjonhendelse) ->
                                                     when {
                                                         spedisjonhendelse == null -> log.info("fant ikke tilhørende spedisjonhendelse for spleishendelseId=${spleishendelse.id}")
-                                                        spleishendelse.internDokumentId != spedisjonhendelse.internDokumentId -> {
+                                                        else -> {
                                                             log.info("fant ulikhet i internDokumentId mellom spedisjonHendelseId=${spedisjonhendelse.id} og spleishendelseId=${spleishendelse.id} for spedisjonmeldingtype=${spedisjonhendelse.type} og spleismeldingtype=${spleishendelse.type}")
                                                         }
                                                     }
                                                 }
+
+                                            val spedisjonverdier: List<Any> = ulikeHendelser.flatMap { (spleishendelse, spedisjonhendelse) ->
+                                                spedisjonhendelse?.let {
+                                                    listOf(
+                                                        it.id,
+                                                        spleishendelse.internDokumentId
+                                                    )
+                                                } ?: emptyList()
+                                            }
+                                            if (spedisjonverdier.isNotEmpty()) {
+                                                val updateStmt = updateSpedisjonStmt.format(ulikeHendelser.joinToString { "(?, ?)" })
+                                                spedisjonSession.run(queryOf(updateStmt, *spedisjonverdier.toTypedArray()).asUpdate)
+                                            }
+
+                                            val spedisjonAsyncverdier: List<Any> = ulikeHendelser.flatMap { (spleishendelse, spedisjonhendelse) ->
+                                                spedisjonhendelse?.let {
+                                                    listOf(
+                                                        spleishendelse.internDokumentId,
+                                                        spedisjonhendelse.internDokumentId
+                                                    )
+                                                } ?: emptyList()
+                                            }
+                                            if (spedisjonAsyncverdier.isNotEmpty()) {
+                                                val updateStmt = updateSpedisjonAsyncStmt.format(ulikeHendelser.joinToString { "(?, ?)" })
+                                                spedisjonAsyncSession.run(queryOf(updateStmt, *spedisjonAsyncverdier.toTypedArray()).asUpdate)
+                                            }
                                         } catch (err: Exception) {
                                             log.error("feil ved migrering: ${err.message}", err)
                                             throw err
