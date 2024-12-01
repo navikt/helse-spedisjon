@@ -15,11 +15,9 @@ import org.intellij.lang.annotations.Language
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.security.MessageDigest
 import java.util.*
 import javax.sql.DataSource
-import kotlin.collections.plus
 import kotlin.io.path.Path
 import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
@@ -56,6 +54,11 @@ private fun workMain() {
         maximumPoolSize = 1
     }
 
+    val spleisConfig = HikariConfig().apply {
+        jdbcUrl = jdbcUrlWithGoogleSocketFactory(System.getenv("SPLEIS_INSTANCE"), ConnectionConfigFactory.MountPath("/var/run/secrets/sql/spleis"))
+        poolName = "spleis"
+        maximumPoolSize = 1
+    }
     val spedisjonConfig = HikariConfig().apply {
         jdbcUrl = jdbcUrlWithGoogleSocketFactory(System.getenv("SPEDISJON_INSTANCE"), ConnectionConfigFactory.MountPath("/var/run/secrets/sql/spedisjon"))
         poolName = "spedisjon"
@@ -67,15 +70,15 @@ private fun workMain() {
         maximumPoolSize = 1
     }
 
-    testTilkoblinger(flywayMigrationConfig, appConfig, spedisjonConfig, spedisjonAsyncConfig)
+    testTilkoblinger(flywayMigrationConfig, appConfig, spleisConfig, spedisjonConfig, spedisjonAsyncConfig)
     migrateDatabase(flywayMigrationConfig)
 
     HikariDataSource(appConfig).use { dataSource ->
-        utførMigrering(dataSource, spedisjonConfig, spedisjonAsyncConfig)
+        utførMigrering(dataSource, spleisConfig, spedisjonConfig, spedisjonAsyncConfig)
     }
 }
 
-fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spedisjonAsyncConfig: HikariConfig) {
+fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjonConfig: HikariConfig, spedisjonAsyncConfig: HikariConfig) {
     sessionOf(dataSource).use { session ->
         klargjørEllerVentPåTilgjengeligArbeid(session) {
             log.info("Henter personer fra spedisjon og forbereder arbeidstabell")
@@ -114,48 +117,103 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spedi
         }
 
         @Language("PostgreSQL")
-        val hentHendelser = """
-            select intern_dokument_id,opprettet
+        val hentSpedisjonhendelser = """
+            select id,type,duplikatkontroll,intern_dokument_id
             from melding 
-            where fnr = ?;
+            where fnr = ? and (
+                type = 'ny_søknad' OR
+                type = 'ny_søknad_frilans' OR
+                type = 'ny_søknad_selvstendig' OR
+                type = 'ny_søknad_arbeidsledig' OR
+                type = 'sendt_søknad_arbeidsgiver' OR
+                type = 'sendt_søknad_nav' OR
+                type = 'sendt_søknad_frilans' OR
+                type = 'sendt_søknad_selvstendig' OR
+                type = 'sendt_søknad_arbeidsledig'
+            );
+        """
+
+        @Language("PostgreSQL")
+        val hentSpleishendelser = """
+            select id,melding_type,melding_id,data->>'id' as soknad_id, data->>'status' as soknad_status
+            from melding 
+            where fnr = ? and (
+                melding_type = 'NY_SØKNAD' OR
+                melding_type = 'NY_SØKNAD_FRILANS' OR
+                melding_type = 'NY_SØKNAD_SELVSTENDIG' OR
+                melding_type = 'NY_SØKNAD_ARBEIDSLEDIG' OR
+                melding_type = 'SENDT_SØKNAD_ARBEIDSGIVER' OR
+                melding_type = 'SENDT_SØKNAD_NAV' OR
+                melding_type = 'SENDT_SØKNAD_FRILANS' OR
+                melding_type = 'SENDT_SØKNAD_SELVSTENDIG' OR
+                melding_type = 'SENDT_SØKNAD_ARBEIDSLEDIG'
+            );
         """
         @Language("PostgreSQL")
-        val insertStmt = """
-            insert into ekspedering(intern_dokument_id,ekspedert) values %s
-            on conflict(intern_dokument_id) do nothing
+        val updateSpedisjonStmt = """
+            update melding set intern_dokument_id = ? where id = ?;
+        """
+        @Language("PostgreSQL")
+        val updateSpedisjonAsyncStmt = """
+            update ekspedering set intern_dokument_id = ? where intern_dokument_id = ?;
         """
 
         HikariDataSource(spedisjonConfig).use { spedisjonDataSource ->
             sessionOf(spedisjonDataSource).use { spedisjonSession ->
                 HikariDataSource(spedisjonAsyncConfig).use { spedisjonAsyncDataSource ->
                     sessionOf(spedisjonAsyncDataSource).use { spedisjonAsyncSession ->
-                        utførArbeid(session) { arbeid ->
-                            MDC.putCloseable("arbeidId", arbeid.id.toString()).use {
-                                try {
-                                    log.info("henter hendelser for arbeidId=${arbeid.id}")
-                                    val hendelser = spedisjonSession.run(queryOf(hentHendelser, arbeid.fnr).map { row ->
-                                        val internId = UUID.fromString(row.string("intern_dokument_id"))
-                                        val opprettet = row.localDateTime("opprettet")
-                                        Hendelse(
-                                            internId = internId,
-                                            opprettet = opprettet
-                                        )
-                                    }.asList)
+                        HikariDataSource(spleisConfig).use { spleisDataSource ->
+                            sessionOf(spleisDataSource).use { spleisSession ->
+                                utførArbeid(session) { arbeid ->
+                                    MDC.putCloseable("arbeidId", arbeid.id.toString()).use {
+                                        try {
+                                            log.info("henter hendelser for arbeidId=${arbeid.id}")
+                                            val spedisjonhendelser = spedisjonSession.run(queryOf(hentSpedisjonhendelser, arbeid.fnr).map { row ->
+                                                val meldingstype = row.string("type")
+                                                Spedisjonhendelse(
+                                                    id = row.long("id"),
+                                                    type = Hendelsetype.tilHendelsetypeOrNull(meldingstype) ?: error("tolket ikke type $meldingstype"),
+                                                    duplikatkontroll = row.string("duplikatkontroll"),
+                                                    internDokumentId = UUID.fromString(row.string("intern_dokument_id")),
+                                                )
+                                            }.asList)
 
-                                    log.info("Hentet ${hendelser.size} hendelser for arbeidId=${arbeid.id}")
-                                    if (hendelser.isNotEmpty()) {
-                                        val verdier: List<Any> = hendelser.flatMap { hendelse ->
-                                            listOf(
-                                                hendelse.internId,
-                                                hendelse.opprettet.toInstant(ZoneId.of("Europe/Oslo").rules.getOffset(hendelse.opprettet))
-                                            )
+                                            log.info("Hentet ${spedisjonhendelser.size} hendelser for arbeidId=${arbeid.id}")
+
+
+                                            val spleishendelser = spleisSession.run(queryOf(hentSpleishendelser, arbeid.fnr).map { row ->
+                                                val meldingstype = row.string("melding_type")
+                                                Spleishendelse(
+                                                    id = row.long("id"),
+                                                    type = Hendelsetype.tilHendelsetypeOrNull(meldingstype) ?: error("tolket ikke type $meldingstype"),
+                                                    internDokumentId = UUID.fromString(row.string("melding_id")),
+                                                    søknadId = row.string("soknad_id"),
+                                                    søknadStatus = row.string("soknad_status"),
+                                                )
+                                            }.asList)
+
+                                            log.info("Hentet ${spleishendelser.size} hendelser for arbeidId=${arbeid.id}")
+
+                                            spleishendelser
+                                                .map { spleishendelse ->
+                                                    val motpart = spedisjonhendelser.firstOrNull { spedisjonhendelse ->
+                                                        spedisjonhendelse.duplikatkontroll == spleishendelse.duplikatkontroll
+                                                    }
+                                                    spleishendelse to motpart
+                                                }
+                                                .forEach { (spleishendelse, spedisjonhendelse) ->
+                                                    when {
+                                                        spedisjonhendelse == null -> log.info("fant ikke tilhørende spedisjonhendelse for spleishendelseId=${spleishendelse.id}")
+                                                        spleishendelse.internDokumentId != spedisjonhendelse.internDokumentId -> {
+                                                            log.info("fant ulikhet i internDokumentId mellom spedisjonHendelseId=${spedisjonhendelse.id} og spleishendelseId=${spleishendelse.id} for spedisjonmeldingtype=${spedisjonhendelse.type} og spleismeldingtype=${spleishendelse.type}")
+                                                        }
+                                                    }
+                                                }
+                                        } catch (err: Exception) {
+                                            log.error("feil ved migrering: ${err.message}", err)
+                                            throw err
                                         }
-                                        val updateStmt = insertStmt.format(hendelser.joinToString { "(?, ?)" })
-                                        spedisjonAsyncSession.run(queryOf(updateStmt, *verdier.toTypedArray()).asUpdate)
                                     }
-                                } catch (err: Exception) {
-                                    log.error("feil ved migrering: ${err.message}", err)
-                                    throw err
                                 }
                             }
                         }
@@ -166,10 +224,59 @@ fun utførMigrering(dataSource: DataSource, spedisjonConfig: HikariConfig, spedi
     }
 }
 
-data class Hendelse(
-    val internId: UUID,
-    val opprettet: LocalDateTime
+data class Spedisjonhendelse(
+    val id: Long,
+    val type: Hendelsetype,
+    val duplikatkontroll: String,
+    val internDokumentId: UUID
 )
+
+enum class Hendelsetype {
+    NY_SØKNAD,
+    NY_SØKNAD_FRILANS,
+    NY_SØKNAD_SELVSTENDIG,
+    NY_SØKNAD_ARBEIDSLEDIG,
+    SENDT_SØKNAD_ARBEIDSGIVER,
+    SENDT_SØKNAD_NAV,
+    SENDT_SØKNAD_FRILANS,
+    SENDT_SØKNAD_SELVSTENDIG,
+    SENDT_SØKNAD_ARBEIDSLEDIG;
+
+    companion object {
+        fun tilHendelsetypeOrNull(s: String): Hendelsetype? {
+            return when (s.lowercase()) {
+                "ny_søknad" -> NY_SØKNAD
+                "ny_søknad_frilans" -> NY_SØKNAD_FRILANS
+                "ny_søknad_selvstendig" -> NY_SØKNAD_SELVSTENDIG
+                "ny_søknad_arbeidsledig" -> NY_SØKNAD_ARBEIDSLEDIG
+                "sendt_søknad_arbeidsgiver" -> SENDT_SØKNAD_ARBEIDSGIVER
+                "sendt_søknad_nav" -> SENDT_SØKNAD_NAV
+                "sendt_søknad_frilans" -> SENDT_SØKNAD_FRILANS
+                "sendt_søknad_selvstendig" -> SENDT_SØKNAD_SELVSTENDIG
+                "sendt_søknad_arbeidsledig" -> SENDT_SØKNAD_ARBEIDSLEDIG
+                else -> null
+            }
+        }
+    }
+}
+
+internal fun String.sha512(): String =
+    MessageDigest
+        .getInstance("SHA-512")
+        .digest(this.toByteArray())
+        .joinToString("") { "%02x".format(it) }
+
+data class Spleishendelse(
+    val id: Long,
+    val type: Hendelsetype,
+    val internDokumentId: UUID,
+    val søknadId: String,
+    val søknadStatus: String
+) {
+    val duplikatkontroll by lazy {
+        "$søknadId$søknadStatus".sha512()
+    }
+}
 
 data class Arbeid(val id: Long, val fnr: String)
 
@@ -258,6 +365,7 @@ private fun migrateDatabase(connectionConfig: HikariConfig) {
 private fun testTilkoblinger(vararg config: HikariConfig) {
     log.info("Tester datasourcer")
     config.forEach {
+        log.info("tester ${it.poolName}")
         HikariDataSource(it).use {
             log.info("${it.poolName} OK!")
         }

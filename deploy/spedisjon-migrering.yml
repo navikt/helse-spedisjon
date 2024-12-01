@@ -23,6 +23,8 @@ spec:
       mountPath: /var/run/secrets/sql/spedisjon_async
     - secret: sqeletor-spedisjon-async-4caa82fe
       mountPath: /var/run/secrets/sql/spedisjon_async_certs
+    - secret: {{ spleis_secret }}
+      mountPath: /var/run/secrets/sql/spleis
   gcp:
     sqlInstances:
       - type: POSTGRES_16
@@ -41,7 +43,5 @@ spec:
   env:
     - name: SPEDISJON_INSTANCE
       value: {{ spedisjon_instance }}
-    - name: SPEDISJON_ASYNC_INSTANCE
-      value: {{ spedisjon_async_instance }}
-    - name: SPEDISJON_MIGRATE_INSTANCE
-      value: spedisjon-migrering
+    - name: SPLEIS_INSTANCE
+      value: {{ spleis_instance }}

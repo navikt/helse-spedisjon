@@ -1,5 +1,6 @@
 {
   "parallelism": 1,
   "spedisjon_instance": "spedisjon",
-  "spedisjon_async_instance": "spedisjon-async"
+  "spleis_instance": "helse-spleis",
+  "spleis_secret": "google-sql-helse-spleis"
 }

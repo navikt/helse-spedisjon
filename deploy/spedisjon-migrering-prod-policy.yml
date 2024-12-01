@@ -11,6 +11,9 @@ spec:
     - to:
         - ipBlock:
             cidr: 35.228.255.9/32 # spedisjon
+    - to:
+        - ipBlock:
+            cidr: 34.88.185.194/32 # spleis
   podSelector:
     matchLabels:
       app: spedisjon-migrate
