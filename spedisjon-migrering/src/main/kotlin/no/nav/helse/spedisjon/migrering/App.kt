@@ -181,7 +181,7 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
                                             log.info("Hentet ${spedisjonhendelser.size} hendelser for arbeidId=${arbeid.id}")
 
 
-                                            val spleishendelser = spleisSession.run(queryOf(hentSpleishendelser, arbeid.fnr).map { row ->
+                                            val spleishendelser = spleisSession.run(queryOf(hentSpleishendelser, arbeid.fnr.toLong()).map { row ->
                                                 val meldingstype = row.string("melding_type")
                                                 Spleishendelse(
                                                     id = row.long("id"),
