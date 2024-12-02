@@ -10,10 +10,10 @@ spec:
   parallelism: {{ parallelism }}
   resources:
     limits:
-      memory: 4096Mi
+      memory: 1024Mi
       cpu: 4000m
     requests:
-      cpu: 200m
+      cpu: 50m
   secureLogs:
     enabled: true
   filesFrom:

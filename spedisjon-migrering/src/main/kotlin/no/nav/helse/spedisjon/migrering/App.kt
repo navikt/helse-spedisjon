@@ -16,6 +16,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import java.security.MessageDigest
+import java.time.LocalDateTime
 import java.util.*
 import javax.sql.DataSource
 import kotlin.io.path.Path
@@ -118,35 +119,19 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
 
         @Language("PostgreSQL")
         val hentSpedisjonhendelser = """
-            select id,type,duplikatkontroll,intern_dokument_id
+            select id,duplikatkontroll,intern_dokument_id
             from melding 
             where fnr = ? and (
-                type = 'ny_søknad' OR
-                type = 'ny_søknad_frilans' OR
-                type = 'ny_søknad_selvstendig' OR
-                type = 'ny_søknad_arbeidsledig' OR
-                type = 'sendt_søknad_arbeidsgiver' OR
-                type = 'sendt_søknad_nav' OR
-                type = 'sendt_søknad_frilans' OR
-                type = 'sendt_søknad_selvstendig' OR
-                type = 'sendt_søknad_arbeidsledig'
+                type = 'inntektsmelding'
             );
         """
 
         @Language("PostgreSQL")
         val hentSpleishendelser = """
-            select id,melding_type,melding_id,data->>'id' as soknad_id, data->>'status' as soknad_status
+            select id,melding_id,data->>'mottattDato' as mottatt_dato, data->>'arkivreferanse' as arkivreferanse
             from melding 
             where fnr = ? and (
-                melding_type = 'NY_SØKNAD' OR
-                melding_type = 'NY_SØKNAD_FRILANS' OR
-                melding_type = 'NY_SØKNAD_SELVSTENDIG' OR
-                melding_type = 'NY_SØKNAD_ARBEIDSLEDIG' OR
-                melding_type = 'SENDT_SØKNAD_ARBEIDSGIVER' OR
-                melding_type = 'SENDT_SØKNAD_NAV' OR
-                melding_type = 'SENDT_SØKNAD_FRILANS' OR
-                melding_type = 'SENDT_SØKNAD_SELVSTENDIG' OR
-                melding_type = 'SENDT_SØKNAD_ARBEIDSLEDIG'
+                melding_type = 'INNTEKTSMELDING'
             );
         """
         @Language("PostgreSQL")
@@ -179,10 +164,8 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
                                         try {
                                             log.info("henter hendelser for arbeidId=${arbeid.id}")
                                             val spedisjonhendelser = spedisjonSession.run(queryOf(hentSpedisjonhendelser, arbeid.fnr).map { row ->
-                                                val meldingstype = row.string("type")
-                                                Spedisjonhendelse(
+                                                Spedisjoninntektsmelding(
                                                     id = row.long("id"),
-                                                    type = Hendelsetype.tilHendelsetypeOrNull(meldingstype) ?: error("tolket ikke type $meldingstype"),
                                                     duplikatkontroll = row.string("duplikatkontroll"),
                                                     internDokumentId = UUID.fromString(row.string("intern_dokument_id")),
                                                 )
@@ -190,15 +173,12 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
 
                                             log.info("Hentet ${spedisjonhendelser.size} hendelser for arbeidId=${arbeid.id}")
 
-
                                             val spleishendelser = spleisSession.run(queryOf(hentSpleishendelser, arbeid.fnr.toLong()).map { row ->
-                                                val meldingstype = row.string("melding_type")
-                                                Spleishendelse(
+                                                Spleisinntektsmelding(
                                                     id = row.long("id"),
-                                                    type = Hendelsetype.tilHendelsetypeOrNull(meldingstype) ?: error("tolket ikke type $meldingstype"),
                                                     internDokumentId = UUID.fromString(row.string("melding_id")),
-                                                    søknadId = row.string("soknad_id"),
-                                                    søknadStatus = row.string("soknad_status"),
+                                                    mottattDato = row.localDateTime("mottatt_dato"),
+                                                    arkivreferanse = row.string("arkivreferanse")
                                                 )
                                             }.asList)
 
@@ -218,7 +198,7 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
                                                     when {
                                                         spedisjonhendelse == null -> log.info("fant ikke tilhørende spedisjonhendelse for spleishendelseId=${spleishendelse.id}")
                                                         else -> {
-                                                            log.info("fant ulikhet i internDokumentId mellom spedisjonHendelseId=${spedisjonhendelse.id} og spleishendelseId=${spleishendelse.id} for spedisjonmeldingtype=${spedisjonhendelse.type} og spleismeldingtype=${spleishendelse.type}")
+                                                            log.info("fant ulikhet i internDokumentId mellom spedisjonHendelseId=${spedisjonhendelse.id} og spleishendelseId=${spleishendelse.id}")
                                                         }
                                                     }
                                                 }
@@ -263,9 +243,8 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
     }
 }
 
-data class Spedisjonhendelse(
+data class Spedisjoninntektsmelding(
     val id: Long,
-    val type: Hendelsetype,
     val duplikatkontroll: String,
     val internDokumentId: UUID
 )
@@ -305,15 +284,14 @@ internal fun String.sha512(): String =
         .digest(this.toByteArray())
         .joinToString("") { "%02x".format(it) }
 
-data class Spleishendelse(
+data class Spleisinntektsmelding(
     val id: Long,
-    val type: Hendelsetype,
     val internDokumentId: UUID,
-    val søknadId: String,
-    val søknadStatus: String
+    val arkivreferanse: String,
+    val mottattDato: LocalDateTime
 ) {
     val duplikatkontroll by lazy {
-        "$søknadId$søknadStatus".sha512()
+        "$arkivreferanse".sha512()
     }
 }
 

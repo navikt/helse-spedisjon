@@ -7,7 +7,7 @@ spec:
   egress:
     - to:
         - ipBlock:
-            cidr: 100.71.0.167/32 # spedisjon-async
+            cidr: 100.71.17.34/16 # spedisjon-async
     - to:
         - ipBlock:
             cidr: 35.228.255.9/32 # spedisjon
