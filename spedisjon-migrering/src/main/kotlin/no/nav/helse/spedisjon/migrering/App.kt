@@ -110,7 +110,10 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
 
                             if (personer.isNotEmpty()) {
                                 @Language("PostgreSQL")
-                                val query = """INSERT INTO arbeidstabell (fnr) VALUES ${personer.joinToString { "(?)" }}"""
+                                val query = """
+                                    INSERT INTO arbeidstabell (fnr) VALUES ${personer.joinToString { "(?)" }}
+                                    on conflict (fnr) do nothing
+                                """
                                 session.run(queryOf(query, *personer.toTypedArray()).asExecute)
                             }
 
