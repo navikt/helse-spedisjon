@@ -1,5 +1,8 @@
 package no.nav.helse.spedisjon.migrering
 
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.naisful.postgres.ConnectionConfigFactory
 import com.github.navikt.tbd_libs.naisful.postgres.defaultJdbcUrl
 import com.github.navikt.tbd_libs.naisful.postgres.jdbcUrlWithGoogleSocketFactory
@@ -26,6 +29,9 @@ import kotlin.time.measureTime
 import kotlin.time.toJavaDuration
 
 val log: Logger = LoggerFactory.getLogger("no.nav.helse.spedisjon.migrering.App")
+val objectMapper = jacksonObjectMapper()
+    .registerModule(JavaTimeModule())
+    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
 fun main() {
     try {
@@ -118,123 +124,52 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
         }
 
         @Language("PostgreSQL")
-        val hentSpedisjonhendelser = """
-            select id,duplikatkontroll,intern_dokument_id
-            from melding 
-            where fnr = ? and (
-                type = 'inntektsmelding'
-            );
-        """
-
-        @Language("PostgreSQL")
         val hentSpleishendelser = """
-            select id,melding_id,data->>'mottattDato' as mottatt_dato, data->>'arkivreferanse' as arkivreferanse
+            select id,melding_id,melding_type,data
             from melding 
             where fnr = ? and (
+                melding_type = 'NY_SØKNAD' OR
+                melding_type = 'NY_SØKNAD_FRILANS' OR
+                melding_type = 'NY_SØKNAD_SELVSTENDIG' OR
+                melding_type = 'NY_SØKNAD_ARBEIDSLEDIG' OR
+                melding_type = 'SENDT_SØKNAD_ARBEIDSGIVER' OR
+                melding_type = 'SENDT_SØKNAD_NAV' OR
+                melding_type = 'SENDT_SØKNAD_FRILANS' OR
+                melding_type = 'SENDT_SØKNAD_SELVSTENDIG' OR
+                melding_type = 'SENDT_SØKNAD_ARBEIDSLEDIG' OR
                 melding_type = 'INNTEKTSMELDING'
             );
         """
-        @Language("PostgreSQL")
-        val updateSpedisjonStmt = """
-            update melding
-            set intern_dokument_id = v.intern_dokument_id
-            from (values
-                %s
-            ) as v(id, intern_dokument_id)
-            where melding.id = v.id
-        """
-        @Language("PostgreSQL")
-        val updateSpedisjonAsyncStmt = """
-            update ekspedering
-            set intern_dokument_id = v.ny_intern_dokument_id
-            from (values
-                %s
-            ) as v(ny_intern_dokument_id,gammel_intern_dokument_id)
-            where ekspedering.intern_dokument_id = v.gammel_intern_dokument_id;
-        """
 
-        HikariDataSource(spedisjonConfig).use { spedisjonDataSource ->
-            sessionOf(spedisjonDataSource).use { spedisjonSession ->
-                HikariDataSource(spedisjonAsyncConfig).use { spedisjonAsyncDataSource ->
-                    sessionOf(spedisjonAsyncDataSource).use { spedisjonAsyncSession ->
-                        HikariDataSource(spleisConfig).use { spleisDataSource ->
-                            sessionOf(spleisDataSource).use { spleisSession ->
-                                utførArbeid(session) { arbeid ->
-                                    MDC.putCloseable("arbeidId", arbeid.id.toString()).use {
-                                        try {
-                                            log.info("henter hendelser for arbeidId=${arbeid.id}")
-                                            val spedisjonhendelser = spedisjonSession.run(queryOf(hentSpedisjonhendelser, arbeid.fnr).map { row ->
-                                                Spedisjoninntektsmelding(
-                                                    id = row.long("id"),
-                                                    duplikatkontroll = row.string("duplikatkontroll"),
-                                                    internDokumentId = UUID.fromString(row.string("intern_dokument_id")),
-                                                )
-                                            }.asList)
+        HikariDataSource(spleisConfig).use { spleisDataSource ->
+            sessionOf(spleisDataSource).use { spleisSession ->
+                utførArbeid(session) { arbeid ->
+                    MDC.putCloseable("arbeidId", arbeid.id.toString()).use {
+                        try {
+                            log.info("henter hendelser for arbeidId=${arbeid.id}")
 
-                                            log.info("Hentet ${spedisjonhendelser.size} hendelser for arbeidId=${arbeid.id}")
+                            val spleishendelser = spleisSession.run(queryOf(hentSpleishendelser, arbeid.fnr.toLong()).map { row ->
+                                val meldingtype = row.string("melding_type")
+                                Spleishendelse(
+                                    id = row.long("id"),
+                                    internDokumentId = UUID.fromString(row.string("melding_id")),
+                                    meldingtype = Hendelsetype.tilHendelsetypeOrNull(meldingtype) ?: error("ingen mapping for $meldingtype"),
+                                    data = row.string("data")
+                                )
+                            }.asList)
 
-                                            val spleishendelser = spleisSession.run(queryOf(hentSpleishendelser, arbeid.fnr.toLong()).map { row ->
-                                                Spleisinntektsmelding(
-                                                    id = row.long("id"),
-                                                    internDokumentId = UUID.fromString(row.string("melding_id")),
-                                                    mottattDato = LocalDateTime.parse(row.string("mottatt_dato")),
-                                                    arkivreferanse = row.string("arkivreferanse")
-                                                )
-                                            }.asList)
+                            log.info("Hentet ${spleishendelser.size} hendelser for arbeidId=${arbeid.id}")
 
-                                            log.info("Hentet ${spleishendelser.size} hendelser for arbeidId=${arbeid.id}")
-
-                                            val ulikeHendelser = spleishendelser
-                                                .map { spleishendelse ->
-                                                    val motpart = spedisjonhendelser.firstOrNull { spedisjonhendelse ->
-                                                        spedisjonhendelse.duplikatkontroll == spleishendelse.duplikatkontroll
-                                                    }
-                                                    spleishendelse to motpart
-                                                }
-                                                .filter { (spleishendelse, spedisjonhendelse) ->
-                                                    spleishendelse.internDokumentId != spedisjonhendelse?.internDokumentId
-                                                }
-                                                .onEach { (spleishendelse, spedisjonhendelse) ->
-                                                    when {
-                                                        spedisjonhendelse == null -> log.info("fant ikke tilhørende spedisjonhendelse for spleishendelseId=${spleishendelse.id}")
-                                                        else -> {
-                                                            log.info("fant ulikhet i internDokumentId mellom spedisjonHendelseId=${spedisjonhendelse.id} og spleishendelseId=${spleishendelse.id}")
-                                                        }
-                                                    }
-                                                }
-
-                                            val spedisjonverdier: List<Any> = ulikeHendelser.flatMap { (spleishendelse, spedisjonhendelse) ->
-                                                spedisjonhendelse?.let {
-                                                    listOf(
-                                                        it.id,
-                                                        spleishendelse.internDokumentId
-                                                    )
-                                                } ?: emptyList()
-                                            }
-                                            if (spedisjonverdier.isNotEmpty()) {
-                                                val updateStmt = updateSpedisjonStmt.format(ulikeHendelser.joinToString { "(?, ?)" })
-                                                spedisjonSession.run(queryOf(updateStmt, *spedisjonverdier.toTypedArray()).asUpdate)
-                                            }
-
-                                            val spedisjonAsyncverdier: List<Any> = ulikeHendelser.flatMap { (spleishendelse, spedisjonhendelse) ->
-                                                spedisjonhendelse?.let {
-                                                    listOf(
-                                                        spleishendelse.internDokumentId,
-                                                        spedisjonhendelse.internDokumentId
-                                                    )
-                                                } ?: emptyList()
-                                            }
-                                            if (spedisjonAsyncverdier.isNotEmpty()) {
-                                                val updateStmt = updateSpedisjonAsyncStmt.format(ulikeHendelser.joinToString { "(?, ?)" })
-                                                spedisjonAsyncSession.run(queryOf(updateStmt, *spedisjonAsyncverdier.toTypedArray()).asUpdate)
-                                            }
-                                        } catch (err: Exception) {
-                                            log.error("feil ved migrering: ${err.message}", err)
-                                            throw err
-                                        }
+                            spleishendelser
+                                .groupBy { spleishendelse -> spleishendelse.duplikatkontroll }
+                                .forEach { (duplikatkontroll, hendelser) ->
+                                    if (hendelser.size > 1) {
+                                        log.info("duplikatkontroll=$duplikatkontroll for arbeidId=${arbeid.id} mappes til ${hendelser.size} meldinger")
                                     }
                                 }
-                            }
+                        } catch (err: Exception) {
+                            log.error("feil ved migrering: ${err.message}", err)
+                            throw err
                         }
                     }
                 }
@@ -242,12 +177,6 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
         }
     }
 }
-
-data class Spedisjoninntektsmelding(
-    val id: Long,
-    val duplikatkontroll: String,
-    val internDokumentId: UUID
-)
 
 enum class Hendelsetype {
     NY_SØKNAD,
@@ -258,7 +187,8 @@ enum class Hendelsetype {
     SENDT_SØKNAD_NAV,
     SENDT_SØKNAD_FRILANS,
     SENDT_SØKNAD_SELVSTENDIG,
-    SENDT_SØKNAD_ARBEIDSLEDIG;
+    SENDT_SØKNAD_ARBEIDSLEDIG,
+    INNTEKTSMELDING;
 
     companion object {
         fun tilHendelsetypeOrNull(s: String): Hendelsetype? {
@@ -272,6 +202,7 @@ enum class Hendelsetype {
                 "sendt_søknad_frilans" -> SENDT_SØKNAD_FRILANS
                 "sendt_søknad_selvstendig" -> SENDT_SØKNAD_SELVSTENDIG
                 "sendt_søknad_arbeidsledig" -> SENDT_SØKNAD_ARBEIDSLEDIG
+                "inntektsmelding" -> INNTEKTSMELDING
                 else -> null
             }
         }
@@ -284,15 +215,49 @@ internal fun String.sha512(): String =
         .digest(this.toByteArray())
         .joinToString("") { "%02x".format(it) }
 
-data class Spleisinntektsmelding(
+data class Spleishendelse(
     val id: Long,
     val internDokumentId: UUID,
-    val arkivreferanse: String,
-    val mottattDato: LocalDateTime
+    val meldingtype: Hendelsetype,
+    val data: String
 ) {
-    val duplikatkontroll by lazy {
-        "$arkivreferanse".sha512()
+    private val node by lazy { objectMapper.readTree(data) }
+    val eksternDokumentId = when (meldingtype) {
+        Hendelsetype.NY_SØKNAD,
+        Hendelsetype.NY_SØKNAD_FRILANS,
+        Hendelsetype.NY_SØKNAD_SELVSTENDIG,
+        Hendelsetype.NY_SØKNAD_ARBEIDSLEDIG -> UUID.fromString(node.path("sykmeldingId").asText())
+        Hendelsetype.SENDT_SØKNAD_ARBEIDSGIVER,
+        Hendelsetype.SENDT_SØKNAD_NAV,
+        Hendelsetype.SENDT_SØKNAD_FRILANS,
+        Hendelsetype.SENDT_SØKNAD_SELVSTENDIG,
+        Hendelsetype.SENDT_SØKNAD_ARBEIDSLEDIG -> UUID.fromString(node.path("id").asText())
+        Hendelsetype.INNTEKTSMELDING -> UUID.fromString(node.path("inntektsmeldingId").asText())
     }
+    val rapportertDato = when (meldingtype) {
+        Hendelsetype.NY_SØKNAD,
+        Hendelsetype.NY_SØKNAD_FRILANS,
+        Hendelsetype.NY_SØKNAD_SELVSTENDIG,
+        Hendelsetype.NY_SØKNAD_ARBEIDSLEDIG -> LocalDateTime.parse(node.path("opprettet").asText())
+        Hendelsetype.SENDT_SØKNAD_ARBEIDSGIVER -> LocalDateTime.parse(node.path("sendtArbeidsgiver").asText())
+        Hendelsetype.SENDT_SØKNAD_NAV,
+        Hendelsetype.SENDT_SØKNAD_FRILANS,
+        Hendelsetype.SENDT_SØKNAD_SELVSTENDIG,
+        Hendelsetype.SENDT_SØKNAD_ARBEIDSLEDIG -> LocalDateTime.parse(node.path("sendtNav").asText())
+        Hendelsetype.INNTEKTSMELDING -> LocalDateTime.parse(node.path("mottattDato").asText())
+    }
+    val duplikatkontroll = when (meldingtype) {
+        Hendelsetype.NY_SØKNAD,
+        Hendelsetype.NY_SØKNAD_FRILANS,
+        Hendelsetype.NY_SØKNAD_SELVSTENDIG,
+        Hendelsetype.NY_SØKNAD_ARBEIDSLEDIG,
+        Hendelsetype.SENDT_SØKNAD_ARBEIDSGIVER,
+        Hendelsetype.SENDT_SØKNAD_NAV,
+        Hendelsetype.SENDT_SØKNAD_FRILANS,
+        Hendelsetype.SENDT_SØKNAD_SELVSTENDIG,
+        Hendelsetype.SENDT_SØKNAD_ARBEIDSLEDIG -> "${node.path("id").asText()}${node.path("status").asText()}"
+        Hendelsetype.INNTEKTSMELDING -> node.path("arkivreferanse").asText()
+    }.sha512()
 }
 
 data class Arbeid(val id: Long, val fnr: String)
