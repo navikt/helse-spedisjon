@@ -177,7 +177,7 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
                                                 Spleisinntektsmelding(
                                                     id = row.long("id"),
                                                     internDokumentId = UUID.fromString(row.string("melding_id")),
-                                                    mottattDato = row.localDateTime("mottatt_dato"),
+                                                    mottattDato = LocalDateTime.parse(row.string("mottatt_dato")),
                                                     arkivreferanse = row.string("arkivreferanse")
                                                 )
                                             }.asList)
