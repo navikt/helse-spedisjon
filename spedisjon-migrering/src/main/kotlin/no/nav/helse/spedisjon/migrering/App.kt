@@ -129,7 +129,7 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
 
         @Language("PostgreSQL")
         val hentSpedisjonhendelser = """
-            select intern_dokument_id,duplikatkontroll from melding where fnr = ?;
+            select id,intern_dokument_id,duplikatkontroll from melding where fnr = ?;
         """
         @Language("PostgreSQL")
         val hentSpleishendelser = """
