@@ -19,6 +19,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import java.security.MessageDigest
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 import javax.sql.DataSource
@@ -127,6 +128,10 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
         }
 
         @Language("PostgreSQL")
+        val hentSpedisjonhendelser = """
+            select intern_dokument_id,duplikatkontroll from melding where fnr = ?;
+        """
+        @Language("PostgreSQL")
         val hentSpleishendelser = """
             select id,melding_id,melding_type,data
             from melding 
@@ -143,36 +148,107 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
                 melding_type = 'INNTEKTSMELDING'
             );
         """
+        @Language("PostgreSQL")
+        val insertSpedisjonStmt = """
+            insert into melding_alias(melding_id, intern_dokument_id) values %s;
+        """
 
-        HikariDataSource(spleisConfig).use { spleisDataSource ->
-            sessionOf(spleisDataSource).use { spleisSession ->
-                utførArbeid(session) { arbeid ->
-                    MDC.putCloseable("arbeidId", arbeid.id.toString()).use {
-                        try {
-                            log.info("henter hendelser for arbeidId=${arbeid.id}")
+        @Language("PostgreSQL")
+        val insertSpedisjonAsyncStmt = """
+            insert into ekspedering(intern_dokument_id, ekspedert) values %s on conflict (intern_dokument_id) do nothing;
+        """
 
-                            val spleishendelser = spleisSession.run(queryOf(hentSpleishendelser, arbeid.fnr.toLong()).map { row ->
-                                val meldingtype = row.string("melding_type")
-                                Spleishendelse(
-                                    id = row.long("id"),
-                                    internDokumentId = UUID.fromString(row.string("melding_id")),
-                                    meldingtype = Hendelsetype.tilHendelsetypeOrNull(meldingtype) ?: error("ingen mapping for $meldingtype"),
-                                    data = row.string("data")
-                                )
-                            }.asList)
+        HikariDataSource(spedisjonConfig).use { spedisjonDataSource ->
+            sessionOf(spedisjonDataSource).use { spedisjonSession ->
+                HikariDataSource(spedisjonAsyncConfig).use { spedisjonAsyncDataSource ->
+                    sessionOf(spedisjonAsyncDataSource).use { spedisjonAsyncSession ->
+                        HikariDataSource(spleisConfig).use { spleisDataSource ->
+                            sessionOf(spleisDataSource).use { spleisSession ->
+                                utførArbeid(session) { arbeid ->
+                                    MDC.putCloseable("arbeidId", arbeid.id.toString()).use {
+                                        try {
+                                            log.info("henter hendelser for arbeidId=${arbeid.id}")
 
-                            log.info("Hentet ${spleishendelser.size} hendelser for arbeidId=${arbeid.id}")
+                                            val spedisjonhendelser = spedisjonSession.run(queryOf(hentSpedisjonhendelser).map { row ->
+                                                Spedisjonhendelse(
+                                                    id = row.long("id"),
+                                                    internDokumentId = UUID.fromString(row.string("intern_dokument_id")),
+                                                    duplikatkontroll = row.string("duplikatkontroll")
+                                                )
+                                            }.asList)
 
-                            spleishendelser
-                                .groupBy { spleishendelse -> spleishendelse.duplikatkontroll }
-                                .forEach { (duplikatkontroll, hendelser) ->
-                                    if (hendelser.size > 1) {
-                                        log.info("duplikatkontroll=$duplikatkontroll for arbeidId=${arbeid.id} mappes til ${hendelser.size} meldinger")
+                                            val spleishendelser = spleisSession.run(queryOf(hentSpleishendelser, arbeid.fnr.toLong()).map { row ->
+                                                val meldingtype = row.string("melding_type")
+                                                Spleishendelse(
+                                                    id = row.long("id"),
+                                                    internDokumentId = UUID.fromString(row.string("melding_id")),
+                                                    meldingtype = Hendelsetype.tilHendelsetypeOrNull(meldingtype) ?: error("ingen mapping for $meldingtype"),
+                                                    data = row.string("data")
+                                                )
+                                            }.asList)
+
+                                            log.info("Hentet ${spleishendelser.size} hendelser for arbeidId=${arbeid.id}")
+
+                                            val duplikate = spleishendelser
+                                                .groupBy { spleishendelse -> spleishendelse.duplikatkontroll }
+                                                .filterValues { hendelser -> hendelser.size > 1 }
+                                                .mapNotNull { (duplikatkontroll, hendelser) ->
+                                                    spedisjonhendelser
+                                                        .firstOrNull { spedisjonhendelse -> spedisjonhendelse.duplikatkontroll == duplikatkontroll }
+                                                        ?.let { spedisjonhendelse ->
+                                                            MeldingAlias(
+                                                                spedisjonMeldingId = spedisjonhendelse.id,
+                                                                duplikatkontroll = duplikatkontroll,
+                                                                internDokumentIder = hendelser
+                                                                    .filter { spleishendelse ->
+                                                                        spleishendelse.internDokumentId != spedisjonhendelse.internDokumentId
+                                                                    }
+                                                                    .map { it.internDokumentId }
+                                                            )
+                                                        }
+                                                }
+
+                                            if (duplikate.isNotEmpty()) {
+                                                log.info("inserter ${duplikate.size} duplikater for arbeidId=${arbeid.id}")
+                                                run {
+                                                    val verdier = duplikate.flatMap { alias ->
+                                                        alias.internDokumentIder.flatMap { uUID ->
+                                                            listOf(
+                                                                alias.spedisjonMeldingId,
+                                                                uUID
+                                                            )
+                                                        }
+                                                    }
+                                                    val spørsmålstegn = duplikate.joinToString(separator = ",") { alias ->
+                                                        alias.internDokumentIder.joinToString { "(?, ?) "}
+                                                    }
+                                                    val stmt = insertSpedisjonStmt.format(spørsmålstegn)
+                                                    spedisjonSession.run(queryOf(stmt, *verdier.toTypedArray()).asExecute)
+                                                }
+                                                run {
+                                                    // insert into ekspedering(intern_dokument_id, ekspedert) values %s on conflict (intern_dokument_id) do nothing;
+                                                    val verdier = duplikate.flatMap { alias ->
+                                                        alias.internDokumentIder.flatMap { uUID ->
+                                                            listOf(
+                                                                uUID,
+                                                                Instant.now()
+                                                            )
+                                                        }
+                                                    }
+                                                    val spørsmålstegn = duplikate.joinToString(separator = ",") { alias ->
+                                                        alias.internDokumentIder.joinToString { "(?, ?) "}
+                                                    }
+                                                    val stmt = insertSpedisjonAsyncStmt.format(spørsmålstegn)
+                                                    spedisjonAsyncSession.run(queryOf(stmt, *verdier.toTypedArray()).asExecute)
+                                                }
+                                            }
+                                        } catch (err: Exception) {
+                                            log.error("feil ved migrering: ${err.message}", err)
+                                            throw err
+                                        }
                                     }
                                 }
-                        } catch (err: Exception) {
-                            log.error("feil ved migrering: ${err.message}", err)
-                            throw err
+                            }
                         }
                     }
                 }
@@ -180,6 +256,12 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
         }
     }
 }
+
+data class MeldingAlias(
+    val spedisjonMeldingId: Long,
+    val duplikatkontroll: String,
+    val internDokumentIder: List<UUID>,
+)
 
 enum class Hendelsetype {
     NY_SØKNAD,
@@ -218,6 +300,11 @@ internal fun String.sha512(): String =
         .digest(this.toByteArray())
         .joinToString("") { "%02x".format(it) }
 
+data class Spedisjonhendelse(
+    val id: Long,
+    val internDokumentId: UUID,
+    val duplikatkontroll: String
+)
 data class Spleishendelse(
     val id: Long,
     val internDokumentId: UUID,
