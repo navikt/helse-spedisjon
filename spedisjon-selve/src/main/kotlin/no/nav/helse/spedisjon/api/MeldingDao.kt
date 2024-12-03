@@ -22,12 +22,16 @@ internal class MeldingDao(private val dataSource: DataSource) {
             val stmt = """
                 select fnr,type,intern_dokument_id,ekstern_dokument_id,duplikatkontroll,data,opprettet 
                 from melding 
-                where 
-                    ${internDokumentIder.joinToString(separator = " OR ") {
-                        "intern_dokument_id = ?"
-                    }}
+                where ${internDokumentIder.joinToString(separator = " OR ") { "intern_dokument_id = ?" }}
+                union all
+                select m.fnr,m.type,m.intern_dokument_id,m.ekstern_dokument_id,m.duplikatkontroll,m.data,m.opprettet 
+                from melding_alias ma
+                inner join melding m on m.id = ma.melding_id
+                where ${internDokumentIder.joinToString(separator = " OR ") { "ma.intern_dokument_id = ?" }}
             ;"""
-            session.run(queryOf(stmt, *internDokumentIder.toTypedArray()).map { row ->
+            // gjentar listen to ganger
+            val dokumentIder = (internDokumentIder + internDokumentIder)
+            session.run(queryOf(stmt, *dokumentIder.toTypedArray()).map { row ->
                 MeldingDto(
                     type = row.string("type"),
                     fnr = row.string("fnr"),
