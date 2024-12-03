@@ -169,7 +169,7 @@ fun utførMigrering(dataSource: DataSource, spleisConfig: HikariConfig, spedisjo
                                         try {
                                             log.info("henter hendelser for arbeidId=${arbeid.id}")
 
-                                            val spedisjonhendelser = spedisjonSession.run(queryOf(hentSpedisjonhendelser).map { row ->
+                                            val spedisjonhendelser = spedisjonSession.run(queryOf(hentSpedisjonhendelser, arbeid.fnr).map { row ->
                                                 Spedisjonhendelse(
                                                     id = row.long("id"),
                                                     internDokumentId = UUID.fromString(row.string("intern_dokument_id")),
