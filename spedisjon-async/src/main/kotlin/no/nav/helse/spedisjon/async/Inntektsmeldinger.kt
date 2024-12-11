@@ -7,6 +7,7 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.micrometer.core.instrument.MeterRegistry
+import org.slf4j.LoggerFactory
 
 internal class Inntektsmeldinger(
     rapidsConnection: RapidsConnection,
@@ -18,13 +19,13 @@ internal class Inntektsmeldinger(
             precondition {
                 it.forbid("@event_name")
                 it.requireKey("inntektsmeldingId")
-                it.requireValue("matcherSpleis", true)
             }
             validate {
                 it.requireKey(
                     "inntektsmeldingId", "virksomhetsnummer",
                     "arbeidsgivertype", "beregnetInntekt",
-                    "status", "arkivreferanse", "arbeidstakerFnr"
+                    "status", "arkivreferanse", "arbeidstakerFnr",
+                    "matcherSpleis"
                 )
                 it.requireArray("arbeidsgiverperioder") {
                     require("fom", JsonNode::asLocalDate)
@@ -45,7 +46,14 @@ internal class Inntektsmeldinger(
         }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+        metadata: MessageMetadata,
+        meterRegistry: MeterRegistry
+    ) {
+        if (!packet["matcherSpleis"].asBoolean()) return sikkerlogg.info("Ignorerer inntektsmelding som ikke matcher spleis:\n\t ${packet.toJson()}")
+
         val detaljer = Meldingsdetaljer(
             type = "inntektsmelding",
             fnr = packet["arbeidstakerFnr"].asText(),
@@ -54,7 +62,7 @@ internal class Inntektsmeldinger(
             duplikatnøkkel = listOf(packet["arkivreferanse"].asText()),
             jsonBody = packet.toJson()
         )
-        meldingMediator.leggInnMelding(detaljer)?.also { internId ->
+        meldingMediator.leggInnMelding(detaljer).also { internId ->
             val inntektsmelding = Melding.Inntektsmelding(
                 internId = internId,
                 orgnummer = packet["virksomhetsnummer"].asText(),
@@ -68,5 +76,9 @@ internal class Inntektsmeldinger(
 
     override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne Inntektsmelding:\n$problems")
+    }
+
+    private companion object {
+        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
     }
 }
