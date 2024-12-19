@@ -3,8 +3,10 @@ package no.nav.helse.spedisjon.async
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
+import com.github.navikt.tbd_libs.rapids_and_rivers.withMDC
 import com.github.navikt.tbd_libs.result_object.*
 import com.github.navikt.tbd_libs.speed.Feilresponse
+import org.slf4j.LoggerFactory
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -30,28 +32,33 @@ internal class HttpMeldingtjeneste(
 
     override fun nyMelding(request: NyMeldingRequest): NyMeldingResponse {
         val callId = UUID.randomUUID().toString()
-        val jsonInputString = objectMapper.writeValueAsString(request)
-        return request("POST", "/api/melding", jsonInputString, callId)
-            .map {  response ->
-                when (response.statusCode()) {
-                    200 -> convertResponseBody<NyMeldingOkResponse>(response).map {
-                        NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
+        return withMDC("callId" to callId) {
+            val jsonInputString = objectMapper.writeValueAsString(request)
+            sikkerlogg.info("legger melding til spedisjon:\n$request")
+            request("POST", "/api/melding", jsonInputString, callId)
+                .map { response ->
+                    when (response.statusCode()) {
+                        200 -> convertResponseBody<NyMeldingOkResponse>(response).map {
+                            NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
+                        }
+
+                        409 -> convertResponseBody<NyMeldingOkResponse>(response).map {
+                            NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
+                        }
+
+                        else -> convertResponseBody<Feilresponse>(response).map {
+                            Result.Error("Feil fra Spedisjon: ${it.detail}")
+                        }
                     }
-                    409 -> convertResponseBody<NyMeldingOkResponse>(response).map {
-                        NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
-                    }
-                    else -> convertResponseBody<Feilresponse>(response).map {
-                        Result.Error("Feil fra Spedisjon: ${it.detail}")
-                    }
-                }
-            }.getOrThrow()
+                }.getOrThrow()
+        }
     }
 
     override fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse {
         val callId = UUID.randomUUID().toString()
         val jsonInputString = objectMapper.writeValueAsString(HentMeldingerRequest(interneDokumentIder))
         return request("GET", "/api/meldinger", jsonInputString, callId)
-            .map {  response ->
+            .map { response ->
                 when (response.statusCode()) {
                     200 -> convertResponseBody<HentMeldingerOkResponse>(response).map {
                         HentMeldingerResponse(
@@ -68,6 +75,7 @@ internal class HttpMeldingtjeneste(
                             }
                         ).ok()
                     }
+
                     else -> convertResponseBody<Feilresponse>(response).map {
                         Result.Error("Feil fra Spedisjon: ${it.detail}")
                     }
@@ -75,7 +83,12 @@ internal class HttpMeldingtjeneste(
             }.getOrThrow()
     }
 
-    private fun request(method: String, action: String, jsonInputString: String, callId: String): Result<HttpResponse<String>> {
+    private fun request(
+        method: String,
+        action: String,
+        jsonInputString: String,
+        callId: String
+    ): Result<HttpResponse<String>> {
         return tokenProvider.bearerToken(scope).map { token ->
             try {
                 val request = HttpRequest.newBuilder()
@@ -115,6 +128,10 @@ internal class HttpMeldingtjeneste(
         val duplikatkontroll: String,
         val jsonBody: String
     )
+
+    private companion object {
+        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
+    }
 }
 
 data class NyMeldingResponse(val internDokumentId: UUID)

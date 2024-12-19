@@ -10,18 +10,18 @@ class EkspederingMediator(
     private val rapidsConnection: MessageContext,
 ) {
     fun videresendMelding(fnr: String, internId: UUID, melding: BeriketMelding) {
-        if (!dao.meldingEkspedert(internId)) return duplikatMelding(internId)
+        if (!dao.meldingEkspedert(internId)) return duplikatMelding(internId, melding)
         "Ekspederer {} og sender til rapid".also {
             logg.info(it, kv("internId", internId))
-            sikkerlogg.info(it, kv("internId", internId))
+            sikkerlogg.info("${it}:\n${melding.json}", kv("internId", internId))
         }
         rapidsConnection.publish(fnr, melding.json)
     }
 
-    private fun duplikatMelding(internId: UUID) {
+    private fun duplikatMelding(internId: UUID, melding: BeriketMelding) {
         "Har ekspedert {} fra før, sender ikke videre til rapid".also {
             logg.info(it, kv("internId", internId))
-            sikkerlogg.info(it, kv("internId", internId))
+            sikkerlogg.info("${it}:\n${melding.json}", kv("internId", internId))
         }
     }
 
