@@ -28,7 +28,10 @@ data class Personinformasjon(
         fun innhent(speedClient: SpeedClient, melding: Melding, callId: String): Personinformasjon {
             return runBlocking {
                 val personinfoDeferred = async(Dispatchers.IO) {
-                    sikkerlogg.info("henter personinfo for ${melding::class.simpleName} (${melding.meldingsdetaljer.type}) for {}", kv("fødselsnummer", melding.meldingsdetaljer.fnr))
+                    sikkerlogg.info(
+                        "henter personinfo for ${melding::class.simpleName} (${melding.meldingsdetaljer.type}) for {}",
+                        kv("fødselsnummer", melding.meldingsdetaljer.fnr)
+                    )
                     retry {
                         when (val svar = speedClient.hentPersoninfo(melding.meldingsdetaljer.fnr, callId)) {
                             is Result.Error -> throw RuntimeException(svar.error, svar.cause)
@@ -37,7 +40,10 @@ data class Personinformasjon(
                     }
                 }
                 val historiskeIdenterDeferred = async(Dispatchers.IO) {
-                    sikkerlogg.info("henter historiske identer for ${melding::class.simpleName} (${melding.meldingsdetaljer.type}) for {}", kv("fødselsnummer", melding.meldingsdetaljer.fnr))
+                    sikkerlogg.info(
+                        "henter historiske identer for ${melding::class.simpleName} (${melding.meldingsdetaljer.type}) for {}",
+                        kv("fødselsnummer", melding.meldingsdetaljer.fnr)
+                    )
                     retry {
                         when (val svar = speedClient.hentHistoriskeFødselsnumre(melding.meldingsdetaljer.fnr, callId)) {
                             is Result.Error -> throw RuntimeException(svar.error, svar.cause)
@@ -46,7 +52,10 @@ data class Personinformasjon(
                     }
                 }
                 val identerDeferred = async(Dispatchers.IO) {
-                    sikkerlogg.info("henter aktørId for ${melding::class.simpleName} (${melding.meldingsdetaljer.type}) for {}", kv("fødselsnummer", melding.meldingsdetaljer.fnr))
+                    sikkerlogg.info(
+                        "henter aktørId for ${melding::class.simpleName} (${melding.meldingsdetaljer.type}) for {}",
+                        kv("fødselsnummer", melding.meldingsdetaljer.fnr)
+                    )
                     retry {
                         when (val svar = speedClient.hentFødselsnummerOgAktørId(melding.meldingsdetaljer.fnr, callId)) {
                             is Result.Error -> throw RuntimeException(svar.error, svar.cause)
@@ -55,16 +64,29 @@ data class Personinformasjon(
                     }
                 }
 
-                Personinformasjon(personinfoDeferred.await(), historiskeIdenterDeferred.await(), identerDeferred.await())
+                Personinformasjon(
+                    personinfoDeferred.await(),
+                    historiskeIdenterDeferred.await(),
+                    identerDeferred.await()
+                )
             }
         }
 
         fun berikMeldingOgBehandleDen(speedClient: SpeedClient, melding: Melding, håndtering: (Berikelse) -> Unit) {
             val callId = UUID.randomUUID().toString()
-            withMDC("callId" to callId) {
-                sikkerlogg.info("beriker ${melding::class.simpleName}")
+            withMDC(
+                mapOf(
+                    "callId" to callId,
+                    "ekstern_dokument_id" to "${melding.meldingsdetaljer.eksternDokumentId}",
+                    "intern_dokument_id" to "${melding.internId}"
+                )
+            ) {
+                sikkerlogg.info("beriker ${melding::class.simpleName}:\n${melding.meldingsdetaljer.jsonBody}")
                 val (personinfo, historiskeIdenter, identer) = innhent(speedClient, melding, callId)
-                val støttes = personinfo.adressebeskyttelse !in setOf(Adressebeskyttelse.STRENGT_FORTROLIG, Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND)
+                val støttes = personinfo.adressebeskyttelse !in setOf(
+                    Adressebeskyttelse.STRENGT_FORTROLIG,
+                    Adressebeskyttelse.STRENGT_FORTROLIG_UTLAND
+                )
                 when (støttes) {
                     true -> {
                         val berikelse = Berikelse(
@@ -75,7 +97,8 @@ data class Personinformasjon(
                         )
                         håndtering(berikelse)
                     }
-                    false -> sikkerlogg.info("Personen støttes ikke ${identer.aktørId}")
+
+                    false -> sikkerlogg.info("Personen støttes ikke ${identer.aktørId}:\n${melding.meldingsdetaljer.jsonBody}")
                 }
             }
         }

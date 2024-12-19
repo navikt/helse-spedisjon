@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon.async
 
+import com.github.navikt.tbd_libs.rapids_and_rivers.withMDC
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.Counter
 import io.micrometer.prometheusmetrics.PrometheusConfig
@@ -36,20 +37,29 @@ internal class MeldingMediator(
             .tag("type", meldingsdetaljer.type)
             .register(registry)
             .increment()
-        val request = NyMeldingRequest(
-            type = meldingsdetaljer.type,
-            fnr = meldingsdetaljer.fnr,
-            eksternDokumentId = meldingsdetaljer.eksternDokumentId,
-            rapportertDato = meldingsdetaljer.rapportertDato,
-            duplikatkontroll = meldingsdetaljer.duplikatkontroll,
-            jsonBody = meldingsdetaljer.jsonBody
-        )
-        return meldingtjeneste.nyMelding(request).internDokumentId
+
+        return withMDC("ekstern_dokument_id" to "${meldingsdetaljer.eksternDokumentId}") {
+            val request = NyMeldingRequest(
+                type = meldingsdetaljer.type,
+                fnr = meldingsdetaljer.fnr,
+                eksternDokumentId = meldingsdetaljer.eksternDokumentId,
+                rapportertDato = meldingsdetaljer.rapportertDato,
+                duplikatkontroll = meldingsdetaljer.duplikatkontroll,
+                jsonBody = meldingsdetaljer.jsonBody
+            )
+            meldingtjeneste.nyMelding(request).internDokumentId
+        }
     }
 
     fun onMelding(melding: Melding) {
         messageRecognized = true
-        berikOgSendVidere(melding)
+        // vi sender ikke inntektsmelding  videre. her er vi avhengig av puls!
+        if (melding is Melding.Inntektsmelding) return
+
+        Personinformasjon.Companion.berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
+            val beriketMelding = berikelse.berik(melding)
+            ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, beriketMelding)
+        }
 
         Counter.builder("melding_unik_totals")
             .description("Antall unike meldinger mottatt")
@@ -67,15 +77,5 @@ internal class MeldingMediator(
     fun afterMessage(message: String) {
         if (messageRecognized || riverErrors.isEmpty()) return
         sikkerLogg.warn("kunne ikke gjenkjenne melding:\n\t$message\n\nProblemer:\n${riverErrors.joinToString(separator = "\n")}")
-    }
-
-    private fun berikOgSendVidere(melding: Melding) {
-        // vi sender ikke inntektsmelding  videre. her er vi avhengig av puls!
-        if (melding is Melding.Inntektsmelding) return
-
-        Personinformasjon.Companion.berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
-            val beriketMelding = berikelse.berik(melding)
-            ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, beriketMelding)
-        }
     }
 }
