@@ -31,10 +31,6 @@ internal class Inntektsmeldinger(
                     require("fom", JsonNode::asLocalDate)
                     require("tom", JsonNode::asLocalDate)
                 }
-                it.requireArray("ferieperioder") {
-                    require("fom", JsonNode::asLocalDate)
-                    require("tom", JsonNode::asLocalDate)
-                }
                 it.requireArray("endringIRefusjoner") {
                     require("endringsdato", JsonNode::asLocalDate)
                 }
