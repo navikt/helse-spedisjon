@@ -9,7 +9,7 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.micrometer.core.instrument.MeterRegistry
 import org.slf4j.LoggerFactory
 
-internal class Inntektsmeldinger(
+internal class LpsOgAltinnInntektsmeldinger(
     rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator,
     private val inntektsmeldingMediator: InntektsmeldingMediator
@@ -19,6 +19,7 @@ internal class Inntektsmeldinger(
             precondition {
                 it.forbid("@event_name")
                 it.requireKey("inntektsmeldingId")
+                it.forbidValues("avsenderSystem.navn", listOf("NAV_NO", "NAV_NO_SELVBESTEMT"))
             }
             validate {
                 it.requireKey(
@@ -48,7 +49,7 @@ internal class Inntektsmeldinger(
         metadata: MessageMetadata,
         meterRegistry: MeterRegistry
     ) {
-        if (!packet["matcherSpleis"].asBoolean()) return sikkerlogg.info("Ignorerer inntektsmelding som ikke matcher spleis:\n\t ${packet.toJson()}")
+        if (!packet["matcherSpleis"].asBoolean()) return sikkerlogg.info("Ignorerer LPS/Altinn-inntektsmelding som ikke matcher spleis:\n\t ${packet.toJson()}")
 
         val detaljer = Meldingsdetaljer(
             type = "inntektsmelding",
@@ -71,7 +72,7 @@ internal class Inntektsmeldinger(
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
-        meldingMediator.onRiverError("kunne ikke gjenkjenne Inntektsmelding:\n$problems")
+        meldingMediator.onRiverError("kunne ikke gjenkjenne LPS/Altinn-Inntektsmelding:\n$problems")
     }
 
     private companion object {

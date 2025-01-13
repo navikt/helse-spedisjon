@@ -115,4 +115,10 @@ sealed class Melding(val internId: UUID, val meldingsdetaljer: Meldingsdetaljer)
         val arbeidsforholdId: String?,
         meldingsdetaljer: Meldingsdetaljer
     ) : Melding(internId, meldingsdetaljer)
+    class NavNoInntektsmelding(
+        internId: UUID,
+        val orgnummer: String,
+        val arbeidsforholdId: String?,
+        meldingsdetaljer: Meldingsdetaljer
+    ) : Melding(internId, meldingsdetaljer)
 }

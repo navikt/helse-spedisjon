@@ -5,7 +5,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearMocks
-import io.mockk.every
 import io.mockk.mockk
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.junit.jupiter.api.Assertions
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.UUID
 
-internal class InntektsmeldingerTest : AbstractRiverTest() {
+internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
     fun `ingen sendeklare inntektsmeldinger`() {
@@ -190,7 +189,7 @@ internal class InntektsmeldingerTest : AbstractRiverTest() {
         val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSource)
         inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
-            Inntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
+            LpsOgAltinnInntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
         }
     }
 
