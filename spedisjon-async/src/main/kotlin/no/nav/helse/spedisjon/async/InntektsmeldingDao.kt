@@ -15,8 +15,8 @@ import javax.sql.DataSource
 
 internal class InntektsmeldingDao(
     private val meldingtjeneste: Meldingtjeneste,
-    dataSource: DataSource
-): AbstractDao(dataSource) {
+    dataSourceProvider: () -> DataSource
+): AbstractDao(dataSourceProvider) {
 
     private companion object {
         private val logg = LoggerFactory.getLogger(Puls::class.java)

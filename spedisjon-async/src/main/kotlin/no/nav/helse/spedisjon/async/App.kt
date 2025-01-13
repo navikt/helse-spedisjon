@@ -24,26 +24,25 @@ fun main() {
     val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
     val speedClient = SpeedClient(HttpClient.newHttpClient(), objectMapper, azure)
 
-    val dataSourceBuilder = DataSourceBuilder(env)
     val httpMeldingtjeneste = HttpMeldingtjeneste(
         httpClient = HttpClient.newHttpClient(),
         tokenProvider = azure,
         objectMapper = objectMapper
     )
 
-    val inntektsmeldingDao = InntektsmeldingDao(httpMeldingtjeneste, dataSourceBuilder.dataSource)
 
     val factory = ConsumerProducerFactory(AivenConfig.default)
-
     val rapidsConnection = RapidApplication.create(env, factory)
 
-    val ekspederingMediator = EkspederingMediator(EkspederingDao(dataSourceBuilder.dataSource), rapidsConnection)
+    val dataSourceBuilder = DataSourceBuilder(env)
+    val ekspederingMediator = EkspederingMediator(EkspederingDao(dataSourceBuilder::dataSource), rapidsConnection)
     val meldingMediator = MeldingMediator(httpMeldingtjeneste, speedClient, ekspederingMediator)
     val inntektsmeldingTimeoutSekunder = env["KARANTENE_TID"]?.toLong() ?: 0L.also {
         val loggtekst = "KARANTENE_TID er tom; defaulter til ingen karantene"
         LoggerFactory.getLogger(::main.javaClass).info(loggtekst)
         LoggerFactory.getLogger("tjenestekall").info(loggtekst)
     }
+    val inntektsmeldingDao = InntektsmeldingDao(httpMeldingtjeneste, dataSourceBuilder::dataSource)
     val inntektsmeldingMediator = InntektsmeldingMediator(
         speedClient,
         inntektsmeldingDao,

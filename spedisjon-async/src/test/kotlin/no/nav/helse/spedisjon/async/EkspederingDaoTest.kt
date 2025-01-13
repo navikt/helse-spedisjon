@@ -10,7 +10,7 @@ class EkspederingDaoTest {
     fun `duplikat melding`() {
         val testDataSource = databaseContainer.nyTilkobling()
         try {
-            val dao = EkspederingDao(testDataSource.ds)
+            val dao = EkspederingDao(testDataSource::ds)
             val id = UUID.randomUUID()
             assertTrue(dao.meldingEkspedert(id))
             assertFalse(dao.meldingEkspedert(id))

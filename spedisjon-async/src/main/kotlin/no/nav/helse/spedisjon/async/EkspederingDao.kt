@@ -6,7 +6,8 @@ import org.intellij.lang.annotations.Language
 import java.util.UUID
 import javax.sql.DataSource
 
-class EkspederingDao(private val dataSource: DataSource) {
+class EkspederingDao(private val dataSourceProvider: () -> DataSource) {
+    private val dataSource by lazy(dataSourceProvider)
 
     fun meldingEkspedert(internId: UUID): Boolean {
         return sessionOf(dataSource).use { session ->

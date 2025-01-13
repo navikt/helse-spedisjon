@@ -23,7 +23,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
 
     @BeforeEach
     fun before() {
-        inntektsmeldingDao = InntektsmeldingDao(meldingstjeneste, dataSource)
+        inntektsmeldingDao = InntektsmeldingDao(meldingstjeneste, ::dataSource)
         meldingMediator = MeldingMediator(meldingstjeneste, mockk(), mockk())
         mediator = InntektsmeldingMediator(mockk(), inntektsmeldingDao, mockk())
 

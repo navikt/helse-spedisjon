@@ -32,7 +32,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         val speedClient = mockSpeed()
         val ekspederingMediator = EkspederingMediator(
-            dao = EkspederingDao(dataSource),
+            dao = EkspederingDao(::dataSource),
             rapidsConnection = rapidsConnection,
         )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)

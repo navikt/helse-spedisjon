@@ -78,11 +78,11 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         val speedClient = mockSpeed(støttes = false)
         val ekspederingMediator = EkspederingMediator(
-            dao = EkspederingDao(dataSource),
+            dao = EkspederingDao(::dataSource),
             rapidsConnection = rapidsConnection,
         )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
-        val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSource)
+        val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, ::dataSource)
         val inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
             LpsOgAltinnInntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)

@@ -181,12 +181,12 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         clearMocks(dokumentProducerMock)
         val ekspederingMediator = EkspederingMediator(
-            dao = EkspederingDao(dataSource),
+            dao = EkspederingDao(::dataSource),
             rapidsConnection = rapidsConnection,
         )
         val speedClient = mockSpeed()
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
-        val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, dataSource)
+        val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, ::dataSource)
         inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
             LpsOgAltinnInntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)

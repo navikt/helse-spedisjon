@@ -97,7 +97,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         clearMocks(dokumentProducerMock)
         val ekspederingMediator = EkspederingMediator(
-            dao = EkspederingDao(dataSource),
+            dao = EkspederingDao(::dataSource),
             rapidsConnection = rapidsConnection,
         )
         val speedClient = mockSpeed()
