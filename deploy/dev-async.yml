@@ -12,7 +12,9 @@ spec:
     type: Recreate
   liveness:
     path: isalive
-    initialDelay: 5
+    initialDelay: 1
+    periodSeconds: 1
+    failureThreshold: 60
   readiness:
     path: isready
     initialDelay: 5
@@ -20,7 +22,7 @@ spec:
     limits:
       memory: 512Mi
     requests:
-      cpu: 50m
+      cpu: 150m
       memory: 64Mi
   replicas:
     min: 1
