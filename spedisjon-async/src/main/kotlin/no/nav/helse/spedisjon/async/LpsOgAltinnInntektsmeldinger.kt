@@ -22,23 +22,9 @@ internal class LpsOgAltinnInntektsmeldinger(
                 it.forbidValues("avsenderSystem.navn", listOf("NAV_NO", "NAV_NO_SELVBESTEMT"))
             }
             validate {
-                it.requireKey(
-                    "inntektsmeldingId", "virksomhetsnummer",
-                    "arbeidsgivertype", "beregnetInntekt",
-                    "status", "arkivreferanse", "arbeidstakerFnr",
-                    "matcherSpleis"
-                )
-                it.requireArray("arbeidsgiverperioder") {
-                    require("fom", JsonNode::asLocalDate)
-                    require("tom", JsonNode::asLocalDate)
-                }
-                it.requireArray("endringIRefusjoner") {
-                    require("endringsdato", JsonNode::asLocalDate)
-                }
-                it.interestedIn("foersteFravaersdag", JsonNode::asLocalDate)
-                it.interestedIn("refusjon.opphoersdato", JsonNode::asLocalDate)
+                it.requireKey("matcherSpleis", "inntektsmeldingId", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer")
                 it.require("mottattDato", JsonNode::asLocalDateTime)
-                it.interestedIn("refusjon.beloepPrMnd", "arbeidsforholdId")
+                it.interestedIn("arbeidsforholdId")
             }
         }.register(this)
     }

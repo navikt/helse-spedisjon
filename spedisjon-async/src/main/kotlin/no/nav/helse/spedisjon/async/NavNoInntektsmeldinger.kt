@@ -21,18 +21,9 @@ internal class NavNoInntektsmeldinger(
                 it.requireAny("avsenderSystem.navn", listOf("NAV_NO", "NAV_NO_SELVBESTEMT"))
             }
             validate {
-                it.requireKey("matcherSpleis", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer", "beregnetInntekt", "opphoerAvNaturalytelser")
-                it.requireArray("arbeidsgiverperioder") {
-                    require("fom", JsonNode::asLocalDate)
-                    require("tom", JsonNode::asLocalDate)
-                }
-                it.requireArray("endringIRefusjoner") {
-                    require("endringsdato", JsonNode::asLocalDate)
-                    requireKey("beloep")
-                }
+                it.requireKey("matcherSpleis", "inntektsmeldingId", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer")
                 it.require("mottattDato", JsonNode::asLocalDateTime)
-                it.interestedIn("refusjon.opphoersdato", JsonNode::asLocalDate)
-                it.interestedIn("refusjon.beloepPrMnd", "begrunnelseForReduksjonEllerIkkeUtbetalt", "arbeidsforholdId")
+                it.interestedIn("arbeidsforholdId")
             }
         }.register(this)
     }
