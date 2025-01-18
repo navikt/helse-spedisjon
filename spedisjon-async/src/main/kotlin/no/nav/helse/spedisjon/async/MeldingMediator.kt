@@ -5,8 +5,8 @@ import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.Counter
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
-import org.slf4j.LoggerFactory
 import java.util.*
+import org.slf4j.LoggerFactory
 
 internal class MeldingMediator(
     private val meldingtjeneste: Meldingtjeneste,
@@ -38,6 +38,8 @@ internal class MeldingMediator(
             .register(registry)
             .increment()
 
+        messageRecognized = true
+
         return withMDC("ekstern_dokument_id" to "${meldingsdetaljer.eksternDokumentId}") {
             val request = NyMeldingRequest(
                 type = meldingsdetaljer.type,
@@ -52,13 +54,19 @@ internal class MeldingMediator(
     }
 
     fun onMelding(melding: Melding) {
-        messageRecognized = true
-        // vi sender ikke inntektsmelding  videre. her er vi avhengig av puls!
-        if (melding is Melding.Inntektsmelding) return
-
-        Personinformasjon.Companion.berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
-            val beriketMelding = berikelse.berik(melding)
-            ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, beriketMelding)
+        when (melding) {
+            is Melding.AvbruttSøknad,
+            is Melding.NySøknad,
+            is Melding.SendtSøknad -> {
+                Personinformasjon.Companion.berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
+                    val beriketMelding = berikelse.berik(melding)
+                    ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, beriketMelding)
+                }
+            }
+            is Melding.NavNoInntektsmelding -> {
+                ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, BeriketMelding(melding.rapidhendelse))
+            }
+            is Melding.Inntektsmelding -> error("lps-inntektsmeldinger skal ikke sendes her")
         }
 
         Counter.builder("melding_unik_totals")

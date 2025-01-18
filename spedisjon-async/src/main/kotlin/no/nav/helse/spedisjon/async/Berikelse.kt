@@ -19,16 +19,16 @@ class Berikelse(
     }
 
     internal fun berik(melding: Melding): BeriketMelding {
+        check(melding !is Melding.Inntektsmelding && melding !is Melding.NavNoInntektsmelding) {
+            "inntektsmeldinger trenger ikke berikelse"
+        }
         val packet = objectmapper.readTree(melding.rapidhendelse) as ObjectNode
         packet.put("fødselsdato", fødselsdato.toString())
         if (dødsdato != null) packet.put("dødsdato", dødsdato.toString())
         packet.withArray("historiskeFolkeregisteridenter").apply {
             historiskeFolkeregisteridenter.forEach { add(it) }
         }
-        // beriker ikke inntektsmelding med aktørId
-        if (melding !is Melding.Inntektsmelding) {
-            packet.put("aktorId", aktørId)
-        }
+        packet.put("aktorId", aktørId)
         return BeriketMelding(packet.toString())
     }
 }

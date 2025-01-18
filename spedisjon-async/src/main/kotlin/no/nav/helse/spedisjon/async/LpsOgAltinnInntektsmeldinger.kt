@@ -1,7 +1,10 @@
 package no.nav.helse.spedisjon.async
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.github.navikt.tbd_libs.rapids_and_rivers.*
+import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
+import com.github.navikt.tbd_libs.rapids_and_rivers.River
+import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
+import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
@@ -52,7 +55,6 @@ internal class LpsOgAltinnInntektsmeldinger(
                 arbeidsforholdId = packet["arbeidsforholdId"].takeIf(JsonNode::isTextual)?.asText(),
                 meldingsdetaljer = detaljer
             )
-            meldingMediator.onMelding(inntektsmelding)
             inntektsmeldingMediator.lagreInntektsmelding(inntektsmelding)
         }
     }

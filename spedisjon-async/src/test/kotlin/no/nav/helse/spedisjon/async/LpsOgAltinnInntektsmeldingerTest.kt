@@ -187,7 +187,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
         val speedClient = mockSpeed()
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, ::dataSource)
-        inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao, ekspederingMediator)
+        inntektsmeldingMediator = InntektsmeldingMediator(inntektsmeldingDao, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
             LpsOgAltinnInntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
         }

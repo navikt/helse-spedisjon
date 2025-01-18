@@ -4,12 +4,10 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.github.navikt.tbd_libs.speed.SpeedClient
-import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
+import org.slf4j.LoggerFactory
 
 internal class InntektsmeldingMediator(
-    private val speedClient: SpeedClient,
     private val inntektsmeldingDao: InntektsmeldingDao,
     private val ekspederingMediator: EkspederingMediator,
     private val inntektsmeldingTimeoutSekunder: Long = 1
@@ -39,22 +37,19 @@ internal class InntektsmeldingMediator(
 
     fun ekspeder() {
         inntektsmeldingDao.hentSendeklareMeldinger(inntektsmeldingTimeoutSekunder) { inntektsmelding, antallInntektsmeldingerMottatt ->
-            Personinformasjon.Companion.berikMeldingOgBehandleDen(speedClient, inntektsmelding.melding) { berikelse ->
-                val beriketMelding = beriketInntektsmelding(berikelse, inntektsmelding, antallInntektsmeldingerMottatt)
-                ekspederingMediator.videresendMelding(inntektsmelding.fnr, inntektsmelding.melding.internId, beriketMelding)
-            }
+            val beriketMelding = beriketInntektsmelding(inntektsmelding, antallInntektsmeldingerMottatt)
+            ekspederingMediator.videresendMelding(inntektsmelding.fnr, inntektsmelding.melding.internId, beriketMelding)
         }
     }
 
-    private fun beriketInntektsmelding(berikelse: Berikelse, inntektsmelding: SendeklarInntektsmelding, antallInntektsmeldingMottatt: Int): BeriketMelding {
-        val beriketMelding = berikelse.berik(inntektsmelding.melding)
+    private fun beriketInntektsmelding(inntektsmelding: SendeklarInntektsmelding, antallInntektsmeldingMottatt: Int): BeriketMelding {
         sikkerlogg.info("Ekspederer inntektsmelding med fødselsnummer: ${inntektsmelding.fnr} og orgnummer: ${inntektsmelding.orgnummer}")
-        return flaggFlereInntektsmeldinger(beriketMelding, antallInntektsmeldingMottatt)
+        return flaggFlereInntektsmeldinger(inntektsmelding.melding, antallInntektsmeldingMottatt)
     }
 
-    private fun flaggFlereInntektsmeldinger(beriketMelding: BeriketMelding, antallInntektsmeldinger: Int) =
-        beriketMelding.copy(
-            json = (objectmapper.readTree(beriketMelding.json) as ObjectNode).apply {
+    private fun flaggFlereInntektsmeldinger(melding: Melding.Inntektsmelding, antallInntektsmeldinger: Int) =
+        BeriketMelding(
+            json = (objectmapper.readTree(melding.rapidhendelse) as ObjectNode).apply {
                 put("harFlereInntektsmeldinger", antallInntektsmeldinger > 1)
             }.toString()
         )

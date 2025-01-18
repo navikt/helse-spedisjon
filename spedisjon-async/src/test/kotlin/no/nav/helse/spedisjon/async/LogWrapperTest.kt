@@ -85,18 +85,14 @@ internal class LogWrapperTest {
         }
 
         override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
-            mediator.onMelding(Melding.NySøknad(
-                internId = UUID.randomUUID(),
-                meldingsdetaljer = Meldingsdetaljer(
-                    type = "ny_søknad",
-                    fnr = "fnr",
-                    eksternDokumentId = UUID.randomUUID(),
-                    rapportertDato = LocalDateTime.now(),
-                    duplikatnøkkel = listOf("en_nøkkel"),
-                    jsonBody = packet.toJson()
-                )
-            )
-            )
+            mediator.leggInnMelding(Meldingsdetaljer(
+                type = "ny_søknad",
+                fnr = "fnr",
+                eksternDokumentId = UUID.randomUUID(),
+                rapportertDato = LocalDateTime.now(),
+                duplikatnøkkel = listOf("en_nøkkel"),
+                jsonBody = packet.toJson()
+            ))
         }
         override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
             mediator.onRiverError("Ukjent melding:\n$problems")

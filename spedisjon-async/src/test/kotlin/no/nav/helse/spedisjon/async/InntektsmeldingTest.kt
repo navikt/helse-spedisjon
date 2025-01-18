@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon.async
 
-import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
 import io.mockk.mockk
 import kotliquery.queryOf
 import kotliquery.sessionOf
@@ -25,7 +24,7 @@ class InntektsmeldingTest : AbstractDatabaseTest() {
     fun before() {
         inntektsmeldingDao = InntektsmeldingDao(meldingstjeneste, ::dataSource)
         meldingMediator = MeldingMediator(meldingstjeneste, mockk(), mockk())
-        mediator = InntektsmeldingMediator(mockk(), inntektsmeldingDao, mockk())
+        mediator = InntektsmeldingMediator(inntektsmeldingDao, mockk())
 
     }
 

@@ -83,7 +83,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
         )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, ::dataSource)
-        val inntektsmeldingMediator = InntektsmeldingMediator(speedClient, inntektsmeldingDao, ekspederingMediator)
+        val inntektsmeldingMediator = InntektsmeldingMediator(inntektsmeldingDao, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
             LpsOgAltinnInntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
             NyeSøknader(this, meldingMediator)

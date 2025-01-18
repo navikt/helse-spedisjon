@@ -12,9 +12,9 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection.Message
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection.StatusListener
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.MeterRegistry
+import java.net.http.HttpClient
 import no.nav.helse.rapids_rivers.RapidApplication
 import org.slf4j.LoggerFactory
-import java.net.http.HttpClient
 
 fun main() {
     val env = System.getenv()
@@ -44,7 +44,6 @@ fun main() {
     }
     val inntektsmeldingDao = InntektsmeldingDao(httpMeldingtjeneste, dataSourceBuilder::dataSource)
     val inntektsmeldingMediator = InntektsmeldingMediator(
-        speedClient,
         inntektsmeldingDao,
         ekspederingMediator,
         inntektsmeldingTimeoutSekunder = inntektsmeldingTimeoutSekunder
