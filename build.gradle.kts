@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 val junitJupiterVersion = "5.11.3"
 val rapidsAndRiversVersion = "2025012712551737978926.de930d8e0feb"
-val tbdLibsVersion = "2024.12.18-11.39-73f8eecb"
+val tbdLibsVersion = "2025.01.27-12.50-76316f3b"
 
 plugins {
     base
