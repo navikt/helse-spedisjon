@@ -55,5 +55,10 @@ spec:
         databases:
           - name: spedisjon
             envVarPrefix: DATABASE
+        flags:
+          - name: cloudsql.enable_pgaudit
+            value: "true"
+          - name: pgaudit.log
+            value: 'write'
   secureLogs:
     enabled: true
