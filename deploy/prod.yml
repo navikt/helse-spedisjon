@@ -47,7 +47,7 @@ spec:
     path: /metrics
   gcp:
     sqlInstances:
-      - type: POSTGRES_15
+      - type: POSTGRES_17
         diskAutoresize: true
         diskSize: 150
         tier: db-custom-1-3840
