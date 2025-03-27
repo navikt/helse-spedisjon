@@ -42,6 +42,7 @@ spec:
         - application: spedisjon-async
         - application: sporbar
         - application: spre-subsumsjon
+        - application: sparkel-arbeidsgiver
   prometheus:
     enabled: true
     path: /metrics
