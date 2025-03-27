@@ -1,6 +1,6 @@
 private val cloudSqlVersion = "1.21.0"
-private val postgresqlVersion = "42.7.4"
-val hikariCPVersion = "6.1.0"
+private val postgresqlVersion = "42.7.5"
+val hikariCPVersion = "6.3.0"
 private val kotliqueryVersion = "1.9.0"
 
 val rapidsAndRiversVersion: String by project

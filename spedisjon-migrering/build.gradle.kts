@@ -2,12 +2,12 @@ val mainClass = "no.nav.helse.spedisjon.migrering.AppKt"
 
 val logbackClassicVersion = "1.5.12"
 val logbackEncoderVersion = "8.0"
-val flywayVersion = "10.21.0"
+val flywayVersion = "11.5.0"
 val cloudSqlVersion = "1.21.0"
-val postgresqlVersion = "42.7.4"
-val hikariCPVersion = "6.1.0"
+val postgresqlVersion = "42.7.5"
+val hikariCPVersion = "6.3.0"
 val kotliqueryVersion = "1.9.0"
-val jacksonVersion = "2.18.1"
+val jacksonVersion = "2.18.3"
 val kotlinxCoroutinesVersion = "1.9.0"
 val tbdLibsVersion: String by project
 
