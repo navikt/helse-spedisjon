@@ -1,4 +1,4 @@
-val flywayCoreVersion = "10.21.0"
+val flywayCoreVersion = "11.5.0"
 val hikariCPVersion = "6.3.0"
 val postgresqlVersion = "42.7.5"
 val kotliqueryVersion = "1.9.0"
