@@ -6,7 +6,7 @@ val tbdLibsVersion = "2025.01.27-12.50-76316f3b"
 
 plugins {
     base
-    kotlin("jvm") version "2.0.21" apply false
+    kotlin("jvm") version "2.1.20" apply false
 }
 
 subprojects {
