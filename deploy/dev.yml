@@ -40,6 +40,7 @@ spec:
         - application: sporbar
         - application: spre-subsumsjon
         - application: sparkel-arbeidsgiver
+        - application: spaghet
   prometheus:
     enabled: true
     path: /metrics
