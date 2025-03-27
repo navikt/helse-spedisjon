@@ -50,8 +50,6 @@ jobs:
           image_suffix: async
           dockerfile: Dockerfile
           docker_context: spedisjon-async
-          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
 
