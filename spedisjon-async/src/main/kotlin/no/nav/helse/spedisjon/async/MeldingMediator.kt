@@ -15,7 +15,6 @@ internal class MeldingMediator(
 ) {
     internal companion object {
         private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
-        private val logg = LoggerFactory.getLogger(MeldingMediator::class.java)
         private val sikkerLogg = LoggerFactory.getLogger("tjenestekall")
     }
 
@@ -58,12 +57,12 @@ internal class MeldingMediator(
             is Melding.AvbruttSøknad,
             is Melding.NySøknad,
             is Melding.SendtSøknad -> {
-                Personinformasjon.Companion.berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
+                Personinformasjon.berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
                     val beriketMelding = berikelse.berik(melding)
                     ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, beriketMelding)
                 }
             }
-            is Melding.NavNoInntektsmelding -> {
+            is Melding.Arbeidsgiveropplysninger -> {
                 ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, BeriketMelding(melding.rapidhendelse))
             }
             is Melding.Inntektsmelding -> error("lps-inntektsmeldinger skal ikke sendes her")

@@ -114,7 +114,9 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
         val speedClient = mockSpeed()
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
-            NavNoInntektsmeldinger(this, meldingMediator)
+            ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Forespurte)
+            ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Korrigerte)
+            ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Selvbestemte)
         }
     }
 }
