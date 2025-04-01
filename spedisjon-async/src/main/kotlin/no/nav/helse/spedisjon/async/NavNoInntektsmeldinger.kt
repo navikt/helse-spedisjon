@@ -21,7 +21,7 @@ internal class NavNoInntektsmeldinger(
                 it.requireAny("avsenderSystem.navn", listOf("NAV_NO", "NAV_NO_SELVBESTEMT"))
             }
             validate {
-                it.requireKey("matcherSpleis", "inntektsmeldingId", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer")
+                it.requireKey("inntektsmeldingId", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer")
                 it.require("mottattDato", JsonNode::asLocalDateTime)
                 it.interestedIn("arbeidsforholdId")
             }
@@ -34,8 +34,6 @@ internal class NavNoInntektsmeldinger(
         metadata: MessageMetadata,
         meterRegistry: MeterRegistry
     ) {
-        if (!packet["matcherSpleis"].asBoolean()) return sikkerlogg.info("Ignorerer Nav.no-inntektsmelding som ikke matcher spleis:\n\t ${packet.toJson()}")
-
         val detaljer = Meldingsdetaljer(
             type = "inntektsmelding",
             fnr = packet["arbeidstakerFnr"].asText(),

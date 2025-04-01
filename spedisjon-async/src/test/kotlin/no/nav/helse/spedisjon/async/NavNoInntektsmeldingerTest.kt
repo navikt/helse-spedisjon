@@ -5,7 +5,9 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearMocks
 import io.mockk.mockk
 import java.time.LocalDateTime
+import java.util.UUID
 import org.apache.kafka.clients.producer.KafkaProducer
+import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -13,22 +15,14 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
     fun `leser inntektsmeldinger`() {
-        testRapid.sendTestMessage("""
-{
-    "avsenderSystem": {"navn": "NAV_NO" },
-    "inntektsmeldingId": "ac85bd20-7a1e-45e0-afaf-d946db30acd1",
-    "arbeidstakerFnr": "$FØDSELSNUMMER",
-    "virksomhetsnummer": "1234",
-    "arbeidsgivertype": "BEDRIFT",
-    "beregnetInntekt": "1000",
-    "mottattDato": "$OPPRETTET_DATO",
-    "endringIRefusjoner": [],
-    "arbeidsgiverperioder": [],
-    "status": "GYLDIG",
-    "arkivreferanse": "arkivref",
-    "opphoerAvNaturalytelser": [],
-    "matcherSpleis": true
-}""")
+        val im = inntektsmelding(
+            avsender = "NAV_NO",
+            arsakTilInnsending = "Ny",
+            arbeidstakerFnr = FØDSELSNUMMER,
+            virksomhetsnummer = "1234",
+            mottattDato = OPPRETTET_DATO
+        )
+        testRapid.sendTestMessage(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("inntektsmelding")
         assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
@@ -36,64 +30,60 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
     fun `ignorerer inntektsmeldinger med feil avsendersystem`() {
-        testRapid.sendTestMessage("""
-{
-    "avsenderSystem": { "navn": "LPS" },
-    "inntektsmeldingId": "ac85bd20-7a1e-45e0-afaf-d946db30acd1",
-    "arbeidstakerFnr": "$FØDSELSNUMMER",
-    "virksomhetsnummer": "1234",
-    "arbeidsgivertype": "BEDRIFT",
-    "beregnetInntekt": "1000",
-    "mottattDato": "$OPPRETTET_DATO",
-    "endringIRefusjoner": [],
-    "arbeidsgiverperioder": [],
-    "status": "GYLDIG",
-    "arkivreferanse": "arkivref",
-    "opphoerAvNaturalytelser": [],
-    "matcherSpleis": true
-}"""
+        val im = inntektsmelding(
+            avsender = "LPS",
+            arsakTilInnsending = "Ny",
+            arbeidstakerFnr = FØDSELSNUMMER,
+            virksomhetsnummer = "1234",
+            mottattDato = OPPRETTET_DATO
         )
+        testRapid.sendTestMessage(im)
         assertEquals(0, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents()
     }
 
     @Test
     fun `flere inntektsmeldinger forskjellig duplikatkontroll`() {
-        testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse") )
-        testRapid.sendTestMessage( inntektsmelding("66072deb-8586-4fa3-b41a-2e21850fd7db", "virksomhetsnummer", "arkivreferanse2") )
+        testRapid.sendTestMessage(inntektsmelding(
+            inntektsmeldingId = "afbb6489-f3f5-4b7d-8689-af1d7b53087a",
+            virksomhetsnummer = "virksomhetsnummer",
+            arkivreferanse = "arkivreferanse"
+        ))
+        testRapid.sendTestMessage(inntektsmelding(
+            inntektsmeldingId = "66072deb-8586-4fa3-b41a-2e21850fd7db",
+            virksomhetsnummer = "virksomhetsnummer",
+            arkivreferanse = "arkivreferanse2"
+        ))
         assertEquals(2, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("inntektsmelding", "inntektsmelding")
     }
 
-    @Test
-    fun `leser ikke inn inntektsmeldinger hvis matcherSpleis er false`() {
-        testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse", "noe", matcherSpleis = false) )
-        assertEquals(0, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents()
-    }
+    @Language("JSON")
+    private fun inntektsmelding(
+        avsender: String = "NAV_NO",
+        arsakTilInnsending: String = "NY",
+        virksomhetsnummer: String = "999999999",
+        arbeidstakerFnr: String = FØDSELSNUMMER,
+        mottattDato: LocalDateTime = OPPRETTET_DATO,
+        vedtaksperiodeId: String = UUID.randomUUID().toString(),
+        inntektsmeldingId: String = UUID.randomUUID().toString(),
+        arkivreferanse: String = UUID.randomUUID().toString(),
 
-    private fun inntektsmelding(id: String, virksomhetsnummer: String, arkivreferanse: String, arbeidsforholdId: String? = null, matcherSpleis: Boolean = true) : String {
-        val arbeidsforholdIdJson = if (arbeidsforholdId == null) "" else """ "arbeidsforholdId": "$arbeidsforholdId", """
-        return """
-{
-    "avsenderSystem": {"navn": "NAV_NO" },
-    "inntektsmeldingId": "$id",
-    "arbeidstakerFnr": "$FØDSELSNUMMER",
-    $arbeidsforholdIdJson
-    "virksomhetsnummer": "$virksomhetsnummer",
-    "arbeidsgivertype": "BEDRIFT",
-    "beregnetInntekt": "1000",
-    "mottattDato": "${LocalDateTime.now()}",
-    "endringIRefusjoner": [],
-    "arbeidsgiverperioder": [],
-    "status": "GYLDIG",
-    "arkivreferanse": "$arkivreferanse",
-    "opphoerAvNaturalytelser": [],
-    "matcherSpleis": $matcherSpleis
-}"""
-    }
+    ) = """
+            {
+              "avsenderSystem": {"navn": "$avsender" },
+              "inntektsmeldingId": "$inntektsmeldingId",
+              "arsakTilInnsending": "$arsakTilInnsending",
+              "virksomhetsnummer": "$virksomhetsnummer", 
+              "vedtaksperiodeId": "$vedtaksperiodeId", 
+              "arkivreferanse": "$arkivreferanse", 
+              "arbeidstakerFnr": "$arbeidstakerFnr",
+              "mottattDato": "$mottattDato"
+            }
+        """
 
     private val dokumentProducerMock = mockk<KafkaProducer<String, String>>(relaxed = true)
+
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         clearMocks(dokumentProducerMock)
         val ekspederingMediator = EkspederingMediator(
