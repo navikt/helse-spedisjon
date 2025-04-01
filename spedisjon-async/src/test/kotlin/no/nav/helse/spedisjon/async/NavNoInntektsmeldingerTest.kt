@@ -14,13 +14,34 @@ import org.junit.jupiter.api.Test
 internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
-    fun `leser inntektsmeldinger`() {
+    fun `leser inn svar på forespurte arbeidsgiveropplysninger`() {
         val im = inntektsmelding(
             avsender = "NAV_NO",
             arsakTilInnsending = "Ny",
-            arbeidstakerFnr = FØDSELSNUMMER,
-            virksomhetsnummer = "1234",
-            mottattDato = OPPRETTET_DATO
+        )
+        testRapid.sendTestMessage(im)
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("inntektsmelding")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
+    }
+
+    @Test
+    fun `leser inn svar på korrigerte arbeidsgiveropplysninger`() {
+        val im = inntektsmelding(
+            avsender = "NAV_NO",
+            arsakTilInnsending = "Endring",
+        )
+        testRapid.sendTestMessage(im)
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("inntektsmelding")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
+    }
+
+    @Test
+    fun `leser inn svar på selvbestemte arbeidsgiveropplysninger`() {
+        val im = inntektsmelding(
+            avsender = "NAV_NO_SELVBESTEMT",
+            arsakTilInnsending = "Hva-som-Helst-Vi-Bryr-Oss-Ikke"
         )
         testRapid.sendTestMessage(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
@@ -61,7 +82,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
     @Language("JSON")
     private fun inntektsmelding(
         avsender: String = "NAV_NO",
-        arsakTilInnsending: String = "NY",
+        arsakTilInnsending: String = "Ny",
         virksomhetsnummer: String = "999999999",
         arbeidstakerFnr: String = FØDSELSNUMMER,
         mottattDato: LocalDateTime = OPPRETTET_DATO,
