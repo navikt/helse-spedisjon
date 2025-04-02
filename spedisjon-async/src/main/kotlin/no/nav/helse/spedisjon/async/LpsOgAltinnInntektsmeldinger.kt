@@ -10,7 +10,6 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.micrometer.core.instrument.MeterRegistry
-import org.slf4j.LoggerFactory
 
 internal class LpsOgAltinnInntektsmeldinger(
     rapidsConnection: RapidsConnection,
@@ -25,7 +24,7 @@ internal class LpsOgAltinnInntektsmeldinger(
                 it.forbidValues("avsenderSystem.navn", listOf("NAV_NO", "NAV_NO_SELVBESTEMT"))
             }
             validate {
-                it.requireKey("matcherSpleis", "inntektsmeldingId", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer")
+                it.requireKey("inntektsmeldingId", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer")
                 it.require("mottattDato", JsonNode::asLocalDateTime)
                 it.interestedIn("arbeidsforholdId")
             }
@@ -38,8 +37,6 @@ internal class LpsOgAltinnInntektsmeldinger(
         metadata: MessageMetadata,
         meterRegistry: MeterRegistry
     ) {
-        if (!packet["matcherSpleis"].asBoolean()) return sikkerlogg.info("Ignorerer LPS/Altinn-inntektsmelding som ikke matcher spleis:\n\t ${packet.toJson()}")
-
         val detaljer = Meldingsdetaljer(
             type = "inntektsmelding",
             fnr = packet["arbeidstakerFnr"].asText(),
@@ -61,9 +58,5 @@ internal class LpsOgAltinnInntektsmeldinger(
 
     override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne LPS/Altinn-Inntektsmelding:\n$problems")
-    }
-
-    private companion object {
-        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
     }
 }

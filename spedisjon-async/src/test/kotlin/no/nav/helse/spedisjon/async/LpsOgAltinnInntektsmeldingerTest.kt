@@ -7,7 +7,6 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearMocks
 import io.mockk.mockk
 import org.apache.kafka.clients.producer.KafkaProducer
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -35,10 +34,9 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "arkivref",
-    "foersteFravaersdag": "2020-01-01",
-    "matcherSpleis": true
+    "foersteFravaersdag": "2020-01-01"
 }""")
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         manipulerTimeoutOgPubliser()
         assertSendteEvents("inntektsmelding")
         assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
@@ -58,11 +56,10 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "arkivref",
-    "foersteFravaersdag": "2020-01-01",
-    "matcherSpleis": true
+    "foersteFravaersdag": "2020-01-01"
 }"""
         )
-        Assertions.assertEquals(0, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(0, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents()
     }
 
@@ -81,12 +78,11 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "arkivref",
-    "foersteFravaersdag": null, 
-    "matcherSpleis": true
+    "foersteFravaersdag": null
 }"""
         )
         manipulerTimeoutOgPubliser()
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("inntektsmelding")
     }
 
@@ -111,7 +107,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
         testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse") )
         manipulerTimeoutOgPubliser()
         testRapid.sendTestMessage( inntektsmelding("66072deb-8586-4fa3-b41a-2e21850fd7db", "virksomhetsnummer", "arkivreferanse2") )
-        Assertions.assertEquals(2, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(2, antallMeldinger(FØDSELSNUMMER))
         manipulerTimeoutOgPubliser()
         assertSendteEvents("inntektsmelding", "inntektsmelding")
     }
@@ -139,14 +135,6 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
         assertTrue(inntektsmeldinger().last().path("harFlereInntektsmeldinger").asBoolean())
     }
 
-    @Test
-    fun `leser ikke inn inntektsmeldinger hvis matcherSpleis er false`() {
-        testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse", "noe", matcherSpleis = false) )
-        Assertions.assertEquals(0, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents()
-    }
-
-
     private fun inntektsmeldinger() : List<JsonNode> {
         return (0 until testRapid.inspektør.size).mapNotNull {
             val message = testRapid.inspektør.message(it)
@@ -155,7 +143,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
         }
     }
 
-    private fun inntektsmelding(id: String, virksomhetsnummer: String, arkivreferanse: String, arbeidsforholdId: String? = null, matcherSpleis: Boolean = true) : String {
+    private fun inntektsmelding(id: String, virksomhetsnummer: String, arkivreferanse: String, arbeidsforholdId: String? = null) : String {
         val arbeidsforholdIdJson = if (arbeidsforholdId == null) "" else """ "arbeidsforholdId": "$arbeidsforholdId", """
         return """
 {
@@ -171,8 +159,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "$arkivreferanse",
-    "foersteFravaersdag": null,
-    "matcherSpleis": $matcherSpleis
+    "foersteFravaersdag": null
 }"""
     }
 
