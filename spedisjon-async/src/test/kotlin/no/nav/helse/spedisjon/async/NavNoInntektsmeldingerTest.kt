@@ -33,7 +33,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
         )
         testRapid.sendTestMessage(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("korrigerte_arbeidsgiveropplysninger")
+        assertSendteEvents("inntektsmelding")
         assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
@@ -45,7 +45,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
         )
         testRapid.sendTestMessage(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("selvbestemte_arbeidsgiveropplysninger")
+        assertSendteEvents("inntektsmelding")
         assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
