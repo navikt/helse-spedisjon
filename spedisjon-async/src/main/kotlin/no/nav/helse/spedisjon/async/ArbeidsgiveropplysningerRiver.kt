@@ -23,7 +23,7 @@ sealed interface Arbeidsgiveropplysninger {
     }
 
     data object Selvbestemte: Arbeidsgiveropplysninger {
-        override val videresendingstype = "inntektsmelding" // "selvbestemte_arbeidsgiveropplysninger"
+        override val videresendingstype = "selvbestemte_arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
             packet.requireValue("avsenderSystem.navn", "NAV_NO_SELVBESTEMT")
@@ -31,7 +31,7 @@ sealed interface Arbeidsgiveropplysninger {
     }
 
     data object Korrigerte: Arbeidsgiveropplysninger {
-        override val videresendingstype = "inntektsmelding" // korrigerte_arbeidsgiveropplysninger"
+        override val videresendingstype = "korrigerte_arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
             packet.requireValue("avsenderSystem.navn", "NAV_NO")
