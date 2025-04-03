@@ -14,7 +14,7 @@ sealed interface Arbeidsgiveropplysninger {
     fun precondition(packet: JsonMessage)
 
     data object Forespurte: Arbeidsgiveropplysninger {
-        override val videresendingstype = "inntektsmelding" // TODO: skal bli "arbeidsgiveropplysninger"
+        override val videresendingstype = "arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
             packet.requireValue("avsenderSystem.navn", "NAV_NO")
@@ -23,7 +23,7 @@ sealed interface Arbeidsgiveropplysninger {
     }
 
     data object Selvbestemte: Arbeidsgiveropplysninger {
-        override val videresendingstype = "inntektsmelding" // TODO: skal bli "selvbestemte_arbeidsgiveropplysninger"
+        override val videresendingstype = "selvbestemte_arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
             packet.requireValue("avsenderSystem.navn", "NAV_NO_SELVBESTEMT")
@@ -31,7 +31,7 @@ sealed interface Arbeidsgiveropplysninger {
     }
 
     data object Korrigerte: Arbeidsgiveropplysninger {
-        override val videresendingstype = "inntektsmelding" // TODO: skal bli "korrigerte_arbeidsgiveropplysninger"
+        override val videresendingstype = "korrigerte_arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
             packet.requireValue("avsenderSystem.navn", "NAV_NO")

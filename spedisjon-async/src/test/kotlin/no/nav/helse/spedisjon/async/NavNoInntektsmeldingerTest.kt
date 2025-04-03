@@ -21,7 +21,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
         )
         testRapid.sendTestMessage(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("inntektsmelding")
+        assertSendteEvents("arbeidsgiveropplysninger")
         assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
@@ -33,7 +33,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
         )
         testRapid.sendTestMessage(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("inntektsmelding")
+        assertSendteEvents("korrigerte_arbeidsgiveropplysninger")
         assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
@@ -45,7 +45,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
         )
         testRapid.sendTestMessage(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("inntektsmelding")
+        assertSendteEvents("selvbestemte_arbeidsgiveropplysninger")
         assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
@@ -76,7 +76,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
             arkivreferanse = "arkivreferanse2"
         ))
         assertEquals(2, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents("inntektsmelding", "inntektsmelding")
+        assertSendteEvents("arbeidsgiveropplysninger", "arbeidsgiveropplysninger")
     }
 
     @Language("JSON")
