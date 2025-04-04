@@ -20,8 +20,7 @@ internal class LpsOgAltinnInntektsmeldinger(
         River(rapidsConnection).apply {
             precondition {
                 it.forbid("@event_name")
-                it.requireKey("inntektsmeldingId")
-                it.forbidValues("avsenderSystem.navn", listOf("NAV_NO", "NAV_NO_SELVBESTEMT"))
+                it.requireValue("format", "Inntektsmelding")
             }
             validate {
                 it.requireKey("inntektsmeldingId", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer")

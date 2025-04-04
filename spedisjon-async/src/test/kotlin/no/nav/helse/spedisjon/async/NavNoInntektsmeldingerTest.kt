@@ -16,7 +16,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
     @Test
     fun `leser inn svar på forespurte arbeidsgiveropplysninger`() {
         val im = inntektsmelding(
-            avsender = "NAV_NO",
+            forespurt = true,
             arsakTilInnsending = "Ny",
         )
         testRapid.sendTestMessage(im)
@@ -28,7 +28,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
     @Test
     fun `leser inn svar på korrigerte arbeidsgiveropplysninger`() {
         val im = inntektsmelding(
-            avsender = "NAV_NO",
+            forespurt = true,
             arsakTilInnsending = "Endring",
         )
         testRapid.sendTestMessage(im)
@@ -40,7 +40,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
     @Test
     fun `leser inn svar på selvbestemte arbeidsgiveropplysninger`() {
         val im = inntektsmelding(
-            avsender = "NAV_NO_SELVBESTEMT",
+            forespurt = false,
             arsakTilInnsending = "Hva-som-Helst-Vi-Bryr-Oss-Ikke"
         )
         testRapid.sendTestMessage(im)
@@ -50,27 +50,15 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
     }
 
     @Test
-    fun `ignorerer inntektsmeldinger med feil avsendersystem`() {
-        val im = inntektsmelding(
-            avsender = "LPS",
-            arsakTilInnsending = "Ny",
-            arbeidstakerFnr = FØDSELSNUMMER,
-            virksomhetsnummer = "1234",
-            mottattDato = OPPRETTET_DATO
-        )
-        testRapid.sendTestMessage(im)
-        assertEquals(0, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents()
-    }
-
-    @Test
     fun `flere inntektsmeldinger forskjellig duplikatkontroll`() {
         testRapid.sendTestMessage(inntektsmelding(
+            forespurt = true,
             inntektsmeldingId = "afbb6489-f3f5-4b7d-8689-af1d7b53087a",
             virksomhetsnummer = "virksomhetsnummer",
             arkivreferanse = "arkivreferanse"
         ))
         testRapid.sendTestMessage(inntektsmelding(
+            forespurt = true,
             inntektsmeldingId = "66072deb-8586-4fa3-b41a-2e21850fd7db",
             virksomhetsnummer = "virksomhetsnummer",
             arkivreferanse = "arkivreferanse2"
@@ -81,7 +69,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
 
     @Language("JSON")
     private fun inntektsmelding(
-        avsender: String = "NAV_NO",
+        forespurt: Boolean,
         arsakTilInnsending: String = "Ny",
         virksomhetsnummer: String = "999999999",
         arbeidstakerFnr: String = FØDSELSNUMMER,
@@ -92,14 +80,16 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
 
     ) = """
             {
-              "avsenderSystem": {"navn": "$avsender" },
+              "avsenderSystem": {"navn": "Hva-som-Helst-Vi-Bryr-Oss-Ikke" },
               "inntektsmeldingId": "$inntektsmeldingId",
               "arsakTilInnsending": "$arsakTilInnsending",
               "virksomhetsnummer": "$virksomhetsnummer", 
               "vedtaksperiodeId": "$vedtaksperiodeId", 
               "arkivreferanse": "$arkivreferanse", 
               "arbeidstakerFnr": "$arbeidstakerFnr",
-              "mottattDato": "$mottattDato"
+              "mottattDato": "$mottattDato",
+              "format": "Arbeidsgiveropplysninger",
+              "forespurt": $forespurt
             }
         """
 

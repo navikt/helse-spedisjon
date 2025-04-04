@@ -17,7 +17,7 @@ sealed interface Arbeidsgiveropplysninger {
         override val videresendingstype = "arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
-            packet.requireValue("avsenderSystem.navn", "NAV_NO")
+            packet.requireValue("forespurt", true)
             packet.requireValue("arsakTilInnsending", "Ny")
         }
     }
@@ -26,7 +26,7 @@ sealed interface Arbeidsgiveropplysninger {
         override val videresendingstype = "selvbestemte_arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
-            packet.requireValue("avsenderSystem.navn", "NAV_NO_SELVBESTEMT")
+            packet.requireValue("forespurt", false)
         }
     }
 
@@ -34,7 +34,7 @@ sealed interface Arbeidsgiveropplysninger {
         override val videresendingstype = "korrigerte_arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
-            packet.requireValue("avsenderSystem.navn", "NAV_NO")
+            packet.requireValue("forespurt", true)
             packet.requireValue("arsakTilInnsending", "Endring")
         }
     }
@@ -49,12 +49,11 @@ internal class ArbeidsgiveropplysningerRiver(
         River(rapidsConnection).apply {
             precondition {
                 it.forbid("@event_name")
-                //it.requireValue("format", "Arbeidsgiveropplysninger") // TODO: Denne er jo kjekk når HAG legger til den
-                it.requireKey("inntektsmeldingId")
+                it.requireValue("format", "Arbeidsgiveropplysninger")
                 arbeidsgiveropplysning.precondition(it)
             }
             validate {
-                it.requireKey("virksomhetsnummer", "vedtaksperiodeId", "arkivreferanse", "arbeidstakerFnr")
+                it.requireKey("virksomhetsnummer", "vedtaksperiodeId", "arkivreferanse", "arbeidstakerFnr", "inntektsmeldingId")
                 it.require("mottattDato", JsonNode::asLocalDateTime)
             }
         }.register(this)

@@ -34,7 +34,8 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "arkivref",
-    "foersteFravaersdag": "2020-01-01"
+    "foersteFravaersdag": "2020-01-01",
+    "format": "Inntektsmelding"
 }""")
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         manipulerTimeoutOgPubliser()
@@ -56,7 +57,8 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "arkivref",
-    "foersteFravaersdag": "2020-01-01"
+    "foersteFravaersdag": "2020-01-01",
+    "format": "Inntektsmelding"
 }"""
         )
         assertEquals(0, antallMeldinger(FØDSELSNUMMER))
@@ -78,7 +80,8 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "arkivref",
-    "foersteFravaersdag": null
+    "foersteFravaersdag": null,
+    "format": "Inntektsmelding"
 }"""
         )
         manipulerTimeoutOgPubliser()
@@ -159,7 +162,8 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "ferieperioder": [],
     "status": "GYLDIG",
     "arkivreferanse": "$arkivreferanse",
-    "foersteFravaersdag": null
+    "foersteFravaersdag": null,
+    "format": "Inntektsmelding"
 }"""
     }
 
