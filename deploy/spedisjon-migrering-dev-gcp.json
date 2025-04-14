@@ -1,6 +1,0 @@
-{
-  "parallelism": 1,
-  "spedisjon_instance": "spedisjon",
-  "spleis_instance": "helse-spleis",
-  "spleis_secret": "google-sql-helse-spleis"
-}

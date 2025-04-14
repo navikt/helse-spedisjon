@@ -1,6 +1,0 @@
-{
-  "parallelism": 1,
-  "spedisjon_instance": "spedisjon2",
-  "spleis_instance": "spleis2",
-  "spleis_secret": "google-sql-spleis"
-}
