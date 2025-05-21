@@ -58,18 +58,21 @@ spec:
             envVarPrefix: DATABASE
         flags:
           - name: cloudsql.enable_pgaudit
-            value: "true"
+            value: 'true'
           - name: pgaudit.log
-            value: 'write'
+            value: write
   secureLogs:
     enabled: true
   env:
-  - name: KAFKA_CONSUMER_GROUP_ID
-    value: tbd-spedisjon-v1
-  - name: KAFKA_RAPID_TOPIC
-    value: tbd.rapid.v1
-  - name: KAFKA_EXTRA_TOPIC
-    value: flex.sykepengesoknad,helsearbeidsgiver.privat-sykepenger-inntektsmelding
-  - name: KARANTENE_TID
-    value: "1800"
-
+    - name: KAFKA_CONSUMER_GROUP_ID
+      value: tbd-spedisjon-v1
+    - name: KAFKA_RAPID_TOPIC
+      value: tbd.rapid.v1
+    - name: KAFKA_EXTRA_TOPIC
+      value: flex.sykepengesoknad,helsearbeidsgiver.privat-sykepenger-inntektsmelding
+    - name: KARANTENE_TID
+      value: "1800"
+  observability:
+    logging:
+      destinations:
+        - id: elastic

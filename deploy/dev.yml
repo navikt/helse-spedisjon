@@ -58,3 +58,7 @@ spec:
               - name: spedisjon-opprydding-dev
   secureLogs:
     enabled: true
+  observability:
+    logging:
+      destinations:
+        - id: elastic

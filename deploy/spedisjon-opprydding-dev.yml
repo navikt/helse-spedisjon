@@ -44,13 +44,15 @@ spec:
   secureLogs:
     enabled: true
   env:
-  - name: KAFKA_CONSUMER_GROUP_ID
-    value: spedisjon-opprydding-dev-v1
-  - name: KAFKA_RAPID_TOPIC
-    value: tbd.rapid.v1
-  - name: DATABASE_REGION
-    value: "europe-north1"
-  - name: DATABASE_INSTANCE
-    value: "spedisjon"
-
-
+    - name: KAFKA_CONSUMER_GROUP_ID
+      value: spedisjon-opprydding-dev-v1
+    - name: KAFKA_RAPID_TOPIC
+      value: tbd.rapid.v1
+    - name: DATABASE_REGION
+      value: "europe-north1"
+    - name: DATABASE_INSTANCE
+      value: "spedisjon"
+  observability:
+    logging:
+      destinations:
+        - id: elastic
