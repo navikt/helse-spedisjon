@@ -5,11 +5,14 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.azure.createAzureTokenClientFromEnvironment
 import com.github.navikt.tbd_libs.kafka.AivenConfig
 import com.github.navikt.tbd_libs.kafka.ConsumerProducerFactory
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.FailedMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.OutgoingMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection.MessageListener
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection.StatusListener
+import com.github.navikt.tbd_libs.rapids_and_rivers_api.SentMessage
 import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.MeterRegistry
 import java.net.http.HttpClient
@@ -98,6 +101,15 @@ internal class LogWrapper(
 
     override fun publish(message: String) {
         throw IllegalStateException("Krever key for å sikre at vi publiserer meldinger med fnr som key")
+    }
+
+    override fun publish(messages: List<OutgoingMessage>): Pair<List<SentMessage>, List<FailedMessage>> {
+        messages.forEach {
+            checkNotNull(it.key) {
+                "Krever key for å sikre at vi publiserer meldinger med fnr som key"
+            }
+        }
+        return rapidsConnection.publish(messages)
     }
 
     override fun publish(key: String, message: String) {

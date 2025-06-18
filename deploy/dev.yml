@@ -41,6 +41,10 @@ spec:
         - application: spre-subsumsjon
         - application: sparkel-arbeidsgiver
         - application: spaghet
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system
   prometheus:
     enabled: true
     path: /metrics
