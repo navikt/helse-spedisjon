@@ -23,7 +23,7 @@ internal class AndreSøknaderRiver(
                 it.forbidValue("type", "ARBEIDSLEDIG")
                 if (System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp") {
                     // vi støtter selvstendig og arbeidsledig i dev, men bare for ordinære Selvstendig næringsdrivende (ikke Jordbruker etc)
-                    it.forbidValue("arbeidssituasjon", "SELVSTENDIG_NÆRINGSDRIVENDE")
+                    it.forbidValue("arbeidssituasjon", "SELVSTENDIG_NARINGSDRIVENDE")
                 }
             }
             validate {
