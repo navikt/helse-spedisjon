@@ -5,7 +5,7 @@ val kotliqueryVersion = "1.9.0"
 val logbackClassicVersion = "1.5.12"
 val logbackEncoderVersion = "8.0"
 val mockkVersion = "1.13.17"
-val ktorVersion = "3.1.2" // bør være samme som i <com.github.navikt.tbd-libs:naisful-app>
+val ktorVersion = "3.2.3" // bør være samme som i <com.github.navikt.tbd-libs:naisful-app>
 val tbdLibsVersion: String by project
 
 dependencies {
