@@ -26,6 +26,15 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
         Assertions.assertEquals(0, antallMeldinger(FØDSELSNUMMER))
     }
 
+    @Test
+    fun `leser ikke sendte selvstendige søknader med fødselsdag utenfor 30 til 31`() {
+        (1..29).forEach {
+            val fnr = FØDSELSNUMMER.replaceRange(0, 2, it.toString().padStart(2, '0'))
+            testRapid.sendTestMessage(søknad(arbeidssituasjon = "SELVSTENDIG_NARINGSDRIVENDE", fnr = fnr))
+            Assertions.assertEquals(0, antallMeldinger(fnr), "Forventet 0 meldinger for fødselsnummer $fnr")
+        }
+    }
+
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         val speedClient = mockSpeed()
         val ekspederingMediator = EkspederingMediator(
@@ -41,10 +50,10 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
 
     private companion object {
         @Language("JSON")
-        private fun søknad(arbeidssituasjon: String) = """
+        private fun søknad(arbeidssituasjon: String, fnr: String = FØDSELSNUMMER) = """
         {
             "id": "${UUID.randomUUID()}",
-            "fnr": "$FØDSELSNUMMER",
+            "fnr": "$fnr",
             "arbeidsgiver": null,
             "opprettet": "${LocalDateTime.now()}",
             "sendtNav": "$OPPRETTET_DATO",

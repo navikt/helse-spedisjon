@@ -28,7 +28,7 @@ abstract class AbstractDatabaseTest {
     protected lateinit var meldingstjeneste: LokalMeldingtjeneste
 
     protected companion object {
-        const val FØDSELSNUMMER = "fnr"
+        const val FØDSELSNUMMER = "31aaaazzzzz"
         const val ORGNUMMER = "a1"
         const val AKTØR = "aktørId"
         val OPPRETTET_DATO: LocalDateTime = LocalDateTime.now()

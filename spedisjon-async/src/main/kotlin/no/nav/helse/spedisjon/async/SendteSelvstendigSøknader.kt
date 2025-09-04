@@ -24,11 +24,14 @@ internal class SendteSelvstendigSøknader(
                 it.requireValue("type", "SELVSTENDIGE_OG_FRILANSERE")
                 it.requireValue("arbeidssituasjon", "SELVSTENDIG_NARINGSDRIVENDE")
                 it.requireKey("sendtNav")
+                it.require("fnr") { fnr ->
+                    if (Integer.parseInt(fnr.asText().substring(0..1)) !in 30..31) throw IllegalStateException("Skal ikke behandle dette fnr enda.")
+                }
             }
             validate {
                 it.requireKey("soknadsperioder")
                 it.require("opprettet", JsonNode::asLocalDateTime)
-                it.requireKey("id", "fnr", "fom", "tom", "sykmeldingId")
+                it.requireKey("id", "fom", "tom", "sykmeldingId")
                 it.require("sendtNav", JsonNode::asLocalDateTime)
                 it.interestedIn("utenlandskSykmelding", "sendTilGosys")
             }
