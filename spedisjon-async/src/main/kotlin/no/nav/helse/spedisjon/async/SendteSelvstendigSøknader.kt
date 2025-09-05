@@ -22,7 +22,7 @@ internal class SendteSelvstendigSøknader(
                 it.forbid("@event_name")
                 it.requireValue("status", "SENDT")
                 it.requireValue("type", "SELVSTENDIGE_OG_FRILANSERE")
-                it.requireValue("arbeidssituasjon", "SELVSTENDIG_NARINGSDRIVENDE")
+                it.requireAny("arbeidssituasjon", listOf("SELVSTENDIG_NARINGSDRIVENDE", "BARNEPASSER"))
                 it.requireKey("sendtNav")
                 it.require("fnr") { fnr ->
                     if (Integer.parseInt(fnr.asText().substring(0..1)) !in 30..31) throw IllegalStateException("Skal ikke behandle dette fnr enda.")
