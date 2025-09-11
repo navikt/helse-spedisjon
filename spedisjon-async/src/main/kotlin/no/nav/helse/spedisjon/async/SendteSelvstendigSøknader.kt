@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers.River
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
+import com.github.navikt.tbd_libs.rapids_and_rivers.isMissingOrNull
 import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
@@ -27,6 +28,9 @@ internal class SendteSelvstendigSøknader(
                 it.require("fnr") { fnr ->
                     if (Integer.parseInt(fnr.asText().substring(0..1)) !in 30..31) throw IllegalStateException("Skal ikke behandle dette fnr enda.")
                 }
+                it.require("selvstendigNaringsdrivende.ventetid") { ventetid ->
+                    if (ventetid.isMissingOrNull()) throw IllegalStateException("Mangler ventetid for selvstendig næringsdrivende")
+                }
             }
             validate {
                 it.requireKey("soknadsperioder")
@@ -40,7 +44,7 @@ internal class SendteSelvstendigSøknader(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
         val detaljer = Meldingsdetaljer.sendtSøknadSelvstendig(packet)
-        meldingMediator.leggInnMelding(detaljer)?.also { internId ->
+        meldingMediator.leggInnMelding(detaljer).also { internId ->
             meldingMediator.onMelding(Melding.SendtSøknad(internId, packet["sykmeldingId"].asText().toUUID(), detaljer))
         }
     }
