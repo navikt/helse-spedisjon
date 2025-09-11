@@ -3,14 +3,19 @@ package no.nav.helse.spedisjon.async
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import java.time.LocalDateTime
-import java.util.UUID
-
+import java.util.*
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
+
+    @Test
+    fun `leser ikke inn selvstendige søknader der ventetid er null`() {
+        testRapid.sendTestMessage(søknad(arbeidssituasjon = "SELVSTENDIG_NARINGSDRIVENDE", ventetid = null))
+        Assertions.assertEquals(0, antallMeldinger())
+    }
 
     @Test
     fun `leser sendte selvstendige søknader`() {
@@ -50,7 +55,7 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
 
     private companion object {
         @Language("JSON")
-        private fun søknad(arbeidssituasjon: String, fnr: String = FØDSELSNUMMER) = """
+        private fun søknad(arbeidssituasjon: String, fnr: String = FØDSELSNUMMER, ventetid: String? = """{"fom" : "2020-01-01","tom" : "2020-01-16"}""") = """
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$fnr",
@@ -64,7 +69,11 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
             "arbeidssituasjon": "$arbeidssituasjon",
             "sykmeldingId": "${UUID.randomUUID()}",
             "fom": "2020-01-01",
-            "tom": "2020-01-01"
-        }"""
+            "tom": "2020-01-01",
+            "selvstendigNaringsdrivende": {
+                "ventetid": $ventetid
+            }
+        }
+        """
     }
 }
