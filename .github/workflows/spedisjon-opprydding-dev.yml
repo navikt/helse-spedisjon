@@ -9,7 +9,7 @@ on:
       - 'deploy/spedisjon-opprydding-dev.yml'
       - 'build.gradle.kts'
     branches:
-      - master
+      - main
 
 jobs:
   build:

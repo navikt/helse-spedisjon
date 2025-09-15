@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'spedisjon-selve/**'
-      - '.github/workflows/master.yml'
+      - '.github/workflows/main.yml'
       - 'Dockerfile'
       - 'gradle/'
       - 'gradle.properties'
@@ -15,7 +15,7 @@ on:
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
     branches:
-      - master
+      - main
 
 jobs:
   build:
