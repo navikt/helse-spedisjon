@@ -31,14 +31,6 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
         Assertions.assertEquals(0, antallMeldinger(FØDSELSNUMMER))
     }
 
-    @Test
-    fun `leser ikke sendte selvstendige søknader med fødselsdag utenfor 30 til 31`() {
-        (1..29).forEach {
-            val fnr = FØDSELSNUMMER.replaceRange(0, 2, it.toString().padStart(2, '0'))
-            testRapid.sendTestMessage(søknad(arbeidssituasjon = "SELVSTENDIG_NARINGSDRIVENDE", fnr = fnr))
-            Assertions.assertEquals(0, antallMeldinger(fnr), "Forventet 0 meldinger for fødselsnummer $fnr")
-        }
-    }
 
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         val speedClient = mockSpeed()

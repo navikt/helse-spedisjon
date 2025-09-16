@@ -58,7 +58,7 @@ internal class MeldingMediator(
             is Melding.NySøknad,
             is Melding.SendtSøknad -> {
                 Personinformasjon.berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
-                    if (melding.meldingsdetaljer.type == "sendt_søknad_selvstendig" && berikelse.fødselsdato.dayOfMonth !in setOf(1, 31)) {
+                    if (melding.meldingsdetaljer.type == "sendt_søknad_selvstendig" && berikelse.fødselsdato.dayOfMonth in setOf(1, 31)) {
                         // unngå å sende søknader for de som er født mellom 1. og 31. i måneden lmao
                         return@berikMeldingOgBehandleDen
                     }
