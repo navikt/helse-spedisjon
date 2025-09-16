@@ -53,23 +53,25 @@ internal class MeldingMediator(
     }
 
     fun onMelding(melding: Melding) {
-        when (melding) {
-            is Melding.AvbruttSøknad,
-            is Melding.NySøknad,
-            is Melding.SendtSøknad -> {
-                Personinformasjon.berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
-                    if (melding.meldingsdetaljer.type == "sendt_søknad_selvstendig" && berikelse.fødselsdato.dayOfMonth in setOf(1, 31)) {
-                        // unngå å sende søknader for de som er født mellom 1. og 31. i måneden lmao
-                        return@berikMeldingOgBehandleDen
+        withMDC("event_name" to melding.meldingsdetaljer.type) {
+            when (melding) {
+                is Melding.AvbruttSøknad,
+                is Melding.NySøknad,
+                is Melding.SendtSøknad -> {
+                    Personinformasjon.berikMeldingOgBehandleDen(speedClient, melding) { berikelse ->
+                        if (melding.meldingsdetaljer.type == "sendt_søknad_selvstendig" && berikelse.fødselsdato.dayOfMonth in setOf(1, 31)) {
+                            // unngå å sende søknader for de som er født mellom 1. og 31. i måneden lmao
+                            return@berikMeldingOgBehandleDen
+                        }
+                        val beriketMelding = berikelse.berik(melding)
+                        ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, beriketMelding)
                     }
-                    val beriketMelding = berikelse.berik(melding)
-                    ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, beriketMelding)
                 }
+                is Melding.Arbeidsgiveropplysninger -> {
+                    ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, BeriketMelding(melding.rapidhendelse))
+                }
+                is Melding.Inntektsmelding -> error("lps-inntektsmeldinger skal ikke sendes her")
             }
-            is Melding.Arbeidsgiveropplysninger -> {
-                ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, BeriketMelding(melding.rapidhendelse))
-            }
-            is Melding.Inntektsmelding -> error("lps-inntektsmeldinger skal ikke sendes her")
         }
 
         Counter.builder("melding_unik_totals")

@@ -13,7 +13,7 @@ class EkspederingMediator(
         if (!dao.meldingEkspedert(internId)) return duplikatMelding(internId, melding)
         "Ekspederer {} og sender til rapid".also {
             logg.info(it, kv("internId", internId))
-            sikkerlogg.info("${it}:\n${melding.json}", kv("internId", internId))
+            sikkerlogg.info("${it}:\n${melding.json}", kv("internId", internId), kv("fødselsnummer", fnr))
         }
         rapidsConnection.publish(fnr, melding.json)
     }
