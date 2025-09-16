@@ -7,7 +7,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.LocalDate
 
 class Berikelse(
-    private val fødselsdato: LocalDate,
+    internal val fødselsdato: LocalDate,
     private val dødsdato: LocalDate?,
     private val aktørId: String,
     private val historiskeFolkeregisteridenter: List<String>

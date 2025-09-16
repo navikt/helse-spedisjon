@@ -26,7 +26,7 @@ class FremtidigSelvstendigSøknaderRiver internal constructor(
                 it.forbid("@event_name")
                 it.requireValue("status", "FREMTIDIG")
                 it.requireValue("type", "SELVSTENDIGE_OG_FRILANSERE")
-                it.requireValue("arbeidssituasjon", "SELVSTENDIG_NARINGSDRIVENDE")
+                it.requireAny("arbeidssituasjon", listOf("SELVSTENDIG_NARINGSDRIVENDE", "BARNEPASSER"))
             }
             validate {
                 it.requireKey("fnr", "soknadsperioder")

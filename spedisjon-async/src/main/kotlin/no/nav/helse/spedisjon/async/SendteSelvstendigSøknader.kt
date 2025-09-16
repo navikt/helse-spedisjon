@@ -24,10 +24,7 @@ internal class SendteSelvstendigSøknader(
                 it.requireValue("status", "SENDT")
                 it.requireValue("type", "SELVSTENDIGE_OG_FRILANSERE")
                 it.requireAny("arbeidssituasjon", listOf("SELVSTENDIG_NARINGSDRIVENDE", "BARNEPASSER"))
-                it.requireKey("sendtNav")
-                it.require("fnr") { fnr ->
-                    if (Integer.parseInt(fnr.asText().substring(0..1)) !in 30..31) throw IllegalStateException("Skal ikke behandle dette fnr enda.")
-                }
+                it.requireKey("sendtNav", "fnr")
                 it.require("selvstendigNaringsdrivende.ventetid") { ventetid ->
                     if (ventetid.isMissingOrNull()) throw IllegalStateException("Mangler ventetid for selvstendig næringsdrivende")
                 }

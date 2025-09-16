@@ -21,7 +21,7 @@ internal class NyeSelvstendigSøknader(
                 it.forbid("@event_name")
                 it.requireValue("status", "NY")
                 it.requireValue("type", "SELVSTENDIGE_OG_FRILANSERE")
-                it.requireValue("arbeidssituasjon", "SELVSTENDIG_NARINGSDRIVENDE")
+                it.requireAny("arbeidssituasjon", listOf("SELVSTENDIG_NARINGSDRIVENDE", "BARNEPASSER"))
             }
             validate {
                 it.requireKey("fnr", "soknadsperioder")
