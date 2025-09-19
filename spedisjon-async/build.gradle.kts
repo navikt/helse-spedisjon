@@ -1,6 +1,6 @@
 val flywayCoreVersion = "11.5.0"
 val hikariCPVersion = "6.3.0"
-val postgresqlVersion = "42.7.5"
+val postgresqlVersion = "42.7.7"
 val kotliqueryVersion = "1.9.0"
 val mockkVersion = "1.13.17"
 val rapidsAndRiversVersion: String by project
