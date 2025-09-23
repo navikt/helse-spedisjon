@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers.River
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
-import com.github.navikt.tbd_libs.rapids_and_rivers.isMissingOrNull
 import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
@@ -23,11 +22,7 @@ internal class SendteSelvstendigSøknader(
                 it.forbid("@event_name")
                 it.requireValue("status", "SENDT")
                 it.requireValue("type", "SELVSTENDIGE_OG_FRILANSERE")
-                it.requireAny("arbeidssituasjon", listOf("SELVSTENDIG_NARINGSDRIVENDE", "BARNEPASSER"))
                 it.requireKey("sendtNav", "fnr")
-                it.require("selvstendigNaringsdrivende.ventetid") { ventetid ->
-                    if (ventetid.isMissingOrNull()) throw IllegalStateException("Mangler ventetid for selvstendig næringsdrivende")
-                }
             }
             validate {
                 it.requireKey("soknadsperioder")

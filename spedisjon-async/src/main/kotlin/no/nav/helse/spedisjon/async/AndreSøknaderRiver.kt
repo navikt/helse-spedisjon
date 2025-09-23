@@ -21,7 +21,7 @@ internal class AndreSøknaderRiver(
                 it.forbid("@event_name", "inntektsmeldingId")
                 it.forbidValue("type", "ARBEIDSTAKERE")
                 it.forbidValue("type", "ARBEIDSLEDIG")
-                it.forbidValues("arbeidssituasjon", listOf("SELVSTENDIG_NARINGSDRIVENDE", "BARNEPASSER"))
+                it.forbidValue("type", "SELVSTENDIGE_OG_FRILANSERE")
             }
             validate {
                 it.requireKey("id", "fnr", "status")
