@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory
 
 fun main() {
     val env = System.getenv()
-    val erUtvikling = env["NAIS_CLUSTER_NAME"] == "dev-gcp"
 
     val azure = createAzureTokenClientFromEnvironment(env)
     val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
@@ -54,16 +53,16 @@ fun main() {
 
     LogWrapper(rapidsConnection, meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
-        if (erUtvikling) NyeFrilansSøknader(this, meldingMediator)
+        NyeFrilansSøknader(this, meldingMediator)
         NyeSelvstendigSøknader(this, meldingMediator)
         NyeArbeidsledigSøknader(this, meldingMediator)
         FremtidigSøknaderRiver(this, meldingMediator)
-        if (erUtvikling) FremtidigFrilansSøknaderRiver(this, meldingMediator)
+        FremtidigFrilansSøknaderRiver(this, meldingMediator)
         FremtidigSelvstendigSøknaderRiver(this, meldingMediator)
         FremtidigArbeidsledigSøknaderRiver(this, meldingMediator)
         SendteSøknaderArbeidsgiver(this, meldingMediator)
         SendteSøknaderNav(this, meldingMediator)
-        if (erUtvikling) SendteFrilansSøknader(this, meldingMediator)
+        SendteFrilansSøknader(this, meldingMediator)
         SendteSelvstendigSøknader(this, meldingMediator)
         SendteArbeidsledigSøknader(this, meldingMediator)
         AndreSøknaderRiver(this)
