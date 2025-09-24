@@ -22,6 +22,7 @@ internal class SendteSelvstendigSøknader(
                 it.forbid("@event_name")
                 it.requireValue("status", "SENDT")
                 it.requireValue("type", "SELVSTENDIGE_OG_FRILANSERE")
+                it.forbidValue("arbeidssituasjon", "FRILANSER")
                 it.requireKey("sendtNav", "fnr")
             }
             validate {
