@@ -38,12 +38,6 @@ fun main() {
     val dataSourceBuilder = DataSourceBuilder(env)
     val ekspederingMediator = EkspederingMediator(EkspederingDao(dataSourceBuilder::dataSource), rapidsConnection)
     val meldingMediator = MeldingMediator(httpMeldingtjeneste, speedClient, ekspederingMediator)
-    val inntektsmeldingDao = InntektsmeldingDao(httpMeldingtjeneste, dataSourceBuilder::dataSource)
-    val inntektsmeldingMediator = InntektsmeldingMediator(
-        inntektsmeldingDao,
-        ekspederingMediator,
-        inntektsmeldingTimeoutSekunder = 0L
-    )
 
     LogWrapper(rapidsConnection, meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
@@ -64,7 +58,6 @@ fun main() {
         ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Korrigerte)
         ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Selvbestemte)
         LpsOgAltinnInntektsmeldinger(this, meldingMediator)
-        Puls(this, inntektsmeldingMediator)
         AvbrutteSøknader(this, meldingMediator)
         AvbrutteArbeidsledigSøknader(this, meldingMediator)
     }.apply {
