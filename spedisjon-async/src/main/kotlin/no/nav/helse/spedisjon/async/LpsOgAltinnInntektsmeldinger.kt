@@ -13,8 +13,7 @@ import io.micrometer.core.instrument.MeterRegistry
 
 internal class LpsOgAltinnInntektsmeldinger(
     rapidsConnection: RapidsConnection,
-    private val meldingMediator: MeldingMediator,
-    private val inntektsmeldingMediator: InntektsmeldingMediator
+    private val meldingMediator: MeldingMediator
 ) : River.PacketListener {
     init {
         River(rapidsConnection).apply {
@@ -51,7 +50,7 @@ internal class LpsOgAltinnInntektsmeldinger(
                 arbeidsforholdId = packet["arbeidsforholdId"].takeIf(JsonNode::isTextual)?.asText(),
                 meldingsdetaljer = detaljer
             )
-            inntektsmeldingMediator.lagreInntektsmelding(inntektsmelding)
+            meldingMediator.onMelding(inntektsmelding)
         }
     }
 

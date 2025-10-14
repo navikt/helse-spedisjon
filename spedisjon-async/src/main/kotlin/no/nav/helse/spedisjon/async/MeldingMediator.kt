@@ -63,10 +63,10 @@ internal class MeldingMediator(
                         ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, beriketMelding)
                     }
                 }
-                is Melding.Arbeidsgiveropplysninger -> {
+                is Melding.Arbeidsgiveropplysninger,
+                is Melding.Inntektsmelding -> {
                     ekspederingMediator.videresendMelding(melding.meldingsdetaljer.fnr, melding.internId, BeriketMelding(melding.rapidhendelse))
                 }
-                is Melding.Inntektsmelding -> error("lps-inntektsmeldinger skal ikke sendes her")
             }
         }
 

@@ -16,9 +16,9 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
 
     @Test
     fun `ingen sendeklare inntektsmeldinger`() {
-        manipulerTimeoutOgPubliser()
         assertEquals(0, testRapid.inspektør.size)
     }
+
     @Test
     fun `leser inntektsmeldinger`() {
         testRapid.sendTestMessage("""
@@ -38,7 +38,6 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "format": "Inntektsmelding"
 }""")
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        manipulerTimeoutOgPubliser()
         assertSendteEvents("inntektsmelding")
         assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
@@ -84,7 +83,6 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "format": "Inntektsmelding"
 }"""
         )
-        manipulerTimeoutOgPubliser()
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("inntektsmelding")
     }
@@ -92,7 +90,6 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     @Test
     fun `publiserer samme id`() {
         testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse") )
-        manipulerTimeoutOgPubliser()
         val id = testRapid.inspektør.field(0, "@id").asText()
         val inntetsmeldingFrånDatabasen = inntektsmeldingFrånDatabasen()
         assertEquals(id, inntetsmeldingFrånDatabasen.first.toString())
@@ -108,10 +105,8 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     @Test
     fun `flere inntektsmeldinger forskjellig duplikatkontroll`() {
         testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse") )
-        manipulerTimeoutOgPubliser()
         testRapid.sendTestMessage( inntektsmelding("66072deb-8586-4fa3-b41a-2e21850fd7db", "virksomhetsnummer", "arkivreferanse2") )
         assertEquals(2, antallMeldinger(FØDSELSNUMMER))
-        manipulerTimeoutOgPubliser()
         assertSendteEvents("inntektsmelding", "inntektsmelding")
     }
 
@@ -119,23 +114,16 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     fun `flere inntektsmeldinger - begge er beriket`() {
         testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse", "noe") )
         testRapid.sendTestMessage( inntektsmelding("66072deb-8586-4fa3-b41a-2e21850fd7db", "virksomhetsnummer", "arkivreferanse2", "noeAnnet") )
-        manipulerTimeoutOgPubliser()
         assertSendteEvents("inntektsmelding", "inntektsmelding")
-        inntektsmeldinger() .forEach {
-            assertTrue(it.path("harFlereInntektsmeldinger").asBoolean())
-        }
     }
 
     @Test
     fun `flere inntektsmeldinger - en er beriket`() {
         testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse", "noe") )
         testRapid.sendTestMessage( inntektsmelding("66072deb-8586-4fa3-b41a-2e21850fd7db", "virksomhetsnummer", "arkivreferanse2", "noe_annet") )
-        manipulerTimeoutOgPubliser()
         assertSendteEvents("inntektsmelding", "inntektsmelding")
         assertEquals(2, inntektsmeldinger().size)
         assertEquals("afbb6489-f3f5-4b7d-8689-af1d7b53087a", inntektsmeldinger().first().get("inntektsmeldingId").asText())
-        assertTrue(inntektsmeldinger().first().path("harFlereInntektsmeldinger").asBoolean())
-        assertTrue(inntektsmeldinger().last().path("harFlereInntektsmeldinger").asBoolean())
     }
 
     private fun inntektsmeldinger() : List<JsonNode> {
@@ -167,7 +155,6 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
 }"""
     }
 
-    private lateinit var inntektsmeldingMediator: InntektsmeldingMediator
     private val dokumentProducerMock = mockk<KafkaProducer<String, String>>(relaxed = true)
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
         clearMocks(dokumentProducerMock)
@@ -177,16 +164,9 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
         )
         val speedClient = mockSpeed()
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
-        val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, ::dataSource)
-        inntektsmeldingMediator = InntektsmeldingMediator(inntektsmeldingDao, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
-            LpsOgAltinnInntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
+            LpsOgAltinnInntektsmeldinger(this, meldingMediator)
         }
-    }
-
-    private fun manipulerTimeoutOgPubliser() {
-        manipulerTimeoutInntektsmelding(FØDSELSNUMMER)
-        inntektsmeldingMediator.ekspeder()
     }
 
     private companion object {

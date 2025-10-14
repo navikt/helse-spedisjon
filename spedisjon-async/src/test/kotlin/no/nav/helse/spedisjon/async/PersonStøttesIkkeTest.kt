@@ -1,10 +1,10 @@
 package no.nav.helse.spedisjon.async
 
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import java.time.LocalDateTime
+import java.util.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.UUID
 
 internal class PersonStøttesIkkeTest : AbstractRiverTest() {
 
@@ -72,7 +72,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
         """
         )
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
-        assertSendteEvents()
+        assertSendteEvents("inntektsmelding")
     }
 
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
@@ -82,10 +82,8 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
             rapidsConnection = rapidsConnection,
         )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
-        val inntektsmeldingDao = InntektsmeldingDao(meldingtjeneste, ::dataSource)
-        val inntektsmeldingMediator = InntektsmeldingMediator(inntektsmeldingDao, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
-            LpsOgAltinnInntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
+            LpsOgAltinnInntektsmeldinger(this, meldingMediator)
             NyeSøknader(this, meldingMediator)
             FremtidigSøknaderRiver(this, meldingMediator)
             SendteSøknaderArbeidsgiver(this, meldingMediator)

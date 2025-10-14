@@ -10,15 +10,10 @@ import com.github.navikt.tbd_libs.test_support.DatabaseContainers
 import com.github.navikt.tbd_libs.test_support.TestDataSource
 import io.mockk.every
 import io.mockk.mockk
-import kotliquery.queryOf
-import kotliquery.sessionOf
-import kotliquery.using
-import org.intellij.lang.annotations.Language
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
-import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 
 val databaseContainer = DatabaseContainers.container("spedisjon-async", CleanupStrategy.tables("inntektsmelding"))
 
@@ -50,13 +45,6 @@ abstract class AbstractDatabaseTest {
     protected fun antallMeldinger(fnr: String = FØDSELSNUMMER) =
         meldingstjeneste.meldinger.size
 
-    protected fun manipulerTimeoutInntektsmelding(fødselsnummer: String, trekkFra: Duration = Duration.ofSeconds(301)) {
-        @Language("PostgreSQL")
-        val statement = """UPDATE inntektsmelding SET timeout = (SELECT max(timeout) FROM inntektsmelding WHERE fnr = :fnr) - INTERVAL '${trekkFra.seconds} SECONDS'"""
-        sessionOf(dataSource).use {session ->
-            session.run(queryOf(statement, mapOf("fnr" to fødselsnummer, "trekkFra" to trekkFra)).asUpdate)
-        }
-    }
 
     protected fun mockSpeed(fnr: String = FØDSELSNUMMER, aktørId: String = AKTØR, fødselsdato: LocalDate = LocalDate.of(1950, 10, 27), dødsdato: LocalDate? = null, støttes: Boolean = true): SpeedClient {
         return mockk<SpeedClient> {

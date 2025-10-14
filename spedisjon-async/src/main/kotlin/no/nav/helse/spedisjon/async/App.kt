@@ -17,7 +17,6 @@ import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.MeterRegistry
 import java.net.http.HttpClient
 import no.nav.helse.rapids_rivers.RapidApplication
-import org.slf4j.LoggerFactory
 
 fun main() {
     val env = System.getenv()
@@ -39,17 +38,6 @@ fun main() {
     val dataSourceBuilder = DataSourceBuilder(env)
     val ekspederingMediator = EkspederingMediator(EkspederingDao(dataSourceBuilder::dataSource), rapidsConnection)
     val meldingMediator = MeldingMediator(httpMeldingtjeneste, speedClient, ekspederingMediator)
-    val inntektsmeldingTimeoutSekunder = env["KARANTENE_TID"]?.toLong() ?: 0L.also {
-        val loggtekst = "KARANTENE_TID er tom; defaulter til ingen karantene"
-        LoggerFactory.getLogger(::main.javaClass).info(loggtekst)
-        LoggerFactory.getLogger("tjenestekall").info(loggtekst)
-    }
-    val inntektsmeldingDao = InntektsmeldingDao(httpMeldingtjeneste, dataSourceBuilder::dataSource)
-    val inntektsmeldingMediator = InntektsmeldingMediator(
-        inntektsmeldingDao,
-        ekspederingMediator,
-        inntektsmeldingTimeoutSekunder = inntektsmeldingTimeoutSekunder
-    )
 
     LogWrapper(rapidsConnection, meldingMediator).apply {
         NyeSøknader(this, meldingMediator)
@@ -69,8 +57,7 @@ fun main() {
         ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Forespurte)
         ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Korrigerte)
         ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Selvbestemte)
-        LpsOgAltinnInntektsmeldinger(this, meldingMediator, inntektsmeldingMediator)
-        Puls(this, inntektsmeldingMediator)
+        LpsOgAltinnInntektsmeldinger(this, meldingMediator)
         AvbrutteSøknader(this, meldingMediator)
         AvbrutteArbeidsledigSøknader(this, meldingMediator)
     }.apply {
