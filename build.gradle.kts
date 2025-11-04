@@ -1,12 +1,12 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 val junitJupiterVersion = "5.12.1"
-val rapidsAndRiversVersion = "2025092210081758528498.1d4b108f2c61"
-val tbdLibsVersion = "2025.09.19-15.24-1a9c113f"
+val rapidsAndRiversVersion = "2025110410191762247980.5e0592e08597"
+val tbdLibsVersion = "2025.11.04-10.12-3a167132"
 
 plugins {
     base
-    kotlin("jvm") version "2.2.10" apply false
+    kotlin("jvm") version "2.2.21" apply false
 }
 
 subprojects {
