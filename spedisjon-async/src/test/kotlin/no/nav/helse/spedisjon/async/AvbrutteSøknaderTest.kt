@@ -2,8 +2,6 @@ package no.nav.helse.spedisjon.async
 
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
-import io.mockk.every
-import io.mockk.mockk
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -23,10 +21,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
             rapidsConnection = rapidsConnection,
             meldingMediator = meldingMediator
         )
-        AvbrutteArbeidsledigSøknader(
-            rapidsConnection = rapidsConnection,
-            meldingMediator = meldingMediator
-        )
     }
 
     @Test
@@ -36,11 +30,60 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         assertSendteEvents("avbrutt_søknad")
         assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
+
     @Test
     fun `Leser, beriker, videresender avbrutte arbeidsledig-søknader`() {
         testRapid.sendTestMessage(AVBRUTT_ARBEIDSLEDIG_SØKNAD)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_arbeidsledig_søknad")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
+    }
+
+    @Test
+    fun `Leser, beriker, videresender avbrutte frilans-søknader`() {
+        testRapid.sendTestMessage(AVBRUTT_FRILANS_SØKNAD)
+        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("avbrutt_frilanser_søknad")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
+    }
+
+    @Test
+    fun `Leser, beriker, videresender avbrutte selvstendig-søknader`() {
+        testRapid.sendTestMessage(AVBRUTT_SELVSTENDIG_SØKNAD)
+        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("avbrutt_selvstendig_søknad")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
+    }
+
+    @Test
+    fun `Leser, beriker, videresender avbrutte fisker-søknader`() {
+        testRapid.sendTestMessage(AVBRUTT_FISKER_SØKNAD)
+        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("avbrutt_fisker_søknad")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
+    }
+
+    @Test
+    fun `Leser, beriker, videresender avbrutte jordbruker-søknader`() {
+        testRapid.sendTestMessage(AVBRUTT_JORDBRUKER_SØKNAD)
+        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("avbrutt_jordbruker_søknad")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
+    }
+
+    @Test
+    fun `Leser, beriker, videresender avbrutte barnepasser-søknader`() {
+        testRapid.sendTestMessage(AVBRUTT_BARNEPASSER_SØKNAD)
+        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("avbrutt_barnepasser_søknad")
+        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
+    }
+
+    @Test
+    fun `Leser, beriker, videresender avbrutte annet-søknader`() {
+        testRapid.sendTestMessage(AVBRUTT_ANNET_SØKNAD)
+        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertSendteEvents("avbrutt_annet_søknad")
         assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
@@ -58,7 +101,7 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
             "soknadsperioder": [],
             "fravar": [],
             "status": "AVBRUTT",
-            "type": "ARBEIDSTAKERE",
+            "arbeidssituasjon": "ARBEIDSTAKER",
             "sykmeldingId": "${UUID.randomUUID()}",
             "fom": "2020-01-01",
             "tom": "2020-01-01"
@@ -73,7 +116,97 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
             "soknadsperioder": [],
             "fravar": [],
             "status": "AVBRUTT",
-            "type": "ARBEIDSLEDIG",
+            "arbeidssituasjon": "ARBEIDSLEDIG",
+            "sykmeldingId": "${UUID.randomUUID()}",
+            "fom": "2020-01-01",
+            "tom": "2020-01-01"
+        }"""
+
+        private val AVBRUTT_SELVSTENDIG_SØKNAD = """
+        {
+            "id": "${UUID.randomUUID()}",
+            "fnr": "$FØDSELSNUMMER",
+            "opprettet": "$OPPRETTET_DATO",
+            "sendtNav": "${LocalDateTime.now()}",
+            "soknadsperioder": [],
+            "fravar": [],
+            "status": "AVBRUTT",
+            "arbeidssituasjon": "SELVSTENDIG_NARINGSDRIVENDE",
+            "sykmeldingId": "${UUID.randomUUID()}",
+            "fom": "2020-01-01",
+            "tom": "2020-01-01"
+        }"""
+
+        private val AVBRUTT_FRILANS_SØKNAD = """
+        {
+            "id": "${UUID.randomUUID()}",
+            "fnr": "$FØDSELSNUMMER",
+            "opprettet": "$OPPRETTET_DATO",
+            "sendtNav": "${LocalDateTime.now()}",
+            "soknadsperioder": [],
+            "fravar": [],
+            "status": "AVBRUTT",
+            "arbeidssituasjon": "FRILANSER",
+            "sykmeldingId": "${UUID.randomUUID()}",
+            "fom": "2020-01-01",
+            "tom": "2020-01-01"
+        }"""
+
+        private val AVBRUTT_BARNEPASSER_SØKNAD = """
+        {
+            "id": "${UUID.randomUUID()}",
+            "fnr": "$FØDSELSNUMMER",
+            "opprettet": "$OPPRETTET_DATO",
+            "sendtNav": "${LocalDateTime.now()}",
+            "soknadsperioder": [],
+            "fravar": [],
+            "status": "AVBRUTT",
+            "arbeidssituasjon": "BARNEPASSER",
+            "sykmeldingId": "${UUID.randomUUID()}",
+            "fom": "2020-01-01",
+            "tom": "2020-01-01"
+        }"""
+
+        private val AVBRUTT_FISKER_SØKNAD = """
+        {
+            "id": "${UUID.randomUUID()}",
+            "fnr": "$FØDSELSNUMMER",
+            "opprettet": "$OPPRETTET_DATO",
+            "sendtNav": "${LocalDateTime.now()}",
+            "soknadsperioder": [],
+            "fravar": [],
+            "status": "AVBRUTT",
+            "arbeidssituasjon": "FISKER",
+            "sykmeldingId": "${UUID.randomUUID()}",
+            "fom": "2020-01-01",
+            "tom": "2020-01-01"
+        }"""
+
+        private val AVBRUTT_JORDBRUKER_SØKNAD = """
+        {
+            "id": "${UUID.randomUUID()}",
+            "fnr": "$FØDSELSNUMMER",
+            "opprettet": "$OPPRETTET_DATO",
+            "sendtNav": "${LocalDateTime.now()}",
+            "soknadsperioder": [],
+            "fravar": [],
+            "status": "AVBRUTT",
+            "arbeidssituasjon": "JORDBRUKER",
+            "sykmeldingId": "${UUID.randomUUID()}",
+            "fom": "2020-01-01",
+            "tom": "2020-01-01"
+        }"""
+
+        private val AVBRUTT_ANNET_SØKNAD = """
+        {
+            "id": "${UUID.randomUUID()}",
+            "fnr": "$FØDSELSNUMMER",
+            "opprettet": "$OPPRETTET_DATO",
+            "sendtNav": "${LocalDateTime.now()}",
+            "soknadsperioder": [],
+            "fravar": [],
+            "status": "AVBRUTT",
+            "arbeidssituasjon": "ANNET",
             "sykmeldingId": "${UUID.randomUUID()}",
             "fom": "2020-01-01",
             "tom": "2020-01-01"

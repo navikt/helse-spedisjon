@@ -27,17 +27,32 @@ internal class AvbrutteSøknader(
             precondition {
                 it.forbid("@event_name")
                 it.requireAny("status", listOf("AVBRUTT", "UTGATT"))
-                it.requireValue("type", "ARBEIDSTAKERE")
             }
             validate {
                 it.require("opprettet", JsonNode::asLocalDateTime)
-                it.requireKey("id", "fnr", "fom", "tom", "arbeidsgiver.orgnummer")
+                it.requireKey("id", "fnr", "fom", "tom")
+                it.interestedIn("arbeidsgiver.orgnummer")
+                it.requireAny("arbeidssituasjon", listOf(
+                    "SELVSTENDIG_NARINGSDRIVENDE", "BARNEPASSER", "FRILANSER",
+                    "ARBEIDSTAKER", "ARBEIDSLEDIG",
+                    "FISKER", "JORDBRUKER", "ANNET",
+                ))
             }
         }.register(this)
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
-        val detaljer = Meldingsdetaljer.avbruttSøknad(packet)
+        val detaljer = when (packet["arbeidssituasjon"].asText()) {
+            "SELVSTENDIG_NARINGSDRIVENDE" -> Meldingsdetaljer.avbruttSøknadSelvstendig(packet)
+            "BARNEPASSER" -> Meldingsdetaljer.avbruttSøknadBarnepasser(packet)
+            "FRILANSER" -> Meldingsdetaljer.avbruttSøknadFrilanser(packet)
+            "ARBEIDSTAKER" -> Meldingsdetaljer.avbruttSøknad(packet)
+            "ARBEIDSLEDIG" -> Meldingsdetaljer.avbruttSøknadArbeidsledig(packet)
+            "FISKER" -> Meldingsdetaljer.avbruttSøknadFisker(packet)
+            "JORDBRUKER" -> Meldingsdetaljer.avbruttSøknadJordbruker(packet)
+            "ANNET" -> Meldingsdetaljer.avbruttSøknadAnnet(packet)
+            else -> error("Forventer ikke arbeidssituasjon ${packet["arbeidssituasjon"].asText()} her")
+        }
         val internId = meldingMediator.leggInnMelding(detaljer)
         meldingMediator.onMelding(Melding.AvbruttSøknad(internId, detaljer))
         sikkerlogg.info("Mottatt avbrutt søknad: $detaljer")

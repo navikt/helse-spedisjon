@@ -59,7 +59,6 @@ fun main() {
         ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Selvbestemte)
         LpsOgAltinnInntektsmeldinger(this, meldingMediator)
         AvbrutteSøknader(this, meldingMediator)
-        AvbrutteArbeidsledigSøknader(this, meldingMediator)
     }.apply {
         register(object : StatusListener {
             override fun onStartup(rapidsConnection: RapidsConnection) {

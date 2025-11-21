@@ -91,6 +91,12 @@ data class Meldingsdetaljer(
 
         fun avbruttSøknad(packet: JsonMessage) = sendtSøknad("avbrutt_søknad", "opprettet", packet)
         fun avbruttSøknadArbeidsledig(packet: JsonMessage) = sendtSøknad("avbrutt_arbeidsledig_søknad", "opprettet", packet)
+        fun avbruttSøknadSelvstendig(packet: JsonMessage) = sendtSøknad("avbrutt_selvstendig_søknad", "opprettet", packet)
+        fun avbruttSøknadBarnepasser(packet: JsonMessage) = sendtSøknad("avbrutt_barnepasser_søknad", "opprettet", packet)
+        fun avbruttSøknadFrilanser(packet: JsonMessage) = sendtSøknad("avbrutt_frilanser_søknad", "opprettet", packet)
+        fun avbruttSøknadFisker(packet: JsonMessage) = sendtSøknad("avbrutt_fisker_søknad", "opprettet", packet)
+        fun avbruttSøknadJordbruker(packet: JsonMessage) = sendtSøknad("avbrutt_jordbruker_søknad", "opprettet", packet)
+        fun avbruttSøknadAnnet(packet: JsonMessage) = sendtSøknad("avbrutt_annet_søknad", "opprettet", packet)
     }
 }
 
