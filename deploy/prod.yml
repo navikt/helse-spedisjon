@@ -61,6 +61,8 @@ spec:
         databases:
           - name: spedisjon
             envVarPrefix: DATABASE
+            users:
+              - name: bigquery-connection-user
         flags:
           - name: cloudsql.enable_pgaudit
             value: "true"
