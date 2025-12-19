@@ -26,7 +26,7 @@ internal class AvbrutteSøknader(
         River(rapidsConnection).apply {
             precondition {
                 it.forbid("@event_name")
-                it.requireAny("status", listOf("AVBRUTT", "UTGATT"))
+                it.requireAny("status", listOf("AVBRUTT", "UTGATT", "SLETTET"))
             }
             validate {
                 it.require("opprettet", JsonNode::asLocalDateTime)
