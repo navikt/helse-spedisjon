@@ -65,8 +65,6 @@ spec:
             value: "write,ddl,role"
           - name: pgaudit.log_parameter
             value: "on"
-  secureLogs:
-    enabled: true
   env:
     - name: KAFKA_CONSUMER_GROUP_ID
       value: tbd-spedisjon-v1

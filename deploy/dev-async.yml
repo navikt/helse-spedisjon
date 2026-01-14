@@ -52,8 +52,6 @@ spec:
         databases:
           - name: spedisjon-async
             envVarPrefix: DATABASE
-  secureLogs:
-    enabled: true
   env:
     - name: KAFKA_CONSUMER_GROUP_ID
       value: tbd-spedisjon-v1

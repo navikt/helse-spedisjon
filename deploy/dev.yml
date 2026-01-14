@@ -60,8 +60,6 @@ spec:
             envVarPrefix: DATABASE
             users:
               - name: spedisjon-opprydding-dev
-  secureLogs:
-    enabled: true
   observability:
     logging:
       destinations:

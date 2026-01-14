@@ -41,8 +41,6 @@ spec:
         role: roles/cloudsql.client
   envFrom:
     - secret: google-sql-spedisjon-spedisjon-spedisjon-opprydding-de-31466522
-  secureLogs:
-    enabled: true
   env:
     - name: KAFKA_CONSUMER_GROUP_ID
       value: spedisjon-opprydding-dev-v1
