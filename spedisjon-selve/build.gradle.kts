@@ -6,6 +6,7 @@ val logbackClassicVersion = "1.5.18"
 val logbackEncoderVersion = "8.0"
 val mockkVersion = "1.13.17"
 val ktorVersion = "3.2.3" // bør være samme som i <com.github.navikt.tbd-libs:naisful-app>
+val jacksonVerison = "2.20.0"
 val tbdLibsVersion: String by project
 
 dependencies {
@@ -22,6 +23,8 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVerison")
 
     testImplementation("com.github.navikt.tbd-libs:naisful-test-app:$tbdLibsVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
