@@ -63,7 +63,7 @@ internal class NyeFrilansSøknaderTest : AbstractRiverTest() {
   "sendTilGosys": null,
   "utenlandskSykmelding": false
 }""")
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("ny_søknad_frilans")
     }
 

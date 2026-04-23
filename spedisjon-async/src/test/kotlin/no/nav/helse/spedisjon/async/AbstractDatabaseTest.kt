@@ -42,7 +42,7 @@ abstract class AbstractDatabaseTest {
     }
 
 
-    protected fun antallMeldinger(fnr: String = FØDSELSNUMMER) =
+    protected fun antallMeldinger() =
         meldingstjeneste.meldinger.size
 
 

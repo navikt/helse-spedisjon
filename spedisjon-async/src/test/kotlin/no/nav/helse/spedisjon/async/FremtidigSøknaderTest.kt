@@ -12,7 +12,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
     @Test
     fun `tar inn fremtidig søknad`() {
         testRapid.sendTestMessage(søknad())
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("ny_søknad")
         assertEquals("NY", testRapid.inspektør.field(0, "status").textValue())
         assertEquals(true, testRapid.inspektør.field(0, "fremtidig_søknad").booleanValue())
@@ -22,7 +22,7 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
     fun `ignorerer ny søknad om vi har en fremtidig`() {
         testRapid.sendTestMessage(søknad("FREMTIDIG"))
         testRapid.sendTestMessage(søknad("NY"))
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("ny_søknad")
     }
 

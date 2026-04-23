@@ -37,7 +37,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "foersteFravaersdag": "2020-01-01",
     "format": "Inntektsmelding"
 }""")
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(1, antallMeldinger())
         assertSendteEvents("inntektsmelding")
     }
 
@@ -59,7 +59,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "format": "Inntektsmelding"
 }"""
         )
-        assertEquals(0, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(0, antallMeldinger())
         assertSendteEvents()
     }
 
@@ -82,7 +82,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "format": "Inntektsmelding"
 }"""
         )
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(1, antallMeldinger())
         assertSendteEvents("inntektsmelding")
     }
 
@@ -105,7 +105,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     fun `flere inntektsmeldinger forskjellig duplikatkontroll`() {
         testRapid.sendTestMessage( inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse") )
         testRapid.sendTestMessage( inntektsmelding("66072deb-8586-4fa3-b41a-2e21850fd7db", "virksomhetsnummer", "arkivreferanse2") )
-        assertEquals(2, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(2, antallMeldinger())
         assertSendteEvents("inntektsmelding", "inntektsmelding")
     }
 

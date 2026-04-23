@@ -11,14 +11,14 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
     @Test
     fun `fremtidig_søknad til person som ikke støttes lagres, men sendes ikke videre`() {
         testRapid.sendTestMessage(søknad(status = "FREMTIDIG"))
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents()
     }
 
     @Test
     fun `ny_søknad til person som ikke støttes lagres, men sendes ikke videre`() {
         testRapid.sendTestMessage(søknad(status = "NY"))
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents()
     }
 
@@ -32,7 +32,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
                 )
             )
         )
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents()
     }
 
@@ -46,7 +46,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
                 )
             )
         )
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents()
     }
 
@@ -71,7 +71,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
         }
         """
         )
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("inntektsmelding")
     }
 

@@ -24,7 +24,7 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     "fom": "2020-01-01",
     "tom": "2020-01-01"
 }""")
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("ny_søknad")
     }
 

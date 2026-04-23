@@ -12,21 +12,21 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
     @Test
     fun `leser ikke inn selvstendige søknader der ventetid er null`() {
         testRapid.sendTestMessage(søknad(arbeidssituasjon = "SELVSTENDIG_NARINGSDRIVENDE", ventetid = null))
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("sendt_søknad_selvstendig")
     }
 
     @Test
     fun `leser sendte selvstendige søknader`() {
         testRapid.sendTestMessage(søknad(arbeidssituasjon = "SELVSTENDIG_NARINGSDRIVENDE"))
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("sendt_søknad_selvstendig")
     }
 
     @Test
     fun `leser ikke sendte selvstendige søknader med annen arbeidssituasjon`() {
         testRapid.sendTestMessage(søknad(arbeidssituasjon = "JORDBRUKER"))
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("sendt_søknad_selvstendig")
     }
 

@@ -19,7 +19,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
             arsakTilInnsending = "Ny",
         )
         testRapid.sendTestMessage(im)
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(1, antallMeldinger())
         assertSendteEvents("arbeidsgiveropplysninger")
     }
 
@@ -30,7 +30,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
             arsakTilInnsending = "Endring",
         )
         testRapid.sendTestMessage(im)
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(1, antallMeldinger())
         assertSendteEvents("korrigerte_arbeidsgiveropplysninger")
     }
 
@@ -41,7 +41,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
             arsakTilInnsending = "Hva-som-Helst-Vi-Bryr-Oss-Ikke"
         )
         testRapid.sendTestMessage(im)
-        assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(1, antallMeldinger())
         assertSendteEvents("selvbestemte_arbeidsgiveropplysninger")
     }
 
@@ -59,7 +59,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
             virksomhetsnummer = "virksomhetsnummer",
             arkivreferanse = "arkivreferanse2"
         ))
-        assertEquals(2, antallMeldinger(FØDSELSNUMMER))
+        assertEquals(2, antallMeldinger())
         assertSendteEvents("arbeidsgiveropplysninger", "arbeidsgiveropplysninger")
     }
 

@@ -12,7 +12,7 @@ internal class SendteFrilansSøknaderTest : AbstractRiverTest() {
     @Test
     fun `leser sendte søknader`() {
         testRapid.sendTestMessage(SØKNAD)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("sendt_søknad_frilans")
     }
 

@@ -24,56 +24,56 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
     @Test
     fun `Leser, beriker, videresender avbrutte søknader`() {
         testRapid.sendTestMessage(AVBRUTT_SØKNAD)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("avbrutt_søknad")
     }
 
     @Test
     fun `Leser, beriker, videresender avbrutte arbeidsledig-søknader`() {
         testRapid.sendTestMessage(AVBRUTT_ARBEIDSLEDIG_SØKNAD)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("avbrutt_arbeidsledig_søknad")
     }
 
     @Test
     fun `Leser, beriker, videresender avbrutte frilans-søknader`() {
         testRapid.sendTestMessage(AVBRUTT_FRILANS_SØKNAD)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("avbrutt_frilanser_søknad")
     }
 
     @Test
     fun `Leser, beriker, videresender avbrutte selvstendig-søknader`() {
         testRapid.sendTestMessage(AVBRUTT_SELVSTENDIG_SØKNAD)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("avbrutt_selvstendig_søknad")
     }
 
     @Test
     fun `Leser, beriker, videresender avbrutte fisker-søknader`() {
         testRapid.sendTestMessage(AVBRUTT_FISKER_SØKNAD)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("avbrutt_fisker_søknad")
     }
 
     @Test
     fun `Leser, beriker, videresender avbrutte jordbruker-søknader`() {
         testRapid.sendTestMessage(AVBRUTT_JORDBRUKER_SØKNAD)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("avbrutt_jordbruker_søknad")
     }
 
     @Test
     fun `Leser, beriker, videresender avbrutte barnepasser-søknader`() {
         testRapid.sendTestMessage(AVBRUTT_BARNEPASSER_SØKNAD)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("avbrutt_barnepasser_søknad")
     }
 
     @Test
     fun `Leser, beriker, videresender avbrutte annet-søknader`() {
         testRapid.sendTestMessage(AVBRUTT_ANNET_SØKNAD)
-        Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
+        Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("avbrutt_annet_søknad")
     }
 
