@@ -33,12 +33,9 @@ class MeldingDaoTest {
                 fnr = nyMeldingDto.fnr,
                 internDokumentId = result.internId,
                 eksternDokumentId = nyMeldingDto.eksternDokumentId,
-                rapportertDato = LocalDateTime.MIN,
                 duplikatkontroll = nyMeldingDto.duplikatkontroll.padEnd(128, ' '),
                 jsonBody = nyMeldingDto.jsonBody
-            ), actual.copy(
-            rapportertDato = LocalDateTime.MIN
-        ))
+            ), actual)
     }
 
     private fun databaseTest(testblokk: (DataSource) -> Unit) {

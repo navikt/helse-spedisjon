@@ -90,7 +90,6 @@ class ApiTest {
             fnr = "fnr",
             internDokumentId = internDokumentId,
             eksternDokumentId = eksternDokumentId,
-            rapportertDato = LocalDateTime.now(),
             duplikatkontroll = "unik_nøkkel",
             jsonBody = "{}"
         )))
@@ -118,7 +117,6 @@ class ApiTest {
             fnr = "fnr",
             internDokumentId = internDokumentId,
             eksternDokumentId = eksternDokumentId,
-            rapportertDato = LocalDateTime.now(),
             duplikatkontroll = "unik_nøkkel",
             jsonBody = "{}"
         )))
@@ -167,7 +165,6 @@ class ApiTest {
         val fnr: String,
         val internDokumentId: UUID,
         val eksternDokumentId: UUID,
-        val rapportertDato: LocalDateTime,
         val duplikatkontroll: String,
         val jsonBody: String
     )

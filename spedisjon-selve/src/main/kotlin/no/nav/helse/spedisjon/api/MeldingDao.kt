@@ -20,11 +20,11 @@ internal class MeldingDao(private val dataSource: DataSource) {
         return sessionOf(dataSource).use { session ->
             @Language("PostgreSQL")
             val stmt = """
-                select fnr,type,intern_dokument_id,ekstern_dokument_id,duplikatkontroll,data,opprettet 
+                select fnr,type,intern_dokument_id,ekstern_dokument_id,duplikatkontroll,data 
                 from melding 
                 where ${internDokumentIder.joinToString(separator = " OR ") { "intern_dokument_id = ?" }}
                 union all
-                select m.fnr,m.type,m.intern_dokument_id,m.ekstern_dokument_id,m.duplikatkontroll,m.data,m.opprettet 
+                select m.fnr,m.type,m.intern_dokument_id,m.ekstern_dokument_id,m.duplikatkontroll,m.data 
                 from melding_alias ma
                 inner join melding m on m.id = ma.melding_id
                 where ${internDokumentIder.joinToString(separator = " OR ") { "ma.intern_dokument_id = ?" }}
@@ -37,7 +37,6 @@ internal class MeldingDao(private val dataSource: DataSource) {
                     fnr = row.string("fnr"),
                     internDokumentId = row.uuid("intern_dokument_id"),
                     eksternDokumentId = row.uuid("ekstern_dokument_id"),
-                    rapportertDato = row.localDateTime("opprettet"),
                     duplikatkontroll = row.string("duplikatkontroll"),
                     jsonBody = row.string("data")
                 )
@@ -121,7 +120,6 @@ data class MeldingDto(
     val fnr: String,
     val internDokumentId: UUID,
     val eksternDokumentId: UUID,
-    val rapportertDato: LocalDateTime,
     val duplikatkontroll: String,
     val jsonBody: String
 )

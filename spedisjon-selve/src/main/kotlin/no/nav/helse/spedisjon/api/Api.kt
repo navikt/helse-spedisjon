@@ -1,16 +1,13 @@
 package no.nav.helse.spedisjon.api
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.github.navikt.tbd_libs.naisful.FeilResponse
 import io.ktor.http.*
 import io.ktor.server.plugins.NotFoundException
-import io.ktor.server.plugins.callid.callId
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.getOrFail
 import no.nav.helse.spedisjon.api.tjeneste.Meldingtjeneste
-import java.net.URI
 import java.time.LocalDateTime
 import java.util.*
 
@@ -50,7 +47,6 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
                 fnr = melding.fnr,
                 internDokumentId = melding.internDokumentId,
                 eksternDokumentId = melding.eksternDokumentId,
-                rapportertDato = melding.rapportertDato,
                 duplikatkontroll = melding.duplikatkontroll,
                 jsonBody = melding.jsonBody
             ))
@@ -67,7 +63,6 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
                 fnr = melding.fnr,
                 internDokumentId = melding.internDokumentId,
                 eksternDokumentId = melding.eksternDokumentId,
-                rapportertDato = melding.rapportertDato,
                 duplikatkontroll = melding.duplikatkontroll,
                 jsonBody = melding.jsonBody
             )
@@ -104,7 +99,6 @@ data class MeldingResponse(
     val fnr: String,
     val internDokumentId: UUID,
     val eksternDokumentId: UUID,
-    val rapportertDato: LocalDateTime,
     val duplikatkontroll: String,
     val jsonBody: String
 )
