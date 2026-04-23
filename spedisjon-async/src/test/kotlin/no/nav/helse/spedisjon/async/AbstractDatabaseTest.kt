@@ -11,7 +11,6 @@ import com.github.navikt.tbd_libs.test_support.TestDataSource
 import io.mockk.every
 import io.mockk.mockk
 import java.time.LocalDate
-import java.time.LocalDateTime
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 
@@ -24,9 +23,7 @@ abstract class AbstractDatabaseTest {
 
     protected companion object {
         const val FØDSELSNUMMER = "31aaaazzzzz"
-        const val ORGNUMMER = "a1"
         const val AKTØR = "aktørId"
-        val OPPRETTET_DATO: LocalDateTime = LocalDateTime.now()
     }
 
     @BeforeEach
