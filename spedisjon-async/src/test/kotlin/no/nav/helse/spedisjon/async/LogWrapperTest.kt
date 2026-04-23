@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon.async
 
-import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
@@ -15,21 +14,15 @@ import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.MeterRegistry
 import io.mockk.every
 import io.mockk.mockk
+import java.util.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.slf4j.LoggerFactory
-import java.time.LocalDateTime
-import java.util.*
 
 internal class LogWrapperTest {
     private val rapid = TestRapid()
 
     private val appender = ListAppender<ILoggingEvent>().apply { start() }
-
-    private val log = (LoggerFactory.getLogger("tjenestekall") as Logger).apply {
-        addAppender(appender)
-    }
 
     private val meldingtjeneste = mockk<Meldingtjeneste>()
     private val speedClient = mockk<SpeedClient> {
@@ -89,7 +82,6 @@ internal class LogWrapperTest {
                 type = "ny_søknad",
                 fnr = "fnr",
                 eksternDokumentId = UUID.randomUUID(),
-                rapportertDato = LocalDateTime.now(),
                 duplikatnøkkel = listOf("en_nøkkel"),
                 jsonBody = packet.toJson()
             ))

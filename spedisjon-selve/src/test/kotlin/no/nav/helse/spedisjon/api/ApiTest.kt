@@ -4,24 +4,20 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.naisful.test.TestContext
 import com.github.navikt.tbd_libs.naisful.test.naisfulTestApp
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import io.ktor.http.ContentType.Application.Json
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.server.routing.routing
+import io.ktor.server.routing.*
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.mockk.every
 import io.mockk.mockk
+import java.util.*
 import no.nav.helse.spedisjon.api.tjeneste.Meldingtjeneste
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.UUID
 
 class ApiTest {
     private val meldingstjeneste = mockk<Meldingtjeneste>()
@@ -44,7 +40,6 @@ class ApiTest {
                 "type" to "ny_søknad",
                 "fnr" to "fnr",
                 "eksternDokumentId" to UUID.randomUUID(),
-                "rapportertDato" to LocalDateTime.now(),
                 "duplikatkontroll" to "unik_nøkkel",
                 "jsonBody" to "{}"
             ))
@@ -68,7 +63,6 @@ class ApiTest {
                 "type" to "ny_søknad",
                 "fnr" to "fnr",
                 "eksternDokumentId" to UUID.randomUUID(),
-                "rapportertDato" to LocalDateTime.now(),
                 "duplikatkontroll" to "unik_nøkkel",
                 "jsonBody" to "{}"
             ))

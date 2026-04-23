@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
-import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
 import java.security.MessageDigest
 import java.time.LocalDateTime
@@ -15,7 +14,6 @@ data class Meldingsdetaljer(
     val type: String,
     val fnr: String,
     val eksternDokumentId: UUID,
-    val rapportertDato: LocalDateTime,
     val duplikatkontroll: String,
     val jsonBody: String
 ) {
@@ -23,10 +21,9 @@ data class Meldingsdetaljer(
         type: String,
         fnr: String,
         eksternDokumentId: UUID,
-        rapportertDato: LocalDateTime,
         duplikatnøkkel: List<String>,
         jsonBody: String,
-    ) : this(type, fnr, eksternDokumentId, rapportertDato, duplikatnøkkel.joinToString(separator = "").sha512(), fjernInternIdFraJson(jsonBody))
+    ) : this(type, fnr, eksternDokumentId, duplikatnøkkel.joinToString(separator = "").sha512(), fjernInternIdFraJson(jsonBody))
 
     companion object {
         private val objectmapper = jacksonObjectMapper()
@@ -46,12 +43,11 @@ data class Meldingsdetaljer(
                 .digest(this.toByteArray())
                 .joinToString("") { "%02x".format(it) }
 
-        private fun søknad(type: String, fnr: String, eksternDokumentId: UUID, søknadId: UUID, søknadStatus: String, rapportertDato: LocalDateTime, jsonBody: String): Meldingsdetaljer {
+        private fun søknad(type: String, fnr: String, eksternDokumentId: UUID, søknadId: UUID, søknadStatus: String, jsonBody: String): Meldingsdetaljer {
             return Meldingsdetaljer(
                 type = type,
                 fnr = fnr,
                 eksternDokumentId = eksternDokumentId,
-                rapportertDato = rapportertDato,
                 duplikatnøkkel = listOf(søknadId.toString(), søknadStatus),
                 jsonBody = jsonBody
             )
@@ -64,17 +60,15 @@ data class Meldingsdetaljer(
                 eksternDokumentId = packet["sykmeldingId"].asText().toUUID(),
                 søknadId = packet["id"].asText().toUUID(),
                 søknadStatus = packet["status"].asText(),
-                rapportertDato = packet["opprettet"].asLocalDateTime(),
                 jsonBody = packet.toJson()
             )
-        private fun sendtSøknad(type: String, rapportetDatoFelt: String, packet: JsonMessage) =
+        private fun sendtSøknad(type: String, packet: JsonMessage) =
             søknad(
                 type = type,
                 fnr = packet["fnr"].asText(),
                 eksternDokumentId = packet["id"].asText().toUUID(),
                 søknadId = packet["id"].asText().toUUID(),
                 søknadStatus = packet["status"].asText(),
-                rapportertDato = packet[rapportetDatoFelt].asLocalDateTime(),
                 jsonBody = packet.toJson()
             )
 
@@ -83,20 +77,20 @@ data class Meldingsdetaljer(
         fun nySøknadSelvstendig(packet: JsonMessage) = nySøknad("ny_søknad_selvstendig", packet)
         fun nySøknadArbeidsledig(packet: JsonMessage) = nySøknad("ny_søknad_arbeidsledig", packet)
 
-        fun sendtSøknadArbeidsgiver(packet: JsonMessage) = sendtSøknad("sendt_søknad_arbeidsgiver", "sendtArbeidsgiver", packet)
-        fun sendtSøknadNav(packet: JsonMessage) = sendtSøknad("sendt_søknad_nav", "sendtNav", packet)
-        fun sendtSøknadFrilans(packet: JsonMessage) = sendtSøknad("sendt_søknad_frilans", "sendtNav", packet)
-        fun sendtSøknadSelvstendig(packet: JsonMessage) = sendtSøknad("sendt_søknad_selvstendig", "sendtNav", packet)
-        fun sendtSøknadArbeidsledig(packet: JsonMessage) = sendtSøknad("sendt_søknad_arbeidsledig", "sendtNav", packet)
+        fun sendtSøknadArbeidsgiver(packet: JsonMessage) = sendtSøknad("sendt_søknad_arbeidsgiver", packet)
+        fun sendtSøknadNav(packet: JsonMessage) = sendtSøknad("sendt_søknad_nav", packet)
+        fun sendtSøknadFrilans(packet: JsonMessage) = sendtSøknad("sendt_søknad_frilans", packet)
+        fun sendtSøknadSelvstendig(packet: JsonMessage) = sendtSøknad("sendt_søknad_selvstendig", packet)
+        fun sendtSøknadArbeidsledig(packet: JsonMessage) = sendtSøknad("sendt_søknad_arbeidsledig", packet)
 
-        fun avbruttSøknad(packet: JsonMessage) = sendtSøknad("avbrutt_søknad", "opprettet", packet)
-        fun avbruttSøknadArbeidsledig(packet: JsonMessage) = sendtSøknad("avbrutt_arbeidsledig_søknad", "opprettet", packet)
-        fun avbruttSøknadSelvstendig(packet: JsonMessage) = sendtSøknad("avbrutt_selvstendig_søknad", "opprettet", packet)
-        fun avbruttSøknadBarnepasser(packet: JsonMessage) = sendtSøknad("avbrutt_barnepasser_søknad", "opprettet", packet)
-        fun avbruttSøknadFrilanser(packet: JsonMessage) = sendtSøknad("avbrutt_frilanser_søknad", "opprettet", packet)
-        fun avbruttSøknadFisker(packet: JsonMessage) = sendtSøknad("avbrutt_fisker_søknad", "opprettet", packet)
-        fun avbruttSøknadJordbruker(packet: JsonMessage) = sendtSøknad("avbrutt_jordbruker_søknad", "opprettet", packet)
-        fun avbruttSøknadAnnet(packet: JsonMessage) = sendtSøknad("avbrutt_annet_søknad", "opprettet", packet)
+        fun avbruttSøknad(packet: JsonMessage) = sendtSøknad("avbrutt_søknad", packet)
+        fun avbruttSøknadArbeidsledig(packet: JsonMessage) = sendtSøknad("avbrutt_arbeidsledig_søknad", packet)
+        fun avbruttSøknadSelvstendig(packet: JsonMessage) = sendtSøknad("avbrutt_selvstendig_søknad", packet)
+        fun avbruttSøknadBarnepasser(packet: JsonMessage) = sendtSøknad("avbrutt_barnepasser_søknad", packet)
+        fun avbruttSøknadFrilanser(packet: JsonMessage) = sendtSøknad("avbrutt_frilanser_søknad", packet)
+        fun avbruttSøknadFisker(packet: JsonMessage) = sendtSøknad("avbrutt_fisker_søknad", packet)
+        fun avbruttSøknadJordbruker(packet: JsonMessage) = sendtSøknad("avbrutt_jordbruker_søknad", packet)
+        fun avbruttSøknadAnnet(packet: JsonMessage) = sendtSøknad("avbrutt_annet_søknad", packet)
     }
 }
 
@@ -109,7 +103,7 @@ sealed class Melding(val internId: UUID, val meldingsdetaljer: Meldingsdetaljer)
     val rapidhendelse = (objectmapper.readTree(meldingsdetaljer.jsonBody) as ObjectNode).apply {
         put("@event_name", meldingsdetaljer.type)
         put("@id", internId.toString())
-        put("@opprettet", meldingsdetaljer.rapportertDato.toString())
+        put("@opprettet", LocalDateTime.now().toString())
     }.toString()
 
     class NySøknad(internId: UUID, meldingsdetaljer: Meldingsdetaljer) : Melding(internId, meldingsdetaljer)

@@ -1,13 +1,12 @@
 package no.nav.helse.spedisjon.api
 
+import java.util.*
+import javax.sql.DataSource
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
-import java.time.LocalDateTime
-import java.util.*
-import javax.sql.DataSource
 
 internal class MeldingDao(private val dataSource: DataSource) {
 
@@ -45,7 +44,7 @@ internal class MeldingDao(private val dataSource: DataSource) {
     }
 
     fun leggInn(meldingsdetaljer: NyMeldingDto): Resultat {
-        log.info("legger inn melding, rapportertDato=${meldingsdetaljer.rapportertDato},duplikatkontroll=${meldingsdetaljer.duplikatkontroll}\n${meldingsdetaljer.jsonBody}")
+        log.info("legger inn melding, duplikatkontroll=${meldingsdetaljer.duplikatkontroll}\n${meldingsdetaljer.jsonBody}")
         return insertDokument(meldingsdetaljer).also { resultat ->
             if (resultat.utfall == Resultat.Utfall.HENTET_EKSISTERENDE) {
                 log.info("Duplikat melding: {} melding={}", keyValue("duplikatkontroll", meldingsdetaljer.duplikatkontroll), meldingsdetaljer.jsonBody)
@@ -67,12 +66,11 @@ internal class MeldingDao(private val dataSource: DataSource) {
         return sessionOf(dataSource).use { session ->
             @Language("PostgreSQL")
             val insertStmt = """
-            with verdier as (
-                select fnr,type,ekstern_dokument_id,duplikatkontroll,data,opprettet
-                from (values (:fnr, :type, cast(:eksternDokumentId as uuid), :duplikatkontroll, cast(:data as jsonb), cast(:opprettet as timestamp))) v(fnr, type, ekstern_dokument_id, duplikatkontroll, data, opprettet)
+            with verdier (fnr,type,ekstern_dokument_id,duplikatkontroll,data) as (
+                values (:fnr, :type, cast(:eksternDokumentId as uuid), :duplikatkontroll, cast(:data as jsonb))
             ), ins as (
-                insert into melding(fnr,type,ekstern_dokument_id,duplikatkontroll,data,opprettet)
-                select fnr,type,ekstern_dokument_id,duplikatkontroll,data,opprettet
+                insert into melding(fnr,type,ekstern_dokument_id,duplikatkontroll,data)
+                select fnr,type,ekstern_dokument_id,duplikatkontroll,data
                 from verdier
                 on conflict (duplikatkontroll) do nothing
                 returning intern_dokument_id
@@ -91,7 +89,6 @@ internal class MeldingDao(private val dataSource: DataSource) {
                 "eksternDokumentId" to meldingsdetaljer.eksternDokumentId,
                 "duplikatkontroll" to meldingsdetaljer.duplikatkontroll,
                 "data" to meldingsdetaljer.jsonBody,
-                "opprettet" to meldingsdetaljer.rapportertDato
             )).map { row ->
                 Resultat(
                     utfall = when (val kilde = row.string("kilde")) {
@@ -110,7 +107,6 @@ data class NyMeldingDto(
     val type: String,
     val fnr: String,
     val eksternDokumentId: UUID,
-    val rapportertDato: LocalDateTime,
     val duplikatkontroll: String,
     val jsonBody: String
 )

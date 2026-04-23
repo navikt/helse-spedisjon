@@ -1,11 +1,10 @@
 package no.nav.helse.spedisjon.async
 
-import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearMocks
 import io.mockk.mockk
-import java.time.LocalDateTime
-import java.util.UUID
+import java.time.LocalDateTime.now
+import java.util.*
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -22,7 +21,6 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
         testRapid.sendTestMessage(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("arbeidsgiveropplysninger")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -34,7 +32,6 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
         testRapid.sendTestMessage(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("korrigerte_arbeidsgiveropplysninger")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -46,7 +43,6 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
         testRapid.sendTestMessage(im)
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("selvbestemte_arbeidsgiveropplysninger")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -73,7 +69,6 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
         arsakTilInnsending: String = "Ny",
         virksomhetsnummer: String = "999999999",
         arbeidstakerFnr: String = FØDSELSNUMMER,
-        mottattDato: LocalDateTime = OPPRETTET_DATO,
         vedtaksperiodeId: String = UUID.randomUUID().toString(),
         inntektsmeldingId: String = UUID.randomUUID().toString(),
         arkivreferanse: String = UUID.randomUUID().toString(),
@@ -87,7 +82,7 @@ internal class NavNoInntektsmeldingerTest : AbstractRiverTest() {
               "vedtaksperiodeId": "$vedtaksperiodeId", 
               "arkivreferanse": "$arkivreferanse", 
               "arbeidstakerFnr": "$arbeidstakerFnr",
-              "mottattDato": "$mottattDato",
+              "mottattDato": "${now()}",
               "format": "Arbeidsgiveropplysninger",
               "forespurt": $forespurt
             }

@@ -1,13 +1,11 @@
 package no.nav.helse.spedisjon.async
 
-import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
+import java.time.LocalDateTime.now
+import java.util.*
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.*
 
 internal class AvbrutteSøknaderTest : AbstractRiverTest() {
     override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
@@ -28,7 +26,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(AVBRUTT_SØKNAD)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_søknad")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -36,7 +33,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(AVBRUTT_ARBEIDSLEDIG_SØKNAD)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_arbeidsledig_søknad")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -44,7 +40,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(AVBRUTT_FRILANS_SØKNAD)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_frilanser_søknad")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -52,7 +47,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(AVBRUTT_SELVSTENDIG_SØKNAD)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_selvstendig_søknad")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -60,7 +54,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(AVBRUTT_FISKER_SØKNAD)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_fisker_søknad")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -68,7 +61,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(AVBRUTT_JORDBRUKER_SØKNAD)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_jordbruker_søknad")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -76,7 +68,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(AVBRUTT_BARNEPASSER_SØKNAD)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_barnepasser_søknad")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -84,7 +75,6 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(AVBRUTT_ANNET_SØKNAD)
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("avbrutt_annet_søknad")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     private companion object {
@@ -96,8 +86,8 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
             "arbeidsgiver": {
                 "orgnummer": "1234"
             },
-            "opprettet": "$OPPRETTET_DATO",
-            "sendtNav": "${LocalDateTime.now()}",
+            "opprettet": "${now()}",
+            "sendtNav": "${now()}",
             "soknadsperioder": [],
             "fravar": [],
             "status": "AVBRUTT",
@@ -111,8 +101,8 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "opprettet": "$OPPRETTET_DATO",
-            "sendtNav": "${LocalDateTime.now()}",
+            "opprettet": "2020-01-01T07:00:00",
+            "sendtNav": "${now()}",
             "soknadsperioder": [],
             "fravar": [],
             "status": "AVBRUTT",
@@ -126,8 +116,8 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "opprettet": "$OPPRETTET_DATO",
-            "sendtNav": "${LocalDateTime.now()}",
+            "opprettet": "2020-01-01T07:00:00",
+            "sendtNav": "${now()}",
             "soknadsperioder": [],
             "fravar": [],
             "status": "AVBRUTT",
@@ -141,8 +131,8 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "opprettet": "$OPPRETTET_DATO",
-            "sendtNav": "${LocalDateTime.now()}",
+            "opprettet": "2020-01-01T07:00:00",
+            "sendtNav": "${now()}",
             "soknadsperioder": [],
             "fravar": [],
             "status": "AVBRUTT",
@@ -156,8 +146,8 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "opprettet": "$OPPRETTET_DATO",
-            "sendtNav": "${LocalDateTime.now()}",
+            "opprettet": "2020-01-01T07:00:00",
+            "sendtNav": "${now()}",
             "soknadsperioder": [],
             "fravar": [],
             "status": "AVBRUTT",
@@ -171,8 +161,8 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "opprettet": "$OPPRETTET_DATO",
-            "sendtNav": "${LocalDateTime.now()}",
+            "opprettet": "2020-01-01T08:00:00",
+            "sendtNav": "2020-01-02T13:00:00",
             "soknadsperioder": [],
             "fravar": [],
             "status": "AVBRUTT",
@@ -186,8 +176,8 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "opprettet": "$OPPRETTET_DATO",
-            "sendtNav": "${LocalDateTime.now()}",
+            "opprettet": "2020-01-01T07:00:00",
+            "sendtNav": "${now()}",
             "soknadsperioder": [],
             "fravar": [],
             "status": "AVBRUTT",
@@ -201,8 +191,8 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$FØDSELSNUMMER",
-            "opprettet": "$OPPRETTET_DATO",
-            "sendtNav": "${LocalDateTime.now()}",
+            "opprettet": "2020-01-01T07:00:00",
+            "sendtNav": "${now()}",
             "soknadsperioder": [],
             "fravar": [],
             "status": "AVBRUTT",

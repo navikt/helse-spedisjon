@@ -1,12 +1,10 @@
 package no.nav.helse.spedisjon.async
 
-import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
-import java.time.LocalDateTime
+import java.time.LocalDateTime.now
 import java.util.*
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
@@ -16,7 +14,6 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(søknad(arbeidssituasjon = "SELVSTENDIG_NARINGSDRIVENDE", ventetid = null))
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("sendt_søknad_selvstendig")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -24,7 +21,6 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(søknad(arbeidssituasjon = "SELVSTENDIG_NARINGSDRIVENDE"))
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("sendt_søknad_selvstendig")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -32,7 +28,6 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(søknad(arbeidssituasjon = "JORDBRUKER"))
         Assertions.assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("sendt_søknad_selvstendig")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
 
@@ -56,8 +51,8 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
             "id": "${UUID.randomUUID()}",
             "fnr": "$fnr",
             "arbeidsgiver": null,
-            "opprettet": "${LocalDateTime.now()}",
-            "sendtNav": "$OPPRETTET_DATO",
+            "opprettet": "${now()}",
+            "sendtNav": "${now()}",
             "soknadsperioder": [],
             "fravar": null,
             "status": "SENDT",

@@ -3,7 +3,6 @@ package no.nav.helse.spedisjon.async
 import com.fasterxml.jackson.databind.JsonNode
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers.River
-import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
@@ -23,7 +22,6 @@ internal class LpsOgAltinnInntektsmeldinger(
             }
             validate {
                 it.requireKey("inntektsmeldingId", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer")
-                it.require("mottattDato", JsonNode::asLocalDateTime)
                 it.interestedIn("arbeidsforholdId")
             }
         }.register(this)
@@ -39,7 +37,6 @@ internal class LpsOgAltinnInntektsmeldinger(
             type = "inntektsmelding",
             fnr = packet["arbeidstakerFnr"].asText(),
             eksternDokumentId = packet["inntektsmeldingId"].asText().toUUID(),
-            rapportertDato = packet["mottattDato"].asLocalDateTime(),
             duplikatnøkkel = listOf(packet["arkivreferanse"].asText()),
             jsonBody = packet.toJson()
         )

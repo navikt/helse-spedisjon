@@ -44,7 +44,6 @@ internal class MeldingMediator(
                 type = meldingsdetaljer.type,
                 fnr = meldingsdetaljer.fnr,
                 eksternDokumentId = meldingsdetaljer.eksternDokumentId,
-                rapportertDato = meldingsdetaljer.rapportertDato,
                 duplikatkontroll = meldingsdetaljer.duplikatkontroll,
                 jsonBody = meldingsdetaljer.jsonBody
             )

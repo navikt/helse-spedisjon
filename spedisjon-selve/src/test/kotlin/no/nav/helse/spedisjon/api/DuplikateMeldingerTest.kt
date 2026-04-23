@@ -1,14 +1,11 @@
 package no.nav.helse.spedisjon.api
 
 import com.github.navikt.tbd_libs.test_support.TestDataSource
+import java.util.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.*
 
 internal class DuplikateMeldingerTest {
 
@@ -33,7 +30,6 @@ internal class DuplikateMeldingerTest {
             type = "inntektsmelding",
             fnr = "123",
             eksternDokumentId = UUID.randomUUID(),
-            rapportertDato = LocalDateTime.now(),
             duplikatkontroll = duplikatnøkkel,
             jsonBody = "{}"
         )
@@ -41,7 +37,6 @@ internal class DuplikateMeldingerTest {
             type = "inntektsmelding",
             fnr = "567",
             eksternDokumentId = UUID.randomUUID(),
-            rapportertDato = LocalDateTime.now(),
             duplikatkontroll = duplikatnøkkel,
             jsonBody = "{}"
         )

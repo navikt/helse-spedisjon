@@ -2,15 +2,15 @@ package no.nav.helse.spedisjon.async
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearMocks
 import io.mockk.mockk
+import java.time.LocalDateTime.now
+import java.util.*
 import org.apache.kafka.clients.producer.KafkaProducer
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.UUID
 
 internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
 
@@ -28,7 +28,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "virksomhetsnummer": "1234",
     "arbeidsgivertype": "BEDRIFT",
     "beregnetInntekt": "1000",
-    "mottattDato": "$OPPRETTET_DATO",
+    "mottattDato": "${now()}",
     "endringIRefusjoner": [],
     "arbeidsgiverperioder": [],
     "ferieperioder": [],
@@ -39,7 +39,6 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
 }""")
         assertEquals(1, antallMeldinger(FØDSELSNUMMER))
         assertSendteEvents("inntektsmelding")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -50,7 +49,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "virksomhetsnummer": "1234",
     "arbeidsgivertype": "BEDRIFT",
     "beregnetInntekt": "1000",
-    "mottattDato": "${LocalDateTime.now()}",
+    "mottattDato": "${now()}",
     "endringIRefusjoner": [],
     "arbeidsgiverperioder": [],
     "ferieperioder": [],
@@ -73,7 +72,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "virksomhetsnummer": "1234",
     "arbeidsgivertype": "BEDRIFT",
     "beregnetInntekt": "1000",
-    "mottattDato": "${LocalDateTime.now()}",
+    "mottattDato": "${now()}",
     "endringIRefusjoner": [],
     "arbeidsgiverperioder": [],
     "ferieperioder": [],
@@ -144,7 +143,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     "virksomhetsnummer": "$virksomhetsnummer",
     "arbeidsgivertype": "BEDRIFT",
     "beregnetInntekt": "1000",
-    "mottattDato": "${LocalDateTime.now()}",
+    "mottattDato": "${now()}",
     "endringIRefusjoner": [],
     "arbeidsgiverperioder": [],
     "ferieperioder": [],

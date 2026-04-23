@@ -103,7 +103,7 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
             "arbeidsgiver": {
                 "orgnummer": "1234"
             },
-            "opprettet": "$OPPRETTET_DATO",
+            "opprettet": "2020-01-01T07:00:00",
             "type": "$type",
             "soknadsperioder": [],
             "status": "$status",

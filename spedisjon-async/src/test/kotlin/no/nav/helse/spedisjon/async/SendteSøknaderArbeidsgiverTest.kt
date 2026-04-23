@@ -1,15 +1,11 @@
 package no.nav.helse.spedisjon.async
 
-import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
-import io.mockk.every
-import io.mockk.mockk
+import java.time.LocalDateTime.now
+import java.util.*
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.*
 
 internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
 
@@ -18,7 +14,6 @@ internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
         testRapid.sendTestMessage(SØKNAD)
         Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("sendt_søknad_arbeidsgiver")
-        assertEquals(OPPRETTET_DATO, testRapid.inspektør.field(0, "@opprettet").asLocalDateTime())
     }
 
     @Test
@@ -85,8 +80,8 @@ internal class SendteSøknaderArbeidsgiverTest : AbstractRiverTest() {
             "arbeidsgiver": {
                 "orgnummer": "1234"
             },
-            "opprettet": "${LocalDateTime.now()}",
-            "sendtArbeidsgiver": "$OPPRETTET_DATO",
+            "opprettet": "${now()}",
+            "sendtArbeidsgiver": "${now()}",
             "soknadsperioder": [],
             "fravar": [],
             "status": "SENDT",

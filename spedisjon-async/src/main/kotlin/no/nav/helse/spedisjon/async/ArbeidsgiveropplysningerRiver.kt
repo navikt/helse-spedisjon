@@ -1,7 +1,8 @@
 package no.nav.helse.spedisjon.async
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.github.navikt.tbd_libs.rapids_and_rivers.*
+import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
+import com.github.navikt.tbd_libs.rapids_and_rivers.River
+import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
@@ -54,7 +55,6 @@ internal class ArbeidsgiveropplysningerRiver(
             }
             validate {
                 it.requireKey("virksomhetsnummer", "vedtaksperiodeId", "arkivreferanse", "arbeidstakerFnr", "inntektsmeldingId")
-                it.require("mottattDato", JsonNode::asLocalDateTime)
             }
         }.register(this)
     }
@@ -69,7 +69,6 @@ internal class ArbeidsgiveropplysningerRiver(
             type = arbeidsgiveropplysning.videresendingstype,
             fnr = packet["arbeidstakerFnr"].asText(),
             eksternDokumentId = packet["inntektsmeldingId"].asText().toUUID(),
-            rapportertDato = packet["mottattDato"].asLocalDateTime(),
             duplikatnøkkel = listOf(packet["arkivreferanse"].asText()),
             jsonBody = packet.toJson()
         )

@@ -1,10 +1,9 @@
 package no.nav.helse.spedisjon.api.tjeneste
 
+import java.util.*
 import no.nav.helse.spedisjon.api.MeldingDao
 import no.nav.helse.spedisjon.api.MeldingDto
 import no.nav.helse.spedisjon.api.NyMeldingDto
-import java.time.LocalDateTime
-import java.util.*
 
 interface Meldingtjeneste {
     fun nyMelding(meldingsdetaljer: NyMeldingRequest): NyMeldingResponse
@@ -17,7 +16,6 @@ internal class LokalMeldingtjeneste(private val dao: MeldingDao) : Meldingtjenes
             type = request.type,
             fnr = request.fnr,
             eksternDokumentId = request.eksternDokumentId,
-            rapportertDato = request.rapportertDato,
             duplikatkontroll = request.duplikatkontroll,
             jsonBody = request.jsonBody
         )
@@ -41,7 +39,6 @@ data class NyMeldingRequest(
     val type: String,
     val fnr: String,
     val eksternDokumentId: UUID,
-    val rapportertDato: LocalDateTime,
     val duplikatkontroll: String,
     val jsonBody: String
 )

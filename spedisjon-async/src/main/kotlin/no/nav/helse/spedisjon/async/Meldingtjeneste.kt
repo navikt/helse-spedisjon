@@ -4,16 +4,19 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
 import com.github.navikt.tbd_libs.rapids_and_rivers.withMDC
-import com.github.navikt.tbd_libs.result_object.*
+import com.github.navikt.tbd_libs.result_object.Result
+import com.github.navikt.tbd_libs.result_object.error
+import com.github.navikt.tbd_libs.result_object.getOrThrow
+import com.github.navikt.tbd_libs.result_object.map
+import com.github.navikt.tbd_libs.result_object.ok
 import com.github.navikt.tbd_libs.speed.Feilresponse
-import org.slf4j.LoggerFactory
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
-import java.time.LocalDateTime
 import java.util.*
+import org.slf4j.LoggerFactory
 
 interface Meldingtjeneste {
     fun nyMelding(meldingsdetaljer: NyMeldingRequest): NyMeldingResponse
@@ -68,7 +71,6 @@ internal class HttpMeldingtjeneste(
                                     fnr = dto.fnr,
                                     internDokumentId = dto.internDokumentId,
                                     eksternDokumentId = dto.eksternDokumentId,
-                                    rapportertDato = dto.rapportertDato,
                                     duplikatkontroll = dto.duplikatkontroll,
                                     jsonBody = dto.jsonBody
                                 )
@@ -124,7 +126,6 @@ internal class HttpMeldingtjeneste(
         val fnr: String,
         val internDokumentId: UUID,
         val eksternDokumentId: UUID,
-        val rapportertDato: LocalDateTime,
         val duplikatkontroll: String,
         val jsonBody: String
     )
@@ -140,7 +141,6 @@ data class NyMeldingRequest(
     val type: String,
     val fnr: String,
     val eksternDokumentId: UUID,
-    val rapportertDato: LocalDateTime,
     val duplikatkontroll: String,
     val jsonBody: String
 )
@@ -154,7 +154,6 @@ data class MeldingDto(
     val fnr: String,
     val internDokumentId: UUID,
     val eksternDokumentId: UUID,
-    val rapportertDato: LocalDateTime,
     val duplikatkontroll: String,
     val jsonBody: String
 )

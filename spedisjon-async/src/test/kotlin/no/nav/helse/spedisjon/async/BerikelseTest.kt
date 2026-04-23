@@ -2,7 +2,6 @@ package no.nav.helse.spedisjon.async
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -15,7 +14,6 @@ class BerikelseTest {
             type = "ny_søknad",
             fnr = "fnr",
             eksternDokumentId = UUID.randomUUID(),
-            rapportertDato = LocalDateTime.now(),
             duplikatnøkkel = listOf("unik key"),
             jsonBody = "{}"
         ))

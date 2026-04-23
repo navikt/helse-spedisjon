@@ -2,14 +2,13 @@ package no.nav.helse.spedisjon.api
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.http.*
-import io.ktor.server.plugins.NotFoundException
+import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.util.getOrFail
-import no.nav.helse.spedisjon.api.tjeneste.Meldingtjeneste
-import java.time.LocalDateTime
+import io.ktor.server.util.*
 import java.util.*
+import no.nav.helse.spedisjon.api.tjeneste.Meldingtjeneste
 
 internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
     route("/api/melding") {
@@ -25,7 +24,6 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
                 type = request.type,
                 fnr = request.fnr,
                 eksternDokumentId = request.eksternDokumentId,
-                rapportertDato = request.rapportertDato,
                 duplikatkontroll = request.duplikatkontroll,
                 jsonBody = request.jsonBody
             )
@@ -76,7 +74,6 @@ data class NyMeldingRequest(
     val type: String,
     val fnr: String,
     val eksternDokumentId: UUID,
-    val rapportertDato: LocalDateTime,
     val duplikatkontroll: String,
     val jsonBody: String
 )

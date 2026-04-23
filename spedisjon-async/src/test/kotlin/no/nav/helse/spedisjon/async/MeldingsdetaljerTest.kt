@@ -1,10 +1,9 @@
 package no.nav.helse.spedisjon.async
 
+import java.util.*
 import no.nav.helse.spedisjon.async.Meldingsdetaljer.Companion.sha512
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.UUID
 
 class MeldingsdetaljerTest {
 
@@ -14,7 +13,6 @@ class MeldingsdetaljerTest {
             type = "ny_søknad",
             fnr = "123",
             eksternDokumentId = UUID.randomUUID(),
-            rapportertDato = LocalDateTime.now(),
             duplikatnøkkel = listOf("bit_a", "bit_b"),
             jsonBody = "{}"
         )

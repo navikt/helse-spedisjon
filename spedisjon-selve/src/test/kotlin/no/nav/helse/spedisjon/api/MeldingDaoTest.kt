@@ -1,10 +1,9 @@
 package no.nav.helse.spedisjon.api
 
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 import javax.sql.DataSource
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class MeldingDaoTest {
 
@@ -21,7 +20,6 @@ class MeldingDaoTest {
             type = "ny_søknad",
             fnr = "fnr",
             eksternDokumentId = UUID.randomUUID(),
-            rapportertDato = LocalDateTime.now(),
             duplikatkontroll = "unik_nøkkel",
             jsonBody = "{}"
         )

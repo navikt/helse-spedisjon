@@ -5,10 +5,10 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearAllMocks
+import java.util.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
-import java.util.UUID
 
 internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
     protected val testRapid = TestRapid()
@@ -56,7 +56,6 @@ class LokalMeldingtjeneste : Meldingtjeneste {
                 fnr = meldingsdetaljer.fnr,
                 internDokumentId = UUID.randomUUID(),
                 eksternDokumentId = meldingsdetaljer.eksternDokumentId,
-                rapportertDato = meldingsdetaljer.rapportertDato,
                 duplikatkontroll = meldingsdetaljer.duplikatkontroll,
                 jsonBody = meldingsdetaljer.jsonBody
             ).also { meldingsliste.add(it) }
