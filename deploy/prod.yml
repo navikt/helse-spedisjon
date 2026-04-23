@@ -41,7 +41,6 @@ spec:
       rules:
         - application: spedisjon-async
         - application: sporbar
-        - application: spre-subsumsjon
         - application: sparkel-arbeidsgiver
         - application: spaghet
     outbound:
