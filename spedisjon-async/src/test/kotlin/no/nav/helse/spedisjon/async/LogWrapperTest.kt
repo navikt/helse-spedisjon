@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon.async
 
+import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
@@ -18,11 +19,16 @@ import java.util.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 
 internal class LogWrapperTest {
     private val rapid = TestRapid()
 
-    private val appender = ListAppender<ILoggingEvent>().apply { start() }
+    private val appender = ListAppender<ILoggingEvent>().apply {
+        start()
+    }.also {
+        (LoggerFactory.getLogger("tjenestekall") as Logger).addAppender(it)
+    }
 
     private val meldingtjeneste = mockk<Meldingtjeneste>()
     private val speedClient = mockk<SpeedClient> {
