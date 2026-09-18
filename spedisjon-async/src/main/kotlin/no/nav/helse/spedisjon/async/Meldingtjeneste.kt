@@ -111,10 +111,14 @@ internal class HttpMeldingtjeneste(
     }
 
     private inline fun <reified T> convertResponseBody(response: HttpResponse<String>): Result<T> {
+        if (response.body().isNullOrBlank()) {
+            return "Fikk tomt svar fra Spedisjon (status=${response.statusCode()})".error()
+        }
         return try {
             objectMapper.readValue<T>(response.body()).ok()
         } catch (err: Exception) {
-            err.error(err.message ?: "JSON parsing error")
+            val feilmelding = "Klarte ikke å tolke svar fra Spedisjon (status=${response.statusCode()}): ${err.message}"
+            err.error(feilmelding)
         }
     }
 
