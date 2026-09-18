@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '21.x'
+          java-version: '25.x'
           cache: 'gradle'
       - name: Test and build
         run: ./gradlew spedisjon-async:build
