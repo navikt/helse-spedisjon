@@ -49,6 +49,7 @@ subprojects {
     tasks {
         withType<Test> {
             useJUnitPlatform()
+            systemProperty("net.bytebuddy.experimental", "true")
             testLogging {
                 events("skipped", "failed")
             }
