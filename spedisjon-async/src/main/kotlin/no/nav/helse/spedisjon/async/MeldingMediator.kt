@@ -6,7 +6,7 @@ import io.micrometer.core.instrument.Counter
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import java.util.*
-import org.slf4j.LoggerFactory
+import no.nav.sykepenger.libs.logging.loggWarn
 
 internal class MeldingMediator(
     private val meldingtjeneste: Meldingtjeneste,
@@ -15,7 +15,6 @@ internal class MeldingMediator(
 ) {
     internal companion object {
         private val registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
-        private val sikkerLogg = LoggerFactory.getLogger("tjenestekall")
     }
 
     private var messageRecognized = false
@@ -84,6 +83,8 @@ internal class MeldingMediator(
 
     fun afterMessage(message: String) {
         if (messageRecognized || riverErrors.isEmpty()) return
-        sikkerLogg.warn("kunne ikke gjenkjenne melding:\n\t$message\n\nProblemer:\n${riverErrors.joinToString(separator = "\n")}")
+        loggWarn("kunne ikke gjenkjenne melding",
+            "melding" to message,
+            "problemer" to riverErrors.joinToString(separator = "\n"))
     }
 }

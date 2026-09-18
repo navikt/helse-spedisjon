@@ -16,7 +16,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.*
-import org.slf4j.LoggerFactory
+import no.nav.sykepenger.libs.logging.loggInfo
 
 interface Meldingtjeneste {
     fun nyMelding(meldingsdetaljer: NyMeldingRequest): NyMeldingResponse
@@ -37,7 +37,7 @@ internal class HttpMeldingtjeneste(
         val callId = UUID.randomUUID().toString()
         return withMDC("callId" to callId) {
             val jsonInputString = objectMapper.writeValueAsString(request)
-            sikkerlogg.info("legger melding til spedisjon:\n$request")
+            loggInfo("legger melding til spedisjon", "melding" to request.toString())
             request("POST", "/api/melding", jsonInputString, callId)
                 .map { response ->
                     when (response.statusCode()) {
@@ -133,10 +133,6 @@ internal class HttpMeldingtjeneste(
         val duplikatkontroll: String,
         val jsonBody: String
     )
-
-    private companion object {
-        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
-    }
 }
 
 data class NyMeldingResponse(val internDokumentId: UUID)

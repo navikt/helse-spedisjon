@@ -9,16 +9,12 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.micrometer.core.instrument.MeterRegistry
-import org.slf4j.LoggerFactory
+import no.nav.sykepenger.libs.logging.loggInfo
 
 class FremtidigFrilansSøknaderRiver internal constructor(
     rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator
 ) : River.PacketListener {
-
-    companion object {
-        private val tjenestekallLog = LoggerFactory.getLogger("tjenestekall")
-    }
 
     init {
         River(rapidsConnection).apply {
@@ -41,7 +37,7 @@ class FremtidigFrilansSøknaderRiver internal constructor(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
-        tjenestekallLog.info("Behandler fremtidig frilans søknad: ${packet.toJson()}")
+        loggInfo("Behandler fremtidig frilans søknad", "søknad" to packet.toJson())
 
         // Innad i domenet vårt skiller vi ikke mellom fremtidige og nye søknader,
         // derfor gir det mening å maskere fremtidig søknad som ny, for å unngå to identiske håndteringer nedover i løpya

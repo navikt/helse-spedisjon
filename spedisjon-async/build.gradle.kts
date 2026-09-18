@@ -3,6 +3,8 @@ val hikariCPVersion = "6.3.0"
 val postgresqlVersion = "42.7.7"
 val kotliqueryVersion = "1.9.0"
 val mockkVersion = "1.13.17"
+val sykepengeloggingVersion = "20260829.1737"
+
 val rapidsAndRiversVersion: String by project
 val tbdLibsVersion: String by project
 
@@ -12,6 +14,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+    implementation("no.nav.sykepenger.libs:logging:${sykepengeloggingVersion}")
 
     api("com.github.navikt.tbd-libs:azure-token-client-default:$tbdLibsVersion")
     api("com.github.navikt.tbd-libs:retry:$tbdLibsVersion")

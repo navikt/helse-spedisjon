@@ -8,7 +8,7 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.micrometer.core.instrument.MeterRegistry
-import org.slf4j.LoggerFactory
+import no.nav.sykepenger.libs.logging.loggInfo
 
 sealed interface Arbeidsgiveropplysninger {
     val videresendingstype: String
@@ -72,7 +72,7 @@ internal class ArbeidsgiveropplysningerRiver(
             duplikatnøkkel = listOf(packet["arkivreferanse"].asText()),
             jsonBody = packet.toJson()
         )
-        sikkerlogg.info("håndterer ${arbeidsgiveropplysning::class.simpleName} arbeidsgiveropplysninger\n\t$detaljer")
+        loggInfo("håndterer ${arbeidsgiveropplysning::class.simpleName} arbeidsgiveropplysninger", "detaljer" to detaljer.toString())
 
         meldingMediator.leggInnMelding(detaljer).also { internId ->
             val inntektsmelding = Melding.Arbeidsgiveropplysninger(
@@ -85,9 +85,5 @@ internal class ArbeidsgiveropplysningerRiver(
 
     override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne ${arbeidsgiveropplysning::class.simpleName} arbeidsgiveropplysninger:\n\t$problems")
-    }
-
-    private companion object {
-        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
     }
 }

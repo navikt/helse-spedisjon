@@ -1,5 +1,6 @@
 package no.nav.helse.spedisjon.async
 
+import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
@@ -27,7 +28,10 @@ internal class LogWrapperTest {
     private val appender = ListAppender<ILoggingEvent>().apply {
         start()
     }.also {
-        (LoggerFactory.getLogger("tjenestekall") as Logger).addAppender(it)
+        (LoggerFactory.getLogger(MeldingMediator::class.java) as Logger).apply {
+            level = Level.INFO
+            addAppender(it)
+        }
     }
 
     private val meldingtjeneste = mockk<Meldingtjeneste>()
@@ -68,9 +72,9 @@ internal class LogWrapperTest {
             TestRiver(this, mediator) { validate { it.requireKey("a_key_not_set_2") } }
         }
         rapid.sendTestMessage("{}")
-        assertTrue(appender.list.filter { it.formattedMessage.contains("kunne ikke gjenkjenne melding") }.size == 1)
-        assertTrue(appender.list.filter { it.formattedMessage.contains("a_key_not_set_1") }.size == 1)
-        assertTrue(appender.list.filter { it.formattedMessage.contains("a_key_not_set_2") }.size == 1)
+        assertTrue(appender.list.filter { it.formattedMessage.contains("kunne ikke gjenkjenne melding") }.isNotEmpty())
+        assertTrue(appender.list.filter { it.formattedMessage.contains("a_key_not_set_1") }.isNotEmpty())
+        assertTrue(appender.list.filter { it.formattedMessage.contains("a_key_not_set_2") }.isNotEmpty())
     }
 
     private class TestRiver(

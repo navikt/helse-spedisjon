@@ -7,17 +7,12 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers.River
 import io.micrometer.core.instrument.MeterRegistry
 import org.intellij.lang.annotations.Language
-import org.slf4j.LoggerFactory
+import no.nav.sykepenger.libs.logging.loggInfo
 
 internal class SlettPersonRiver(
     rapidsConnection: RapidsConnection,
     private val personRepository: PersonRepository
 ): River.PacketListener {
-
-    private companion object {
-        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
-    }
-
     init {
         River(rapidsConnection).apply {
             precondition { it.requireValue("@event_name", "slett_person") }
@@ -29,9 +24,9 @@ internal class SlettPersonRiver(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
         val fødselsnummer = packet["fødselsnummer"].asText()
-        sikkerlogg.info("Sletter dokumenter knyttet til person med fødselsnummer: $fødselsnummer")
+        loggInfo("Sletter dokumenter knyttet til person", "fødselsnummer" to fødselsnummer)
         personRepository.slett(fødselsnummer)
-        sikkerlogg.info("Dokumenter knyttet til person med fødselsnummer $fødselsnummer er slettet, sender kvittering")
+        loggInfo("Dokumenter knyttet til person er slettet, sender kvittering", "fødselsnummer" to fødselsnummer)
         context.publish(fødselsnummer, lagPersonSlettet(fødselsnummer))
     }
 

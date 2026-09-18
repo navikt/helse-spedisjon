@@ -4,15 +4,10 @@ import java.util.*
 import javax.sql.DataSource
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import net.logstash.logback.argument.StructuredArguments.keyValue
+import no.nav.sykepenger.libs.logging.loggInfo
 import org.intellij.lang.annotations.Language
-import org.slf4j.LoggerFactory
 
 internal class MeldingDao(private val dataSource: DataSource) {
-
-    private companion object {
-        private val log = LoggerFactory.getLogger("tjenestekall")
-    }
 
     fun hentMeldinger(internDokumentIder: List<UUID>): List<MeldingDto> {
         if (internDokumentIder.isEmpty()) return emptyList()
@@ -44,10 +39,14 @@ internal class MeldingDao(private val dataSource: DataSource) {
     }
 
     fun leggInn(meldingsdetaljer: NyMeldingDto): Resultat {
-        log.info("legger inn melding, duplikatkontroll=${meldingsdetaljer.duplikatkontroll}\n${meldingsdetaljer.jsonBody}")
+        loggInfo("legger inn melding",
+            "duplikatkontroll" to meldingsdetaljer.duplikatkontroll,
+            "jsonBody" to meldingsdetaljer.jsonBody)
         return insertDokument(meldingsdetaljer).also { resultat ->
             if (resultat.utfall == Resultat.Utfall.HENTET_EKSISTERENDE) {
-                log.info("Duplikat melding: {} melding={}", keyValue("duplikatkontroll", meldingsdetaljer.duplikatkontroll), meldingsdetaljer.jsonBody)
+                loggInfo("Duplikat melding",
+                    "duplikatkontroll" to meldingsdetaljer.duplikatkontroll,
+                    "melding" to meldingsdetaljer.jsonBody)
             }
         }
     }

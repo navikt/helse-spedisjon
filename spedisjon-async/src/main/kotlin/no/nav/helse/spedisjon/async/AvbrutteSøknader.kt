@@ -9,7 +9,7 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.micrometer.core.instrument.MeterRegistry
-import org.slf4j.LoggerFactory
+import no.nav.sykepenger.libs.logging.loggInfo
 
 /**
  * En avbrutt søknad er en søknad bruker velger aktivt å ikke bruke.
@@ -55,15 +55,11 @@ internal class AvbrutteSøknader(
         }
         val internId = meldingMediator.leggInnMelding(detaljer)
         meldingMediator.onMelding(Melding.AvbruttSøknad(internId, detaljer))
-        sikkerlogg.info("Mottatt avbrutt søknad: $detaljer")
+        loggInfo("Mottatt avbrutt søknad", "detaljer" to detaljer.toString())
     }
 
     override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne Avbrutt søknad:\n$problems")
-    }
-
-    private companion object {
-        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
     }
 
 }
