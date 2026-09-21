@@ -17,6 +17,7 @@ import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.*
 import no.nav.sykepenger.libs.logging.loggInfo
+import no.nav.sykepenger.libs.logging.loggWarn
 
 interface Meldingtjeneste {
     fun nyMelding(meldingsdetaljer: NyMeldingRequest): NyMeldingResponse
@@ -49,9 +50,7 @@ internal class HttpMeldingtjeneste(
                             NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
                         }
 
-                        else -> convertResponseBody<Feilresponse>(response).map {
-                            Result.Error("Feil fra Spedisjon: ${it.detail}")
-                        }
+                        else -> feilFraSpedisjon(response)
                     }
                 }.getOrThrow()
         }
@@ -78,9 +77,7 @@ internal class HttpMeldingtjeneste(
                         ).ok()
                     }
 
-                    else -> convertResponseBody<Feilresponse>(response).map {
-                        Result.Error("Feil fra Spedisjon: ${it.detail}")
-                    }
+                    else -> feilFraSpedisjon(response)
                 }
             }.getOrThrow()
     }
@@ -110,6 +107,24 @@ internal class HttpMeldingtjeneste(
         }
     }
 
+    // Selv om spedisjon sin StatusPages-håndtering svarer med Feilresponse-JSON ved app-feil,
+    // kan infrastruktur foran spedisjon (f.eks. service mesh) svare med ren tekst, for eksempel
+    // ved tidsavbrudd eller at tilkoblingen ikke lenger fungerer.
+    private fun <T> feilFraSpedisjon(response: HttpResponse<String>): Result<T> {
+        val body = response.body().takeIf { it.isNotBlank() }
+            ?: return Result.Error("Feil fra Spedisjon (status=${response.statusCode()}, response body er tom)")
+
+        return try {
+            objectMapper.readValue<Feilresponse>(body).let { feilresponse ->
+                loggWarn("Feil fra Spedisjon (status=${response.statusCode()})", "feilresponse" to body)
+                Result.Error("Feil fra Spedisjon (status=${response.statusCode()}): ${feilresponse.detail}")
+            }
+        } catch (_: Exception) {
+            val tekst = body.takeIf { it.isNotBlank() }?.take(500) ?: "(tomt svar)"
+            Result.Error("Feil fra Spedisjon (status=${response.statusCode()}): $tekst")
+        }
+    }
+
     private inline fun <reified T> convertResponseBody(response: HttpResponse<String>): Result<T> {
         if (response.body().isNullOrBlank()) {
             return "Fikk tomt svar fra Spedisjon (status=${response.statusCode()})".error()
@@ -117,7 +132,7 @@ internal class HttpMeldingtjeneste(
         return try {
             objectMapper.readValue<T>(response.body()).ok()
         } catch (err: Exception) {
-            val feilmelding = "Klarte ikke å tolke svar fra Spedisjon (status=${response.statusCode()}): ${err.message}"
+            val feilmelding = "Klarte ikke å mappe svar fra Spedisjon til ${T::class} (status=${response.statusCode()})"
             err.error(feilmelding)
         }
     }
