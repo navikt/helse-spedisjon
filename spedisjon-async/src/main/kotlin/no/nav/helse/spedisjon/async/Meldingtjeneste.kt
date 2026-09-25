@@ -9,7 +9,9 @@ import com.github.navikt.tbd_libs.result_object.error
 import com.github.navikt.tbd_libs.result_object.getOrThrow
 import com.github.navikt.tbd_libs.result_object.map
 import com.github.navikt.tbd_libs.result_object.ok
-import com.github.navikt.tbd_libs.speed.Feilresponse
+import com.github.navikt.tbd_libs.retry.PredefinerteUtsettelser
+import com.github.navikt.tbd_libs.retry.retryBlocking
+import java.io.IOException
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -29,7 +31,14 @@ internal class HttpMeldingtjeneste(
     private val tokenProvider: AzureTokenProvider,
     private val objectMapper: ObjectMapper,
     baseUrl: String? = null,
-    scope: String? = null
+    scope: String? = null,
+    private val retryUtsettelser: () -> Iterator<Duration> = {
+        PredefinerteUtsettelser(
+            Duration.ofMillis(200),
+            Duration.ofMillis(600),
+            Duration.ofMillis(1200)
+        )
+    }
 ) : Meldingtjeneste {
     private val baseUrl = baseUrl ?: "http://spedisjon"
     private val scope = scope ?: "api://${System.getenv("NAIS_CLUSTER_NAME")}.tbd.spedisjon/.default"
@@ -38,21 +47,31 @@ internal class HttpMeldingtjeneste(
         val callId = UUID.randomUUID().toString()
         return withMDC("callId" to callId) {
             val jsonInputString = objectMapper.writeValueAsString(request)
-            loggInfo("legger melding til spedisjon", "melding" to request.toString())
-            request("POST", "/api/melding", jsonInputString, callId)
-                .map { response ->
-                    when (response.statusCode()) {
-                        200 -> convertResponseBody<NyMeldingOkResponse>(response).map {
-                            NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
-                        }
+            loggInfo("sender melding til spedisjon", "melding" to request.toString())
+            retryBlocking(
+                utsettelser = retryUtsettelser(),
+                avbryt = { it !is RetryableSpedisjonException }
+            ) {
+                request("POST", "/api/melding", jsonInputString, callId)
+                    .map { response ->
+                        when (response.statusCode()) {
+                            200 -> convertResponseBody<NyMeldingOkResponse>(response).map {
+                                NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
+                            }
 
-                        409 -> convertResponseBody<NyMeldingOkResponse>(response).map {
-                            NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
-                        }
+                            409 -> convertResponseBody<NyMeldingOkResponse>(response).map {
+                                NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
+                            }
 
-                        else -> feilFraSpedisjon(response)
+                            429, in 502..504 -> throw RetryableSpedisjonException(
+                                "Midlertidig feil fra APIet (status=${response.statusCode()})"
+                            )
+
+                            else -> feilFraSpedisjon(response)
+                        }
                     }
-                }.getOrThrow()
+                    .getOrThrow()
+            }
         }
     }
 
@@ -101,6 +120,12 @@ internal class HttpMeldingtjeneste(
                     .build()
 
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString()).ok()
+            // Midlertidige nettverksfeil kan oppstå uten HTTP-svar og må derfor prøves på nytt.
+            } catch (err: IOException) {
+                throw RetryableSpedisjonException(
+                    "Midlertidig feil ved sending av request til Spedisjon",
+                    err
+                )
             } catch (err: Exception) {
                 "Feil ved sending av request: ${err.message}".error(err)
             }
@@ -115,7 +140,7 @@ internal class HttpMeldingtjeneste(
             ?: return Result.Error("Feil fra Spedisjon (status=${response.statusCode()}, response body er tom)")
 
         return try {
-            objectMapper.readValue<Feilresponse>(body).let { feilresponse ->
+            objectMapper.readValue<SpedisjonFeilresponse>(body).let { feilresponse ->
                 loggWarn("Feil fra Spedisjon (status=${response.statusCode()})", "feilresponse" to body)
                 Result.Error("Feil fra Spedisjon (status=${response.statusCode()}): ${feilresponse.detail}")
             }
@@ -148,6 +173,18 @@ internal class HttpMeldingtjeneste(
         val duplikatkontroll: String,
         val jsonBody: String
     )
+
+    private data class SpedisjonFeilresponse(
+        val type: URI,
+        val title: String,
+        val status: Int,
+        val detail: String?,
+        val instance: URI? = null,
+        val callId: String? = null
+    )
+
+    private class RetryableSpedisjonException(message: String, cause: Throwable? = null) :
+        RuntimeException(message, cause)
 }
 
 data class NyMeldingResponse(val internDokumentId: UUID)

@@ -2,22 +2,28 @@ package no.nav.helse.spedisjon.api
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.github.navikt.tbd_libs.naisful.NaisEndpoints
+import com.github.navikt.tbd_libs.naisful.standardApiModule
 import com.github.navikt.tbd_libs.naisful.test.TestContext
-import com.github.navikt.tbd_libs.naisful.test.naisfulTestApp
+import com.github.navikt.tbd_libs.naisful.test.plainTestApp
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.Json
+import io.ktor.server.plugins.*
 import io.ktor.server.routing.*
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.mockk.every
 import io.mockk.mockk
+import java.io.IOException
 import java.util.*
 import no.nav.helse.spedisjon.api.tjeneste.Meldingtjeneste
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 
 class ApiTest {
     private val meldingstjeneste = mockk<Meldingtjeneste>()
@@ -70,6 +76,39 @@ class ApiTest {
             assertEquals(HttpStatusCode.Conflict, response.status)
             val body = response.body<ForventetNyMeldingResponse>()
             assertEquals(internDokumentId, body.internDokumentId)
+        }
+    }
+
+    @Test
+    fun `kanalfeil gir midlertidig feil`() = e2e(meldingstjeneste) {
+        every {
+            meldingstjeneste.nyMelding(any())
+        } throws BadRequestException("Failed to convert request body", IOException("connection closed"))
+
+        client.post("/api/melding") {
+            contentType(Json)
+            setBody(mapOf(
+                "type" to "ny_søknad",
+                "fnr" to "fnr",
+                "eksternDokumentId" to UUID.randomUUID(),
+                "duplikatkontroll" to "unik_nøkkel",
+                "jsonBody" to "{}"
+            ))
+        }.also { response ->
+            assertEquals(HttpStatusCode.ServiceUnavailable, response.status)
+            assertEquals("urn:error:temporary", response.bodyAsText().let {
+                jacksonObjectMapper().readTree(it).get("type").asText()
+            })
+        }
+    }
+
+    @Test
+    fun `ugyldig json gir bad request`() = e2e(meldingstjeneste) {
+        client.post("/api/melding") {
+            contentType(Json)
+            setBody("{")
+        }.also { response ->
+            assertEquals(HttpStatusCode.BadRequest, response.status)
         }
     }
 
@@ -136,14 +175,23 @@ class ApiTest {
     }
 
     private fun e2e(meldingtjeneste: Meldingtjeneste, testblokk: suspend TestContext.() -> Unit) {
-        naisfulTestApp(
+        val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
+        plainTestApp(
             testApplicationModule = {
+                standardApiModule(
+                    meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
+                    objectMapper = objectMapper,
+                    callLogger = LoggerFactory.getLogger("ApiTest"),
+                    naisEndpoints = NaisEndpoints.Default,
+                    callIdHeaderName = "callId",
+                    preStopHook = {},
+                    statusPagesConfig = { spedisjonStatusPages() }
+                )
                 routing {
                     api(meldingtjeneste)
                 }
             },
-            objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule()),
-            meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
+            testClientObjectMapper = objectMapper,
             testblokk = testblokk
         )
     }

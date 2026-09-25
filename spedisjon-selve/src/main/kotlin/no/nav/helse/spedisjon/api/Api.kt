@@ -33,6 +33,7 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
                 internDokumentId = response.internDokumentId
             ))
         }
+
         /* hente melding */
         get("/{internDokumentId}") {
             val internDokumentId = UUID.fromString(call.parameters.getOrFail("internDokumentId"))
@@ -68,6 +69,15 @@ internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
         call.respond(HttpStatusCode.OK, HentMeldingerResponse(meldinger = meldinger))
     }
 }
+
+data class SpedisjonFeilresponse(
+    val type: String,
+    val title: String = HttpStatusCode.ServiceUnavailable.description,
+    val status: Int = HttpStatusCode.ServiceUnavailable.value,
+    val detail: String?,
+    val instance: String = "/api/melding",
+    val callId: String? = null
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class NyMeldingRequest(
