@@ -14,7 +14,7 @@ spec:
           # men vinduet 07-16 lokal vintertid og 08-17 lokal sommertid tilsvarer begge UTC 06-15,
           # så hour() >= 6 and hour() < 15 dekker riktig lokalt tidsrom hele året uten DST-håndtering.
           expr: |
-            sum(rate(message_counter_total{app="spedisjon", river=~"Sendte.*", validated="ok"}[15m])) < 0.01
+            sum(rate(message_counter_total{app="spedisjon-async", river=~"Sendte.*", validated="ok"}[15m])) < 0.01
             and hour() >= 6 and hour() < 15
             and day_of_week() >= 1 and day_of_week() <= 5
           # rate(...[15m]) fanger allerede opp at raten har vært under terskelen i 15 minutter,
