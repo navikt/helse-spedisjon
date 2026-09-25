@@ -10,25 +10,20 @@ spec:
     - name: inntektmelding-alert
       rules:
         - alert: Det er mottatt mistenkelig få inntektsmeldinger
-          expr: (day_of_week() >= 1 <= 5 and hour() >= 8 <= 12) and (sum(rate(message_counter_total{app="spedisjon", validated="ok", river="Inntektsmeldinger"}[10m])) < 0.01)
-          for: 3m
+          # Prometheus evaluerer hour() i UTC. Oslo er UTC+1 om vinteren og UTC+2 om sommeren (sommertid),
+          # men vinduet 07-16 lokal vintertid og 08-17 lokal sommertid tilsvarer begge UTC 06-15,
+          # så hour() >= 6 and hour() < 15 dekker riktig lokalt tidsrom hele året uten DST-håndtering.
+          expr: |
+            sum(rate(message_counter_total{app="spedisjon-async", validated="ok", river="ArbeidsgiveropplysningerRiver"}[15m])) < 0.01
+            and hour() >= 6 and hour() < 15
+            and day_of_week() >= 1 and day_of_week() <= 5
+          # rate(...[15m]) fanger allerede opp at raten har vært under terskelen i 15 minutter,
+          # så "for" settes til 0m for å unngå at vi legger enda en forsinkelse på toppen.
+          for: 0m
           annotations:
             beskrivelse: "Det er ikke registert noen/veldig få inntektsmeldinger i Spedisjon. Hør med HAG om det er noe krøll."
             detaljer: "Sjekk om du ser noe rart på <https://grafana.nav.cloud.nais.io/d/oOJjNpkMz/poh-arbeidsgiver-kafka-prod?orgId=1|grafana> eller <https://logs.adeo.no/app/r/s/NGiJM|kibana> da vel"
           labels:
             severity: "error"
-            team_spleiselaget_alerts: slack
-            alert_type: custom
-
-    - name: inntektsmelding-ok-info
-      rules:
-        - alert: Inntektsmelding strømmen ser bra ut
-          expr: sum(rate(message_counter_total{app="spedisjon", validated="ok", river="Inntektsmeldinger"}[10m])) > 0.01 and day_of_week() == 5 and hour() == 7 and minute() < 30
-          for: 1h
-          annotations:
-            beskrivelse: "Antall mottatte inntektsmeldinger fra HAG ser bra ut den siste timen!"
-            detaljer: "Dette er en 'alt er ok' melding så vi ikke trenger å bekymre oss for at noe er galt"
-          labels:
-            severity: "info"
-            team_spleiselaget_alerts: slack
+            team_sas_alerts: slack
             alert_type: custom
