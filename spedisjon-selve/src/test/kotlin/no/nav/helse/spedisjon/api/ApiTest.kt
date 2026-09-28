@@ -237,7 +237,7 @@ class ApiTest {
         fun kanalfeil(): Stream<Throwable> = Stream.of(
             IOException("Channel was cancelled"),
             CancellationException("Channel was cancelled"),
-            ClosedReadChannelException("Channel was cancelled"),
+            ClosedReadChannelException(IOException("Channel was cancelled")),
             ChannelReadException("Channel was cancelled", IOException("connection closed")),
             JsonConvertException(
                 "Illegal json parameter found",
