@@ -57,6 +57,9 @@ spec:
             users:
               - name: spedisjon-opprydding-dev
   observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
     logging:
       destinations:
         - id: elastic

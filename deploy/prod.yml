@@ -69,6 +69,9 @@ spec:
           - name: pgaudit.log_relation
             value: "on"
   observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
     logging:
       destinations:
         - id: elastic
