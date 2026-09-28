@@ -17,8 +17,6 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.cio.ChannelReadException
-import io.ktor.utils.io.ClosedReadChannelException
 import io.micrometer.core.instrument.Clock
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
@@ -120,9 +118,7 @@ internal fun StatusPagesConfig.spedisjonStatusPages() {
 }
 
 internal fun Throwable.skyldesAvbruttKanal(): Boolean {
-    val årsaker = generateSequence(this) { it.cause }.toList()
-    return årsaker.none { it is JsonProcessingException } &&
-        årsaker.any {
-            it is IOException || it is CancellationException
-        }
+    return generateSequence(this) { it.cause }.any {
+        it is CancellationException || (it is IOException && it !is JsonProcessingException)
+    }
 }

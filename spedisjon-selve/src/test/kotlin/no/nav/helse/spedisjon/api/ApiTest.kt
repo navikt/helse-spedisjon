@@ -1,6 +1,7 @@
 package no.nav.helse.spedisjon.api
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.naisful.NaisEndpoints
 import com.github.navikt.tbd_libs.naisful.standardApiModule
@@ -11,18 +12,26 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.Json
+import io.ktor.serialization.JsonConvertException
 import io.ktor.server.plugins.*
 import io.ktor.server.routing.*
+import io.ktor.util.cio.ChannelReadException
+import io.ktor.utils.io.ClosedReadChannelException
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
 import java.util.*
+import java.util.stream.Stream
+import kotlinx.coroutines.CancellationException
 import no.nav.helse.spedisjon.api.tjeneste.Meldingtjeneste
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.slf4j.LoggerFactory
 
 class ApiTest {
@@ -79,11 +88,12 @@ class ApiTest {
         }
     }
 
-    @Test
-    fun `kanalfeil gir midlertidig feil`() = e2e(meldingstjeneste) {
+    @ParameterizedTest
+    @MethodSource("kanalfeil")
+    fun `kanalfeil gir midlertidig feil`(årsak: Throwable) = e2e(meldingstjeneste) {
         every {
             meldingstjeneste.nyMelding(any())
-        } throws BadRequestException("Failed to convert request body", IOException("connection closed"))
+        } throws BadRequestException("Failed to convert request body", årsak)
 
         client.post("/api/melding") {
             contentType(Json)
@@ -96,20 +106,31 @@ class ApiTest {
             ))
         }.also { response ->
             assertEquals(HttpStatusCode.ServiceUnavailable, response.status)
-            assertEquals("urn:error:temporary", response.bodyAsText().let {
-                jacksonObjectMapper().readTree(it).get("type").asText()
-            })
+            val body = jacksonObjectMapper().readTree(response.bodyAsText())
+            assertEquals("urn:error:temporary", body["type"].asText())
+            assertEquals(503, body["status"].asInt())
+            assertEquals("Spedisjon-API er utilgjengelig: Failed to convert request body", body["detail"].asText())
         }
     }
 
-    @Test
-    fun `ugyldig json gir bad request`() = e2e(meldingstjeneste) {
+    @ParameterizedTest
+    @ValueSource(strings = [
+        "{",
+        "{}",
+        """{"type":"ny_søknad","fnr":"fnr","eksternDokumentId":"ugyldig","duplikatkontroll":"unik","jsonBody":"{}"}""",
+        """{"type":"Channel was cancelled"}"""
+    ])
+    fun `ugyldig json gir bad request`(json: String) = e2e(meldingstjeneste) {
         client.post("/api/melding") {
             contentType(Json)
-            setBody("{")
+            setBody(json)
         }.also { response ->
             assertEquals(HttpStatusCode.BadRequest, response.status)
+            val body = jacksonObjectMapper().readTree(response.bodyAsText())
+            assertEquals("urn:error:bad_request", body["type"].asText())
+            assertEquals(400, body["status"].asInt())
         }
+        io.mockk.verify(exactly = 0) { meldingstjeneste.nyMelding(any()) }
     }
 
     @Test
@@ -210,4 +231,30 @@ class ApiTest {
         val duplikatkontroll: String,
         val jsonBody: String
     )
+
+    companion object {
+        @JvmStatic
+        fun kanalfeil(): Stream<Throwable> = Stream.of(
+            IOException("Channel was cancelled"),
+            CancellationException("Channel was cancelled"),
+            ClosedReadChannelException(IOException("Channel was cancelled")),
+            ChannelReadException("Channel was cancelled", IOException("connection closed")),
+            JsonConvertException(
+                "Illegal json parameter found",
+                JsonMappingException.wrapWithPath(
+                    CancellationException("Channel was cancelled"),
+                    NyMeldingRequest::class.java,
+                    "jsonBody"
+                )
+            ),
+            JsonConvertException(
+                "Illegal json parameter found",
+                JsonMappingException.wrapWithPath(
+                    IOException("Channel was cancelled"),
+                    NyMeldingRequest::class.java,
+                    "jsonBody"
+                )
+            )
+        )
+    }
 }
