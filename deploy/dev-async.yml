@@ -60,6 +60,9 @@ spec:
     - name: KAFKA_EXTRA_TOPIC
       value: flex.sykepengesoknad,helsearbeidsgiver.privat-sykepenger-inntektsmelding
   observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
     logging:
       destinations:
         - id: elastic
