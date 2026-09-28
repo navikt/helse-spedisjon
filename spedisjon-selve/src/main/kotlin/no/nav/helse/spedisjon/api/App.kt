@@ -92,6 +92,7 @@ internal fun StatusPagesConfig.spedisjonStatusPages() {
             logger.warn("Midlertidig feil ved lesing av request body", cause)
             HttpStatusCode.ServiceUnavailable
         } else {
+            logger.warn("Bad request", cause)
             HttpStatusCode.BadRequest
         }
         call.response.header(HttpHeaders.ContentType, ContentType.Application.ProblemJson.toString())
