@@ -55,11 +55,7 @@ internal class HttpMeldingtjeneste(
                 request("POST", "/api/melding", jsonInputString, callId)
                     .map { response ->
                         when (response.statusCode()) {
-                            200 -> convertResponseBody<NyMeldingOkResponse>(response).map {
-                                NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
-                            }
-
-                            409 -> convertResponseBody<NyMeldingOkResponse>(response).map {
+                            200, 201, 409 -> convertResponseBody<NyMeldingOkResponse>(response).map {
                                 NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
                             }
 
