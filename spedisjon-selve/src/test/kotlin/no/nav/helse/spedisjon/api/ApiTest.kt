@@ -25,7 +25,7 @@ import java.io.IOException
 import java.util.*
 import java.util.stream.Stream
 import kotlinx.coroutines.CancellationException
-import no.nav.helse.spedisjon.api.tjeneste.Meldingtjeneste
+import no.nav.helse.spedisjon.api.tjeneste.LokalMeldingtjeneste
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -35,7 +35,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.slf4j.LoggerFactory
 
 class ApiTest {
-    private val meldingstjeneste = mockk<Meldingtjeneste>()
+    private val meldingstjeneste = mockk<LokalMeldingtjeneste>()
 
     @BeforeEach
     fun clearMocks() {
@@ -195,7 +195,7 @@ class ApiTest {
         }
     }
 
-    private fun e2e(meldingtjeneste: Meldingtjeneste, testblokk: suspend TestContext.() -> Unit) {
+    private fun e2e(meldingtjeneste: LokalMeldingtjeneste, testblokk: suspend TestContext.() -> Unit) {
         val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
         plainTestApp(
             testApplicationModule = {

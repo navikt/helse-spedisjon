@@ -8,9 +8,9 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import java.util.*
-import no.nav.helse.spedisjon.api.tjeneste.Meldingtjeneste
+import no.nav.helse.spedisjon.api.tjeneste.LokalMeldingtjeneste
 
-internal fun Route.api(meldingtjeneste: Meldingtjeneste) {
+internal fun Route.api(meldingtjeneste: LokalMeldingtjeneste) {
     route("/api/melding") {
         /*
             sette inn ny melding i db

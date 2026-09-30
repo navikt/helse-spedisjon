@@ -5,13 +5,8 @@ import no.nav.helse.spedisjon.api.MeldingDao
 import no.nav.helse.spedisjon.api.MeldingDto
 import no.nav.helse.spedisjon.api.NyMeldingDto
 
-interface Meldingtjeneste {
-    fun nyMelding(meldingsdetaljer: NyMeldingRequest): NyMeldingResponse
-    fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse
-}
-
-internal class LokalMeldingtjeneste(private val dao: MeldingDao) : Meldingtjeneste {
-    override fun nyMelding(request: NyMeldingRequest): NyMeldingResponse {
+internal class LokalMeldingtjeneste(private val dao: MeldingDao) {
+    fun nyMelding(request: NyMeldingRequest): NyMeldingResponse {
         val dto = NyMeldingDto(
             type = request.type,
             fnr = request.fnr,
@@ -26,7 +21,7 @@ internal class LokalMeldingtjeneste(private val dao: MeldingDao) : Meldingtjenes
         )
     }
 
-    override fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse {
+    fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse {
         return HentMeldingerResponse(
             meldinger = dao.hentMeldinger(interneDokumentIder)
         )
