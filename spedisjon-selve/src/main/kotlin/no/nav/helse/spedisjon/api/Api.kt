@@ -13,10 +13,11 @@ import no.nav.helse.spedisjon.api.tjeneste.ApiMeldingtjeneste
 internal fun Route.api(meldingtjeneste: ApiMeldingtjeneste) {
     route("/api/melding") {
         /*
-            sette inn ny melding i db
+            Lagrer dokumenter i databasem.
 
-            409 Conflict hvis meldingen allerede finnes
-            200 OK hvis OK
+            Returnerer:
+              - 201 CREATED hvis meldingen ble lagret
+              - 200 OK hvis meldingen allerede var lagret
          */
         post {
             val request = call.receive<NyMeldingRequest>()
@@ -27,11 +28,11 @@ internal fun Route.api(meldingtjeneste: ApiMeldingtjeneste) {
                 duplikatkontroll = request.duplikatkontroll,
                 jsonBody = request.jsonBody
             )
-            val response = meldingtjeneste.lagreNyMelding(dto)
+            val (responseStatus, internDokumentId) = meldingtjeneste.lagreNyMelding(dto).run {
+                (if (bleLagtInnNå) HttpStatusCode.Created else HttpStatusCode.OK) to internDokumentId
+            }
 
-            call.respond(if (response.lagtInnNå) HttpStatusCode.OK else HttpStatusCode.Conflict, NyMeldingResponse(
-                internDokumentId = response.internDokumentId
-            ))
+            call.respond(responseStatus, NyMeldingResponse(internDokumentId = internDokumentId))
         }
 
         /* hente melding */

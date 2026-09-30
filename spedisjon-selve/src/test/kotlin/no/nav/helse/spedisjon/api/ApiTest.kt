@@ -59,7 +59,7 @@ class ApiTest {
                 "jsonBody" to "{}"
             ))
         }.also { response ->
-            assertEquals(HttpStatusCode.OK, response.status)
+            assertEquals(HttpStatusCode.Created, response.status)
             val body = response.body<ForventetNyMeldingResponse>()
             assertEquals(internDokumentId, body.internDokumentId)
         }
@@ -82,7 +82,7 @@ class ApiTest {
                 "jsonBody" to "{}"
             ))
         }.also { response ->
-            assertEquals(HttpStatusCode.Conflict, response.status)
+            assertEquals(HttpStatusCode.OK, response.status)
             val body = response.body<ForventetNyMeldingResponse>()
             assertEquals(internDokumentId, body.internDokumentId)
         }
