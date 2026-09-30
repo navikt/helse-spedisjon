@@ -139,7 +139,7 @@ internal class HttpMeldingtjenesteTest {
         val internDokumentId = UUID.randomUUID()
         every {
             httpClient.send(any(), any<HttpResponse.BodyHandler<String>>())
-        } returns response(409, """{"internDokumentId":"$internDokumentId"}""")
+        } returns response(200, """{"internDokumentId":"$internDokumentId"}""")
 
         assertEquals(internDokumentId, meldingtjeneste.nyMelding(request).internDokumentId)
         verify(exactly = 1) {
