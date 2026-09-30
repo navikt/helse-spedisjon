@@ -25,7 +25,7 @@ import java.io.IOException
 import java.util.*
 import java.util.stream.Stream
 import kotlinx.coroutines.CancellationException
-import no.nav.helse.spedisjon.api.tjeneste.LokalMeldingtjeneste
+import no.nav.helse.spedisjon.api.tjeneste.ApiMeldingtjeneste
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -35,7 +35,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.slf4j.LoggerFactory
 
 class ApiTest {
-    private val meldingstjeneste = mockk<LokalMeldingtjeneste>()
+    private val meldingstjeneste = mockk<ApiMeldingtjeneste>()
 
     @BeforeEach
     fun clearMocks() {
@@ -46,7 +46,7 @@ class ApiTest {
     fun `ny melding - ok`() = e2e(meldingstjeneste) {
         val internDokumentId = UUID.randomUUID()
         every {
-            meldingstjeneste.nyMelding(any())
+            meldingstjeneste.lagreNyMelding(any())
         } returns no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse(internDokumentId, true)
 
         client.post("/api/melding") {
@@ -69,7 +69,7 @@ class ApiTest {
     fun `ny melding - duplikat`() = e2e(meldingstjeneste) {
         val internDokumentId = UUID.randomUUID()
         every {
-            meldingstjeneste.nyMelding(any())
+            meldingstjeneste.lagreNyMelding(any())
         } returns no.nav.helse.spedisjon.api.tjeneste.NyMeldingResponse(internDokumentId, false)
 
         client.post("/api/melding") {
@@ -92,7 +92,7 @@ class ApiTest {
     @MethodSource("kanalfeil")
     fun `kanalfeil gir midlertidig feil`(årsak: Throwable) = e2e(meldingstjeneste) {
         every {
-            meldingstjeneste.nyMelding(any())
+            meldingstjeneste.lagreNyMelding(any())
         } throws BadRequestException("Failed to convert request body", årsak)
 
         client.post("/api/melding") {
@@ -130,7 +130,7 @@ class ApiTest {
             assertEquals("urn:error:bad_request", body["type"].asText())
             assertEquals(400, body["status"].asInt())
         }
-        io.mockk.verify(exactly = 0) { meldingstjeneste.nyMelding(any()) }
+        io.mockk.verify(exactly = 0) { meldingstjeneste.lagreNyMelding(any()) }
     }
 
     @Test
@@ -195,7 +195,7 @@ class ApiTest {
         }
     }
 
-    private fun e2e(meldingtjeneste: LokalMeldingtjeneste, testblokk: suspend TestContext.() -> Unit) {
+    private fun e2e(meldingtjeneste: ApiMeldingtjeneste, testblokk: suspend TestContext.() -> Unit) {
         val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
         plainTestApp(
             testApplicationModule = {

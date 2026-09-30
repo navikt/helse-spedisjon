@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.Clock
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.prometheus.metrics.model.registry.PrometheusRegistry
-import no.nav.helse.spedisjon.api.tjeneste.LokalMeldingtjeneste
+import no.nav.helse.spedisjon.api.tjeneste.ApiMeldingtjeneste
 import no.nav.sykepenger.libs.logging.navngittLogger
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -52,7 +52,7 @@ private fun launchApp(env: Map<String, String>) {
     val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
 
     val dataSourceBuilder = DataSourceBuilder(meterRegistry)
-    val lokalMeldingtjeneste = LokalMeldingtjeneste(MeldingDao(dataSourceBuilder.dataSource))
+    val apiMeldingtjeneste = ApiMeldingtjeneste(MeldingDao(dataSourceBuilder.dataSource))
 
     val app = naisApp(
         meterRegistry = meterRegistry,
@@ -76,7 +76,7 @@ private fun launchApp(env: Map<String, String>) {
         authentication { azureApp.konfigurerJwtAuth(this) }
         routing {
             authenticate {
-                api(lokalMeldingtjeneste)
+                api(apiMeldingtjeneste)
             }
         }
     }

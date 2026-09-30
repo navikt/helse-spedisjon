@@ -8,9 +8,9 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
 import java.util.*
-import no.nav.helse.spedisjon.api.tjeneste.LokalMeldingtjeneste
+import no.nav.helse.spedisjon.api.tjeneste.ApiMeldingtjeneste
 
-internal fun Route.api(meldingtjeneste: LokalMeldingtjeneste) {
+internal fun Route.api(meldingtjeneste: ApiMeldingtjeneste) {
     route("/api/melding") {
         /*
             sette inn ny melding i db
@@ -27,7 +27,7 @@ internal fun Route.api(meldingtjeneste: LokalMeldingtjeneste) {
                 duplikatkontroll = request.duplikatkontroll,
                 jsonBody = request.jsonBody
             )
-            val response = meldingtjeneste.nyMelding(dto)
+            val response = meldingtjeneste.lagreNyMelding(dto)
 
             call.respond(if (response.lagtInnNå) HttpStatusCode.OK else HttpStatusCode.Conflict, NyMeldingResponse(
                 internDokumentId = response.internDokumentId
