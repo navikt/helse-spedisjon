@@ -44,7 +44,7 @@ internal class MeldingDao(private val dataSource: DataSource) {
             "jsonBody" to meldingsdetaljer.jsonBody)
         return insertDokument(meldingsdetaljer).also { resultat ->
             if (resultat.utfall == Resultat.Utfall.HENTET_EKSISTERENDE) {
-                loggInfo("Duplikat melding",
+                loggInfo("Meldingen er lagret fra før",
                     "duplikatkontroll" to meldingsdetaljer.duplikatkontroll,
                     "melding" to meldingsdetaljer.jsonBody)
             }
@@ -57,7 +57,7 @@ internal class MeldingDao(private val dataSource: DataSource) {
         val internId: UUID,
     ) {
         enum class Utfall {
-            SATT_INN_NY,
+            BLE_LAGRET_NÅ,
             HENTET_EKSISTERENDE
         }
     }
@@ -67,20 +67,19 @@ internal class MeldingDao(private val dataSource: DataSource) {
             val insertStmt = """
             with verdier (fnr,type,ekstern_dokument_id,duplikatkontroll,data) as (
                 values (:fnr, :type, cast(:eksternDokumentId as uuid), :duplikatkontroll, cast(:data as jsonb))
-            ), ins as (
+            ), inserted as (
                 insert into melding(fnr,type,ekstern_dokument_id,duplikatkontroll,data)
                 select fnr,type,ekstern_dokument_id,duplikatkontroll,data
                 from verdier
                 on conflict (duplikatkontroll) do nothing
                 returning intern_dokument_id
             )
-            select 'i' as kilde, intern_dokument_id
-            from ins
+            select intern_dokument_id, true as ble_lagret_nå from inserted
             union all
-            select 's' as kilde, m.intern_dokument_id
-            from verdier v
-            join melding m
-            on v.duplikatkontroll = m.duplikatkontroll;
+            select m.intern_dokument_id, false as ble_lagret_nå
+            from melding m
+            where m.duplikatkontroll = :duplikatkontroll
+            and not exists (select 1 from inserted);
         """
             session.run(queryOf(insertStmt, mapOf(
                 "fnr" to meldingsdetaljer.fnr,
@@ -90,11 +89,7 @@ internal class MeldingDao(private val dataSource: DataSource) {
                 "data" to meldingsdetaljer.jsonBody,
             )).map { row ->
                 Resultat(
-                    utfall = when (val kilde = row.string("kilde")) {
-                        "i" -> Resultat.Utfall.SATT_INN_NY
-                        "s" -> Resultat.Utfall.HENTET_EKSISTERENDE
-                        else -> error("Ukjent kilde: $kilde")
-                    },
+                    utfall = if (row.boolean("ble_lagret_nå")) Resultat.Utfall.BLE_LAGRET_NÅ else Resultat.Utfall.HENTET_EKSISTERENDE,
                     internId = row.uuid("intern_dokument_id")
                 )
             }.asList).single()

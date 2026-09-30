@@ -40,7 +40,7 @@ internal class DuplikateMeldingerTest {
             duplikatkontroll = duplikatnøkkel,
             jsonBody = "{}"
         )
-        assertEquals(MeldingDao.Resultat.Utfall.SATT_INN_NY, meldingDao.leggInn(im1).utfall)
+        assertEquals(MeldingDao.Resultat.Utfall.BLE_LAGRET_NÅ, meldingDao.leggInn(im1).utfall)
         assertEquals(MeldingDao.Resultat.Utfall.HENTET_EKSISTERENDE, meldingDao.leggInn(im2).utfall)
     }
 }

@@ -17,7 +17,7 @@ internal class ApiMeldingtjeneste(private val dao: MeldingDao) {
         val result = dao.leggInn(dto)
         return NyMeldingResponse(
             internDokumentId = result.internId,
-            bleLagtInnNå = result.utfall == MeldingDao.Resultat.Utfall.SATT_INN_NY
+            bleLagtInnNå = result.utfall == MeldingDao.Resultat.Utfall.BLE_LAGRET_NÅ
         )
     }
 
