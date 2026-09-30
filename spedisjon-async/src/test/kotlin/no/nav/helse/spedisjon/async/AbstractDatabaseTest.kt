@@ -19,7 +19,7 @@ val databaseContainer = DatabaseContainers.container("spedisjon-async", CleanupS
 abstract class AbstractDatabaseTest {
     private lateinit var testDataSource: TestDataSource
     protected val dataSource get() = testDataSource.ds
-    protected lateinit var meldingstjeneste: LokalMeldingtjeneste
+    protected lateinit var meldingstjeneste: TestMeldingtjeneste
 
     protected companion object {
         const val FØDSELSNUMMER = "31aaaazzzzz"
@@ -28,7 +28,7 @@ abstract class AbstractDatabaseTest {
 
     @BeforeEach
     fun setup() {
-        meldingstjeneste = LokalMeldingtjeneste()
+        meldingstjeneste = TestMeldingtjeneste()
         testDataSource = databaseContainer.nyTilkobling()
         testDataSource.ds
     }

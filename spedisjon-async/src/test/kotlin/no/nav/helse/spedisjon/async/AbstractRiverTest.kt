@@ -45,7 +45,7 @@ internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
     }
 }
 
-class LokalMeldingtjeneste : Meldingtjeneste {
+class TestMeldingtjeneste : Meldingtjeneste {
     private val meldingsliste = mutableListOf<MeldingDto>()
     val meldinger get() = meldingsliste.toList()
 
