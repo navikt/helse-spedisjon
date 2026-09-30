@@ -22,7 +22,7 @@ import no.nav.sykepenger.libs.logging.loggInfo
 import no.nav.sykepenger.libs.logging.loggWarn
 
 interface Meldingtjeneste {
-    fun nyMelding(meldingsdetaljer: NyMeldingRequest): NyMeldingResponse
+    fun nyMelding(request: NyMeldingRequest): NyMeldingResponse
     fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse
 }
 

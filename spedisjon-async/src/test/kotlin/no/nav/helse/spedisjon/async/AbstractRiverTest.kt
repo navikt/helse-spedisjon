@@ -49,15 +49,15 @@ class TestMeldingtjeneste : Meldingtjeneste {
     private val meldingsliste = mutableListOf<MeldingDto>()
     val meldinger get() = meldingsliste.toList()
 
-    override fun nyMelding(meldingsdetaljer: NyMeldingRequest): NyMeldingResponse {
-        val melding = meldingsliste.firstOrNull { it.duplikatkontroll == meldingsdetaljer.duplikatkontroll } ?:
+    override fun nyMelding(request: NyMeldingRequest): NyMeldingResponse {
+        val melding = meldingsliste.firstOrNull { it.duplikatkontroll == request.duplikatkontroll } ?:
             MeldingDto(
-                type = meldingsdetaljer.type,
-                fnr = meldingsdetaljer.fnr,
+                type = request.type,
+                fnr = request.fnr,
                 internDokumentId = UUID.randomUUID(),
-                eksternDokumentId = meldingsdetaljer.eksternDokumentId,
-                duplikatkontroll = meldingsdetaljer.duplikatkontroll,
-                jsonBody = meldingsdetaljer.jsonBody
+                eksternDokumentId = request.eksternDokumentId,
+                duplikatkontroll = request.duplikatkontroll,
+                jsonBody = request.jsonBody
             ).also { meldingsliste.add(it) }
         return NyMeldingResponse(melding.internDokumentId)
     }
