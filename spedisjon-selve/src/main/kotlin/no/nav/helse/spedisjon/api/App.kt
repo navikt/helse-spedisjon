@@ -43,8 +43,6 @@ fun main() {
 }
 
 private fun launchApp(env: Map<String, String>) {
-    val erUtvikling = env["NAIS_CLUSTER_NAME"] == "dev-gcp"
-
     val azureApp = AzureApp(
         jwkProvider = JwkProviderBuilder(URI(env.getValue("AZURE_OPENID_CONFIG_JWKS_URI")).toURL()).build(),
         issuer = env.getValue("AZURE_OPENID_CONFIG_ISSUER"),
