@@ -2,6 +2,7 @@ package no.nav.helse.spedisjon.api
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -32,6 +33,7 @@ internal fun Route.api(meldingtjeneste: ApiMeldingtjeneste) {
                 (if (bleLagtInnNå) HttpStatusCode.Created else HttpStatusCode.OK) to internDokumentId
             }
 
+            call.application.log.info("Prøver å sende svar på POST /api/melding med status {}", responseStatus.value)
             call.respond(responseStatus, NyMeldingResponse(internDokumentId = internDokumentId))
         }
 

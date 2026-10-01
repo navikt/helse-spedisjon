@@ -73,6 +73,18 @@ internal class HttpMeldingtjenesteTest {
     }
 
     @Test
+    fun `beholder status og feilmelding fra svar uten problemformat`() {
+        every {
+            httpClient.send(any(), any<HttpResponse.BodyHandler<String>>())
+        } returns response(400, "Channel was cancelled")
+
+        val feil = assertThrows(RuntimeException::class.java) {
+            meldingtjeneste.nyMelding(request)
+        }
+        assertEquals("Feil fra Spedisjon (status=400): Channel was cancelled", feil.message)
+    }
+
+    @Test
     fun `kjører ikke retry ved 500`() {
         every {
             httpClient.send(any(), any<HttpResponse.BodyHandler<String>>())

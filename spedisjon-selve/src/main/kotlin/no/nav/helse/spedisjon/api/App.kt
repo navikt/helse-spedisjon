@@ -93,6 +93,12 @@ internal fun StatusPagesConfig.spedisjonStatusPages() {
             logger.warn("Bad request", cause)
             HttpStatusCode.BadRequest
         }
+        logger.info(
+            "Prøver å sende feilrespons etter BadRequestException",
+            "status" to status.value.toString(),
+            "årsakstyper" to generateSequence<Throwable>(cause) { it.cause }
+                .joinToString(" -> ") { it.javaClass.name }
+        )
         call.response.header(HttpHeaders.ContentType, ContentType.Application.ProblemJson.toString())
         call.respond(
             status,

@@ -133,14 +133,28 @@ internal class HttpMeldingtjeneste(
     // ved tidsavbrudd eller at tilkoblingen ikke lenger fungerer.
     private fun <T> feilFraSpedisjon(response: HttpResponse<String>): Result<T> {
         val body = response.body().takeIf { it.isNotBlank() }
-            ?: return Result.Error("Feil fra Spedisjon (status=${response.statusCode()}, response body er tom)")
+            ?: run {
+                loggWarn("Feilrespons uten innhold fra Spedisjon", "http_status" to response.statusCode().toString())
+                return Result.Error("Feil fra Spedisjon (status=${response.statusCode()}, response body er tom)")
+            }
 
         return try {
             objectMapper.readValue<SpedisjonFeilresponse>(body).let { feilresponse ->
-                loggWarn("Feil fra Spedisjon (status=${response.statusCode()})", "feilresponse" to body)
+                val problemType = when (feilresponse.type.toString()) {
+                    "urn:error:bad_request", "urn:error:temporary", "urn:error:internal_error" ->
+                        feilresponse.type.toString()
+                    else -> "annet"
+                }
+                loggWarn(
+                    "Feilsvar fra Spedisjon i problemformat",
+                    "http_status" to response.statusCode().toString(),
+                    "body_status" to feilresponse.status.toString(),
+                    "problem_type" to problemType
+                )
                 Result.Error("Feil fra Spedisjon (status=${response.statusCode()}): ${feilresponse.detail}")
             }
         } catch (_: Exception) {
+            loggWarn("Feilrespons  fra Spedisjon uten kjent problemformat", "http_status" to response.statusCode().toString())
             val tekst = body.takeIf { it.isNotBlank() }?.take(500) ?: "(tomt svar)"
             Result.Error("Feil fra Spedisjon (status=${response.statusCode()}): $tekst")
         }
