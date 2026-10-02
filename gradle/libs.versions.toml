@@ -10,7 +10,7 @@ jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-dat
 kotliquery = "com.github.seratch:kotliquery:1.9.0"
 ktor-server-auth = { module = "io.ktor:ktor-server-auth" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt" }
-postgresql = "org.postgresql:postgresql:42.7.7"
+postgresql = "org.postgresql:postgresql:42.7.13"
 rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026011411051768385145.e8ebad1177b4"
 sykepengerLibs-logging = "no.nav.sykepenger.libs:logging:20261001.1823"
 tbd-libs-azure-token-client-default = { module = "com.github.navikt.tbd-libs:azure-token-client-default", version.ref = "tbd-libs" }
