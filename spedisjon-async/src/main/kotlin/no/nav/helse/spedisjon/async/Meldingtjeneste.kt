@@ -120,9 +120,43 @@ internal class HttpMeldingtjeneste(
                         .method(method, HttpRequest.BodyPublishers.ofString(jsonInputString))
                         .build()
 
-                httpClient.send(request, HttpResponse.BodyHandlers.ofString()).ok()
+                httpClient
+                    .send(request, HttpResponse.BodyHandlers.ofString())
+                    .also { response ->
+                        if (response.statusCode() !in 200..299) {
+                            loggWarn(
+                                "HTTP-feil fra Spedisjon",
+                                "http_status" to response.statusCode().toString(),
+                                "connection_close" to
+                                    (
+                                        response
+                                            .headers()
+                                            .firstValue("Connection")
+                                            .orElse(null)
+                                            ?.equals("close", ignoreCase = true) == true
+                                    ).toString(),
+                                "content_type" to
+                                    when (
+                                        response
+                                            .headers()
+                                            .firstValue("Content-Type")
+                                            .orElse(null)
+                                            ?.substringBefore(';')
+                                            ?.trim()
+                                            ?.lowercase()
+                                    ) {
+                                        "text/plain" -> "text/plain"
+                                        "application/json" -> "application/json"
+                                        "application/problem+json" -> "application/problem+json"
+                                        null -> "mangler"
+                                        else -> "annet"
+                                    }
+                            )
+                        }
+                    }.ok()
                 // Midlertidige nettverksfeil kan oppstå uten HTTP-svar og må derfor prøves på nytt.
             } catch (err: IOException) {
+                loggWarn("Nettverksfeil ved kall til Spedisjon", err)
                 throw RetryableSpedisjonException(
                     "Midlertidig feil ved sending av request til Spedisjon",
                     err

@@ -2,14 +2,17 @@ package no.nav.helse.spedisjon.api
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.http.*
-import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.*
+import io.ktor.utils.io.ClosedWriteChannelException
 import java.util.*
 import no.nav.helse.spedisjon.api.tjeneste.ApiMeldingtjeneste
+import no.nav.sykepenger.libs.logging.navngittLogger
+
+private val logger = navngittLogger("no.nav.helse.spedisjon.api.Api")
 
 internal fun Route.api(meldingtjeneste: ApiMeldingtjeneste) {
     route("/api/melding") {
@@ -35,8 +38,17 @@ internal fun Route.api(meldingtjeneste: ApiMeldingtjeneste) {
                     (if (bleLagtInnNå) HttpStatusCode.Created else HttpStatusCode.OK) to internDokumentId
                 }
 
-            call.application.log.info("Prøver å sende svar på POST /api/melding med status {}", responseStatus.value)
-            call.respond(responseStatus, NyMeldingResponse(internDokumentId = internDokumentId))
+            logger.info("Prøver å sende svar på POST /api/melding med status ${responseStatus.value}")
+            try {
+                call.respond(responseStatus, NyMeldingResponse(internDokumentId = internDokumentId))
+            } catch (err: ClosedWriteChannelException) {
+                logger.warn(
+                    "Skrivekanalen var eller ble lukket under skriving av svar på POST til /api/melding",
+                    err,
+                    "status" to responseStatus.value.toString()
+                )
+                throw err
+            }
         }
 
         // hente melding

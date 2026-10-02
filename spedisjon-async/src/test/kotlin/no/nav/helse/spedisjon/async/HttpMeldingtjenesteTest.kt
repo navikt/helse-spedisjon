@@ -8,6 +8,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import java.net.http.HttpClient
+import java.net.http.HttpHeaders
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.time.LocalDateTime
@@ -89,6 +90,9 @@ internal class HttpMeldingtjenesteTest {
                 meldingtjeneste.nyMelding(request)
             }
         assertEquals("Feil fra Spedisjon (status=400): Channel was cancelled", feil.message)
+        verify(exactly = 1) {
+            httpClient.send(any(), any<HttpResponse.BodyHandler<String>>())
+        }
     }
 
     @Test
@@ -176,5 +180,6 @@ internal class HttpMeldingtjenesteTest {
     ) = mockk<HttpResponse<String>> {
         every { statusCode() } returns status
         every { body() } returns body
+        every { headers() } returns HttpHeaders.of(emptyMap()) { _, _ -> true }
     }
 }
