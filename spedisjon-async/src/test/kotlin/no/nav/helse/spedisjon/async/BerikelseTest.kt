@@ -1,10 +1,10 @@
 package no.nav.helse.spedisjon.async
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.LocalDate
 import java.util.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 class BerikelseTest {
     @Test
@@ -27,10 +27,10 @@ class BerikelseTest {
                 aktørId = "12345",
                 historiskeFolkeregisteridenter = emptyList()
             ).berik(json).toJsonNode()
-        assertEquals("2012-12-31", beriketJson.path("fødselsdato").asText())
-        assertEquals("2023-01-02", beriketJson.path("dødsdato").asText())
-        assertEquals("12345", beriketJson.path("aktorId").asText())
-        assertEquals("ny_søknad", beriketJson.path("@event_name").asText())
+        assertEquals("2012-12-31", beriketJson.path("fødselsdato").asString())
+        assertEquals("2023-01-02", beriketJson.path("dødsdato").asString())
+        assertEquals("12345", beriketJson.path("aktorId").asString())
+        assertEquals("ny_søknad", beriketJson.path("@event_name").asString())
     }
 
     private fun BeriketMelding.toJsonNode() = jacksonObjectMapper().readTree(json)

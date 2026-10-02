@@ -1,7 +1,5 @@
 package no.nav.helse.spedisjon.async
 
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.azure.createAzureTokenClientFromEnvironment
 import com.github.navikt.tbd_libs.kafka.AivenConfig
 import com.github.navikt.tbd_libs.kafka.ConsumerProducerFactory
@@ -17,12 +15,13 @@ import com.github.navikt.tbd_libs.speed.SpeedClient
 import io.micrometer.core.instrument.MeterRegistry
 import java.net.http.HttpClient
 import no.nav.helse.rapids_rivers.RapidApplication
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 fun main() {
     val env = System.getenv()
 
     val azure = createAzureTokenClientFromEnvironment(env)
-    val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
+    val objectMapper = jacksonObjectMapper()
     val speedClient = SpeedClient(HttpClient.newHttpClient(), objectMapper, azure)
 
     val httpMeldingtjeneste =
@@ -86,10 +85,10 @@ internal class LogWrapper(
         message: String,
         context: MessageContext,
         metadata: MessageMetadata,
-        meterRegistry: MeterRegistry
+        metrics: MeterRegistry
     ) {
         meldingMediator.beforeMessage()
-        notifyMessage(message, this, metadata, meterRegistry)
+        notifyMessage(message, this, metadata, metrics)
         meldingMediator.afterMessage(message)
     }
 

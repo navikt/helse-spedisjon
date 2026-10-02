@@ -1,8 +1,5 @@
 package no.nav.helse.spedisjon.api
 
-import com.fasterxml.jackson.databind.JsonMappingException
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.naisful.NaisEndpoints
 import com.github.navikt.tbd_libs.naisful.standardApiModule
 import com.github.navikt.tbd_libs.naisful.test.TestContext
@@ -33,9 +30,22 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.slf4j.LoggerFactory
+import tools.jackson.databind.DatabindException
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 class ApiTest {
     private val meldingstjeneste = mockk<ApiMeldingtjeneste>()
+
+    @Test
+    fun `norske feltnavn beholdes ved serialisering og deserialisering`() {
+        val json = objectMapper.writeValueAsString(NorskFelt("test"))
+        assertEquals("test", objectMapper.readTree(json)["årsak"].asString())
+        assertEquals(NorskFelt("test"), objectMapper.readValue(json, NorskFelt::class.java))
+    }
+
+    data class NorskFelt(
+        val årsak: String
+    )
 
     @BeforeEach
     fun clearMocks() {
@@ -123,9 +133,9 @@ class ApiTest {
                 }.also { response ->
                     assertEquals(HttpStatusCode.ServiceUnavailable, response.status)
                     val body = jacksonObjectMapper().readTree(response.bodyAsText())
-                    assertEquals("urn:error:temporary", body["type"].asText())
+                    assertEquals("urn:error:temporary", body["type"].asString())
                     assertEquals(503, body["status"].asInt())
-                    assertEquals("Spedisjon-API er utilgjengelig: Failed to convert request body", body["detail"].asText())
+                    assertEquals("Spedisjon-API er utilgjengelig: Failed to convert request body", body["detail"].asString())
                 }
         }
 
@@ -147,7 +157,7 @@ class ApiTest {
                 }.also { response ->
                     assertEquals(HttpStatusCode.BadRequest, response.status)
                     val body = jacksonObjectMapper().readTree(response.bodyAsText())
-                    assertEquals("urn:error:bad_request", body["type"].asText())
+                    assertEquals("urn:error:bad_request", body["type"].asString())
                     assertEquals(400, body["status"].asInt())
                 }
             io.mockk.verify(exactly = 0) { meldingstjeneste.lagreNyMelding(any()) }
@@ -234,7 +244,7 @@ class ApiTest {
         meldingtjeneste: ApiMeldingtjeneste,
         testblokk: suspend TestContext.() -> Unit
     ) {
-        val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
+        val objectMapper = jacksonObjectMapper()
         plainTestApp(
             testApplicationModule = {
                 standardApiModule(
@@ -282,7 +292,7 @@ class ApiTest {
                 ChannelReadException("Channel was cancelled", IOException("connection closed")),
                 JsonConvertException(
                     "Illegal json parameter found",
-                    JsonMappingException.wrapWithPath(
+                    DatabindException.wrapWithPath(
                         CancellationException("Channel was cancelled"),
                         NyMeldingRequest::class.java,
                         "jsonBody"
@@ -290,7 +300,7 @@ class ApiTest {
                 ),
                 JsonConvertException(
                     "Illegal json parameter found",
-                    JsonMappingException.wrapWithPath(
+                    DatabindException.wrapWithPath(
                         IOException("Channel was cancelled"),
                         NyMeldingRequest::class.java,
                         "jsonBody"

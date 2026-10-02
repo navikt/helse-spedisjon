@@ -1,10 +1,8 @@
 package no.nav.helse.spedisjon.async
 
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.LocalDate
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 class Berikelse(
     internal val fødselsdato: LocalDate,
@@ -13,10 +11,7 @@ class Berikelse(
     private val historiskeFolkeregisteridenter: List<String>
 ) {
     private companion object {
-        private val objectmapper =
-            jacksonObjectMapper()
-                .registerModule(JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        private val objectmapper = jacksonObjectMapper()
     }
 
     internal fun berik(melding: Melding): BeriketMelding {

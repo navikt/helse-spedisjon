@@ -1,7 +1,5 @@
 package no.nav.helse.spedisjon.async
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
 import com.github.navikt.tbd_libs.rapids_and_rivers.withMDC
 import com.github.navikt.tbd_libs.result_object.Result
@@ -20,6 +18,8 @@ import java.time.Duration
 import java.util.*
 import no.nav.sykepenger.libs.logging.loggInfo
 import no.nav.sykepenger.libs.logging.loggWarn
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.readValue
 
 interface Meldingtjeneste {
     fun nyMelding(request: NyMeldingRequest): NyMeldingResponse

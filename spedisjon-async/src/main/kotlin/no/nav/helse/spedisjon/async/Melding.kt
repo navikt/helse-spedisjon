@@ -1,14 +1,12 @@
 package no.nav.helse.spedisjon.async
 
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers.toUUID
 import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.util.*
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 data class Meldingsdetaljer(
     val type: String,
@@ -26,10 +24,7 @@ data class Meldingsdetaljer(
     ) : this(type, fnr, eksternDokumentId, duplikatnøkkel.joinToString(separator = "").sha512(), fjernInternIdFraJson(jsonBody))
 
     companion object {
-        private val objectmapper =
-            jacksonObjectMapper()
-                .registerModule(JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        private val objectmapper = jacksonObjectMapper()
 
         private fun fjernInternIdFraJson(jsonBody: String) =
             (objectmapper.readTree(jsonBody) as ObjectNode)
@@ -67,10 +62,10 @@ data class Meldingsdetaljer(
             packet: JsonMessage
         ) = søknad(
             type = type,
-            fnr = packet["fnr"].asText(),
-            eksternDokumentId = packet["sykmeldingId"].asText().toUUID(),
-            søknadId = packet["id"].asText().toUUID(),
-            søknadStatus = packet["status"].asText(),
+            fnr = packet["fnr"].asString(),
+            eksternDokumentId = packet["sykmeldingId"].asString().toUUID(),
+            søknadId = packet["id"].asString().toUUID(),
+            søknadStatus = packet["status"].asString(),
             jsonBody = packet.toJson()
         )
 
@@ -79,10 +74,10 @@ data class Meldingsdetaljer(
             packet: JsonMessage
         ) = søknad(
             type = type,
-            fnr = packet["fnr"].asText(),
-            eksternDokumentId = packet["id"].asText().toUUID(),
-            søknadId = packet["id"].asText().toUUID(),
-            søknadStatus = packet["status"].asText(),
+            fnr = packet["fnr"].asString(),
+            eksternDokumentId = packet["id"].asString().toUUID(),
+            søknadId = packet["id"].asString().toUUID(),
+            søknadStatus = packet["status"].asString(),
             jsonBody = packet.toJson()
         )
 
@@ -127,10 +122,7 @@ sealed class Melding(
     val meldingsdetaljer: Meldingsdetaljer
 ) {
     private companion object {
-        private val objectmapper =
-            jacksonObjectMapper()
-                .registerModule(JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        private val objectmapper = jacksonObjectMapper()
     }
 
     val rapidhendelse =

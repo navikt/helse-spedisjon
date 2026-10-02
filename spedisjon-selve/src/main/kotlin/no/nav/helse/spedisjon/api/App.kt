@@ -1,10 +1,6 @@
 package no.nav.helse.spedisjon.api
 
 import com.auth0.jwk.JwkProviderBuilder
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.naisful.defaultStatusPagesConfig
 import com.github.navikt.tbd_libs.naisful.naisApp
 import io.ktor.http.*
@@ -27,14 +23,17 @@ import kotlinx.coroutines.CancellationException
 import no.nav.helse.spedisjon.api.tjeneste.ApiMeldingtjeneste
 import no.nav.sykepenger.libs.logging.navngittLogger
 import org.slf4j.LoggerFactory
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.introspect.DefaultAccessorNamingStrategy
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 
 private val logg = LoggerFactory.getLogger(::main.javaClass)
 private val logger = navngittLogger("no.nav.helse.spedisjon.api.App")
-private val objectMapper =
-    jacksonObjectMapper()
-        .registerModule(JavaTimeModule())
-        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+internal val objectMapper =
+    jacksonMapperBuilder()
+        .accessorNaming(DefaultAccessorNamingStrategy.Provider().withFirstCharAcceptance(true, true))
         .enable(SerializationFeature.INDENT_OUTPUT)
+        .build()
 
 fun main() {
     Thread.currentThread().setUncaughtExceptionHandler { _, e ->
@@ -60,6 +59,7 @@ private fun launchApp(env: Map<String, String>) {
         naisApp(
             meterRegistry = meterRegistry,
             objectMapper = objectMapper,
+            callIdHeaderName = "callId",
             applicationLogger = logg,
             callLogger = LoggerFactory.getLogger("no.nav.helse.spedisjon.api.CallLogging"),
             timersConfig = { call, _ ->
@@ -88,7 +88,7 @@ private fun launchApp(env: Map<String, String>) {
 }
 
 internal fun StatusPagesConfig.spedisjonStatusPages() {
-    defaultStatusPagesConfig()
+    defaultStatusPagesConfig(callIdHeaderName = "callId")
     exception<BadRequestException> { call, cause ->
         val status =
             if (cause.skyldesAvbruttKanal()) {
@@ -132,5 +132,5 @@ internal fun StatusPagesConfig.spedisjonStatusPages() {
 
 internal fun Throwable.skyldesAvbruttKanal(): Boolean =
     generateSequence(this) { it.cause }.any {
-        it is CancellationException || (it is IOException && it !is JsonProcessingException)
+        it is CancellationException || it is IOException
     }

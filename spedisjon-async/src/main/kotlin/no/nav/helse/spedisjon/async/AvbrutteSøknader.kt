@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon.async
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers.River
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
@@ -10,6 +9,7 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.micrometer.core.instrument.MeterRegistry
 import no.nav.sykepenger.libs.logging.loggInfo
+import tools.jackson.databind.JsonNode
 
 /**
  * En avbrutt søknad er en søknad bruker velger aktivt å ikke bruke.
@@ -55,7 +55,7 @@ internal class AvbrutteSøknader(
         meterRegistry: MeterRegistry
     ) {
         val detaljer =
-            when (packet["arbeidssituasjon"].asText()) {
+            when (packet["arbeidssituasjon"].asString()) {
                 "SELVSTENDIG_NARINGSDRIVENDE" -> Meldingsdetaljer.avbruttSøknadSelvstendig(packet)
                 "BARNEPASSER" -> Meldingsdetaljer.avbruttSøknadBarnepasser(packet)
                 "FRILANSER" -> Meldingsdetaljer.avbruttSøknadFrilanser(packet)
@@ -64,7 +64,7 @@ internal class AvbrutteSøknader(
                 "FISKER" -> Meldingsdetaljer.avbruttSøknadFisker(packet)
                 "JORDBRUKER" -> Meldingsdetaljer.avbruttSøknadJordbruker(packet)
                 "ANNET" -> Meldingsdetaljer.avbruttSøknadAnnet(packet)
-                else -> error("Forventer ikke arbeidssituasjon ${packet["arbeidssituasjon"].asText()} her")
+                else -> error("Forventer ikke arbeidssituasjon ${packet["arbeidssituasjon"].asString()} her")
             }
         val internId = meldingMediator.leggInnMelding(detaljer)
         meldingMediator.onMelding(Melding.AvbruttSøknad(internId, detaljer))

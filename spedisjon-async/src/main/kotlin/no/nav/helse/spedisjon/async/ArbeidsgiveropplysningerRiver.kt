@@ -70,9 +70,9 @@ internal class ArbeidsgiveropplysningerRiver(
         val detaljer =
             Meldingsdetaljer(
                 type = arbeidsgiveropplysning.videresendingstype,
-                fnr = packet["arbeidstakerFnr"].asText(),
-                eksternDokumentId = packet["inntektsmeldingId"].asText().toUUID(),
-                duplikatnøkkel = listOf(packet["arkivreferanse"].asText()),
+                fnr = packet["arbeidstakerFnr"].asString(),
+                eksternDokumentId = packet["inntektsmeldingId"].asString().toUUID(),
+                duplikatnøkkel = listOf(packet["arkivreferanse"].asString()),
                 jsonBody = packet.toJson()
             )
         loggInfo("håndterer ${arbeidsgiveropplysning::class.simpleName} arbeidsgiveropplysninger", "detaljer" to detaljer.toString())

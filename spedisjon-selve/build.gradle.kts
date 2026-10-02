@@ -19,8 +19,7 @@ dependencies {
     implementation(libs.hikaricp)
     implementation(libs.postgresql)
     implementation(libs.kotliquery)
-
-    implementation(libs.jackson.datatype.jsr310)
+    implementation(libs.jackson.module.kotlin)
 
     testImplementation(libs.tbd.libs.postgres.testdatabaser)
     testImplementation(libs.tbd.libs.naisful.test.app)

@@ -1,17 +1,17 @@
 [versions]
 sykepengerGradlePlugins = "20261001.1830"
-tbd-libs = "2026.01.22-09.16-1d3f6039"
+tbd-libs = "20261002.1227"
 
 [libraries]
 cloud-sql-postgres-socket-factory = "com.google.cloud.sql:postgres-socket-factory:1.21.0"
 flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:13.8.0"
 hikaricp = "com.zaxxer:HikariCP:6.3.0"
-jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
+jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
 kotliquery = "com.github.seratch:kotliquery:1.9.0"
 ktor-server-auth = { module = "io.ktor:ktor-server-auth" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt" }
 postgresql = "org.postgresql:postgresql:42.7.13"
-rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026011411051768385145.e8ebad1177b4"
+rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026091610031789545782"
 sykepengerLibs-logging = "no.nav.sykepenger.libs:logging:20261001.1823"
 tbd-libs-azure-token-client-default = { module = "com.github.navikt.tbd-libs:azure-token-client-default", version.ref = "tbd-libs" }
 tbd-libs-naisful-app = { module = "com.github.navikt.tbd-libs:naisful-app", version.ref = "tbd-libs" }

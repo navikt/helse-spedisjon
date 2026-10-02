@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon.async
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers.River
 import com.github.navikt.tbd_libs.rapids_and_rivers.asLocalDateTime
@@ -10,6 +9,7 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageMetadata
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageProblems
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.micrometer.core.instrument.MeterRegistry
+import tools.jackson.databind.JsonNode
 
 internal class SendteSelvstendigSøknader(
     rapidsConnection: RapidsConnection,
@@ -43,7 +43,7 @@ internal class SendteSelvstendigSøknader(
     ) {
         val detaljer = Meldingsdetaljer.sendtSøknadSelvstendig(packet)
         meldingMediator.leggInnMelding(detaljer).also { internId ->
-            meldingMediator.onMelding(Melding.SendtSøknad(internId, packet["sykmeldingId"].asText().toUUID(), detaljer))
+            meldingMediator.onMelding(Melding.SendtSøknad(internId, packet["sykmeldingId"].asString().toUUID(), detaljer))
         }
     }
 

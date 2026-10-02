@@ -29,7 +29,7 @@ internal class SlettPersonRiver(
         metadata: MessageMetadata,
         meterRegistry: MeterRegistry
     ) {
-        val fødselsnummer = packet["fødselsnummer"].asText()
+        val fødselsnummer = packet["fødselsnummer"].asString()
         loggInfo("Sletter dokumenter knyttet til person", "fødselsnummer" to fødselsnummer)
         personRepository.slett(fødselsnummer)
         loggInfo("Dokumenter knyttet til person er slettet, sender kvittering", "fødselsnummer" to fødselsnummer)

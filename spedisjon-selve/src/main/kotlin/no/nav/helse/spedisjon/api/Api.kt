@@ -1,6 +1,5 @@
 package no.nav.helse.spedisjon.api
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import io.ktor.http.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
@@ -100,7 +99,6 @@ data class SpedisjonFeilresponse(
     val callId: String? = null
 )
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class NyMeldingRequest(
     val type: String,
     val fnr: String,
@@ -113,7 +111,6 @@ data class NyMeldingResponse(
     val internDokumentId: UUID
 )
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class HentMeldingerRequest(
     val internDokumentIder: List<UUID>
 )

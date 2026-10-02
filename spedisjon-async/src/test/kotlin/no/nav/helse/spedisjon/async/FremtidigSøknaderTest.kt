@@ -13,7 +13,7 @@ internal class FremtidigSøknaderTest : AbstractRiverTest() {
         testRapid.sendTestMessage(søknad())
         Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("ny_søknad")
-        assertEquals("NY", testRapid.inspektør.field(0, "status").textValue())
+        assertEquals("NY", testRapid.inspektør.field(0, "status").stringValue())
         assertEquals(true, testRapid.inspektør.field(0, "fremtidig_søknad").booleanValue())
     }
 

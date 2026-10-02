@@ -13,6 +13,7 @@ dependencies {
     implementation(libs.hikaricp)
     implementation(libs.postgresql)
     implementation(libs.kotliquery)
+    implementation(libs.jackson.module.kotlin)
     implementation(libs.sykepengerLibs.logging)
 
     api(libs.tbd.libs.azure.token.client.default)

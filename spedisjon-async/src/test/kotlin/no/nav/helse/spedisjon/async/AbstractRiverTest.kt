@@ -1,7 +1,5 @@
 package no.nav.helse.spedisjon.async
 
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearAllMocks
@@ -9,6 +7,8 @@ import java.util.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
+import tools.jackson.databind.node.ObjectNode
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
     protected val testRapid = TestRapid()
@@ -42,7 +42,7 @@ internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
                         testRapid.inspektør
                             .message(it)
                             .path("@event_name")
-                            .asText()
+                            .asString()
                     }
             }
         assertEquals(events.toList(), sendteEvents)

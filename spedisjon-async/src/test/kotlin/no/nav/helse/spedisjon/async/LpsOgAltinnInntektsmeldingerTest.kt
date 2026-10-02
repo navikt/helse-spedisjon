@@ -1,7 +1,5 @@
 package no.nav.helse.spedisjon.async
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.mockk.clearMocks
 import io.mockk.mockk
@@ -11,6 +9,8 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.JsonNode
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     @Test
@@ -92,7 +92,7 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
     @Test
     fun `publiserer samme id`() {
         testRapid.sendTestMessage(inntektsmelding("afbb6489-f3f5-4b7d-8689-af1d7b53087a", "virksomhetsnummer", "arkivreferanse"))
-        val id = testRapid.inspektør.field(0, "@id").asText()
+        val id = testRapid.inspektør.field(0, "@id").asString()
         val inntetsmeldingFrånDatabasen = inntektsmeldingFrånDatabasen()
         assertEquals(id, inntetsmeldingFrånDatabasen.first.toString())
         assertFalse(inntetsmeldingFrånDatabasen.second.hasNonNull("@id"))
@@ -124,13 +124,13 @@ internal class LpsOgAltinnInntektsmeldingerTest : AbstractRiverTest() {
         testRapid.sendTestMessage(inntektsmelding("66072deb-8586-4fa3-b41a-2e21850fd7db", "virksomhetsnummer", "arkivreferanse2", "noe_annet"))
         assertSendteEvents("inntektsmelding", "inntektsmelding")
         assertEquals(2, inntektsmeldinger().size)
-        assertEquals("afbb6489-f3f5-4b7d-8689-af1d7b53087a", inntektsmeldinger().first().get("inntektsmeldingId").asText())
+        assertEquals("afbb6489-f3f5-4b7d-8689-af1d7b53087a", inntektsmeldinger().first().get("inntektsmeldingId").asString())
     }
 
     private fun inntektsmeldinger(): List<JsonNode> =
         (0 until testRapid.inspektør.size).mapNotNull {
             val message = testRapid.inspektør.message(it)
-            if (message.path("@event_name").asText() == "inntektsmelding") {
+            if (message.path("@event_name").asString() == "inntektsmelding") {
                 message
             } else {
                 null
