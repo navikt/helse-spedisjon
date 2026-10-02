@@ -38,29 +38,33 @@ abstract class AbstractDatabaseTest {
         databaseContainer.droppTilkobling(testDataSource)
     }
 
+    protected fun antallMeldinger() = meldingstjeneste.meldinger.size
 
-    protected fun antallMeldinger() =
-        meldingstjeneste.meldinger.size
-
-
-    protected fun mockSpeed(fnr: String = FØDSELSNUMMER, aktørId: String = AKTØR, fødselsdato: LocalDate = LocalDate.of(1950, 10, 27), dødsdato: LocalDate? = null, støttes: Boolean = true): SpeedClient {
-        return mockk<SpeedClient> {
-            every { hentPersoninfo(fnr, any() )} returns PersonResponse(
-                fødselsdato = fødselsdato,
-                dødsdato = dødsdato,
-                fornavn = "TEST",
-                mellomnavn = null,
-                etternavn = "PERSON",
-                adressebeskyttelse = if (støttes) PersonResponse.Adressebeskyttelse.UGRADERT else PersonResponse.Adressebeskyttelse.STRENGT_FORTROLIG,
-                kjønn = PersonResponse.Kjønn.MANN
-            ).ok()
+    protected fun mockSpeed(
+        fnr: String = FØDSELSNUMMER,
+        aktørId: String = AKTØR,
+        fødselsdato: LocalDate = LocalDate.of(1950, 10, 27),
+        dødsdato: LocalDate? = null,
+        støttes: Boolean = true
+    ): SpeedClient =
+        mockk<SpeedClient> {
+            every { hentPersoninfo(fnr, any()) } returns
+                PersonResponse(
+                    fødselsdato = fødselsdato,
+                    dødsdato = dødsdato,
+                    fornavn = "TEST",
+                    mellomnavn = null,
+                    etternavn = "PERSON",
+                    adressebeskyttelse = if (støttes) PersonResponse.Adressebeskyttelse.UGRADERT else PersonResponse.Adressebeskyttelse.STRENGT_FORTROLIG,
+                    kjønn = PersonResponse.Kjønn.MANN
+                ).ok()
             every { hentHistoriskeFødselsnumre(fnr, any()) } returns HistoriskeIdenterResponse(emptyList()).ok()
-            every { hentFødselsnummerOgAktørId(fnr, any()) } returns IdentResponse(
-                fødselsnummer = fnr,
-                aktørId = aktørId,
-                npid = null,
-                kilde = IdentResponse.KildeResponse.PDL
-            ).ok()
+            every { hentFødselsnummerOgAktørId(fnr, any()) } returns
+                IdentResponse(
+                    fødselsnummer = fnr,
+                    aktørId = aktørId,
+                    npid = null,
+                    kilde = IdentResponse.KildeResponse.PDL
+                ).ok()
         }
-    }
 }

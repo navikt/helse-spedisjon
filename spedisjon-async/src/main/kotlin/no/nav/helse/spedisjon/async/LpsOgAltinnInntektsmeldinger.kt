@@ -15,16 +15,17 @@ internal class LpsOgAltinnInntektsmeldinger(
     private val meldingMediator: MeldingMediator
 ) : River.PacketListener {
     init {
-        River(rapidsConnection).apply {
-            precondition {
-                it.forbid("@event_name")
-                it.requireValue("format", "Inntektsmelding")
-            }
-            validate {
-                it.requireKey("inntektsmeldingId", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer")
-                it.interestedIn("arbeidsforholdId")
-            }
-        }.register(this)
+        River(rapidsConnection)
+            .apply {
+                precondition {
+                    it.forbid("@event_name")
+                    it.requireValue("format", "Inntektsmelding")
+                }
+                validate {
+                    it.requireKey("inntektsmeldingId", "arkivreferanse", "arbeidstakerFnr", "virksomhetsnummer")
+                    it.interestedIn("arbeidsforholdId")
+                }
+            }.register(this)
     }
 
     override fun onPacket(
@@ -33,25 +34,31 @@ internal class LpsOgAltinnInntektsmeldinger(
         metadata: MessageMetadata,
         meterRegistry: MeterRegistry
     ) {
-        val detaljer = Meldingsdetaljer(
-            type = "inntektsmelding",
-            fnr = packet["arbeidstakerFnr"].asText(),
-            eksternDokumentId = packet["inntektsmeldingId"].asText().toUUID(),
-            duplikatnøkkel = listOf(packet["arkivreferanse"].asText()),
-            jsonBody = packet.toJson()
-        )
-        meldingMediator.leggInnMelding(detaljer).also { internId ->
-            val inntektsmelding = Melding.Inntektsmelding(
-                internId = internId,
-                orgnummer = packet["virksomhetsnummer"].asText(),
-                arbeidsforholdId = packet["arbeidsforholdId"].takeIf(JsonNode::isTextual)?.asText(),
-                meldingsdetaljer = detaljer
+        val detaljer =
+            Meldingsdetaljer(
+                type = "inntektsmelding",
+                fnr = packet["arbeidstakerFnr"].asText(),
+                eksternDokumentId = packet["inntektsmeldingId"].asText().toUUID(),
+                duplikatnøkkel = listOf(packet["arkivreferanse"].asText()),
+                jsonBody = packet.toJson()
             )
+        meldingMediator.leggInnMelding(detaljer).also { internId ->
+            val inntektsmelding =
+                Melding.Inntektsmelding(
+                    internId = internId,
+                    orgnummer = packet["virksomhetsnummer"].asText(),
+                    arbeidsforholdId = packet["arbeidsforholdId"].takeIf(JsonNode::isTextual)?.asText(),
+                    meldingsdetaljer = detaljer
+                )
             meldingMediator.onMelding(inntektsmelding)
         }
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+        metadata: MessageMetadata
+    ) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne LPS/Altinn-Inntektsmelding:\n$problems")
     }
 }

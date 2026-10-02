@@ -5,7 +5,9 @@ import kotliquery.TransactionalSession
 import kotliquery.queryOf
 import kotliquery.sessionOf
 
-internal class PersonRepository(private val dataSource: DataSource) {
+internal class PersonRepository(
+    private val dataSource: DataSource
+) {
     internal fun slett(fødselsnummer: String) {
         sessionOf(dataSource).use { session ->
             session.transaction {

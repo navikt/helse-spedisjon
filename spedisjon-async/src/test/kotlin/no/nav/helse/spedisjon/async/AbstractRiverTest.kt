@@ -13,7 +13,10 @@ import org.junit.jupiter.api.BeforeEach
 internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
     protected val testRapid = TestRapid()
 
-    protected abstract fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste)
+    protected abstract fun createRiver(
+        rapidsConnection: RapidsConnection,
+        meldingtjeneste: Meldingtjeneste
+    )
 
     protected companion object {
         private val objectMapper = jacksonObjectMapper()
@@ -31,14 +34,21 @@ internal abstract class AbstractRiverTest : AbstractDatabaseTest() {
     }
 
     protected fun assertSendteEvents(vararg events: String) {
-        val sendteEvents = when (testRapid.inspektør.size == 0) {
-            true -> emptyList<String>()
-            false -> (0 until testRapid.inspektør.size).map { testRapid.inspektør.message(it).path("@event_name").asText() }
-        }
+        val sendteEvents =
+            when (testRapid.inspektør.size == 0) {
+                true -> emptyList<String>()
+                false ->
+                    (0 until testRapid.inspektør.size).map {
+                        testRapid.inspektør
+                            .message(it)
+                            .path("@event_name")
+                            .asText()
+                    }
+            }
         assertEquals(events.toList(), sendteEvents)
     }
 
-    protected fun String.json(block: (node: ObjectNode) -> Unit) : String {
+    protected fun String.json(block: (node: ObjectNode) -> Unit): String {
         val node = objectMapper.readTree(this) as ObjectNode
         block(node)
         return node.toString()
@@ -50,23 +60,24 @@ class TestMeldingtjeneste : Meldingtjeneste {
     val meldinger get() = meldingsliste.toList()
 
     override fun nyMelding(request: NyMeldingRequest): NyMeldingResponse {
-        val melding = meldingsliste.firstOrNull { it.duplikatkontroll == request.duplikatkontroll } ?:
-            MeldingDto(
-                type = request.type,
-                fnr = request.fnr,
-                internDokumentId = UUID.randomUUID(),
-                eksternDokumentId = request.eksternDokumentId,
-                duplikatkontroll = request.duplikatkontroll,
-                jsonBody = request.jsonBody
-            ).also { meldingsliste.add(it) }
+        val melding =
+            meldingsliste.firstOrNull { it.duplikatkontroll == request.duplikatkontroll }
+                ?: MeldingDto(
+                    type = request.type,
+                    fnr = request.fnr,
+                    internDokumentId = UUID.randomUUID(),
+                    eksternDokumentId = request.eksternDokumentId,
+                    duplikatkontroll = request.duplikatkontroll,
+                    jsonBody = request.jsonBody
+                ).also { meldingsliste.add(it) }
         return NyMeldingResponse(melding.internDokumentId)
     }
 
-    override fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse {
-        return HentMeldingerResponse(
-            meldinger = meldingsliste.filter { dto ->
-                dto.internDokumentId in interneDokumentIder
-            }
+    override fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse =
+        HentMeldingerResponse(
+            meldinger =
+                meldingsliste.filter { dto ->
+                    dto.internDokumentId in interneDokumentIder
+                }
         )
-    }
 }

@@ -13,9 +13,10 @@ class Berikelse(
     private val historiskeFolkeregisteridenter: List<String>
 ) {
     private companion object {
-        private val objectmapper = jacksonObjectMapper()
-            .registerModule(JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        private val objectmapper =
+            jacksonObjectMapper()
+                .registerModule(JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     }
 
     internal fun berik(melding: Melding): BeriketMelding {
@@ -33,4 +34,6 @@ class Berikelse(
     }
 }
 
-data class BeriketMelding(val json: String)
+data class BeriketMelding(
+    val json: String
+)

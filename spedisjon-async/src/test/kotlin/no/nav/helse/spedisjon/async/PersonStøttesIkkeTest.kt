@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 internal class PersonStøttesIkkeTest : AbstractRiverTest() {
-
     @Test
     fun `fremtidig_søknad til person som ikke støttes lagres, men sendes ikke videre`() {
         testRapid.sendTestMessage(søknad(status = "FREMTIDIG"))
@@ -26,10 +25,12 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
     fun `søknad_nav til person som ikke støttes lagres, men sendes ikke videre`() {
         testRapid.sendTestMessage(
             søknad(
-                status = "SENDT", ekstralinjer = listOf(
-                    """"sendtNav": "${LocalDateTime.now()}"""",
-                    """"fravar": []"""
-                )
+                status = "SENDT",
+                ekstralinjer =
+                    listOf(
+                        """"sendtNav": "${LocalDateTime.now()}"""",
+                        """"fravar": []"""
+                    )
             )
         )
         Assertions.assertEquals(1, antallMeldinger())
@@ -40,10 +41,12 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
     fun `søknad_arbeidsgiver til person som ikke støttes lagres, men sendes ikke videre`() {
         testRapid.sendTestMessage(
             søknad(
-                status = "SENDT", ekstralinjer = listOf(
-                    """"sendtArbeidsgiver": "${LocalDateTime.now()}"""",
-                    """"fravar": []"""
-                )
+                status = "SENDT",
+                ekstralinjer =
+                    listOf(
+                        """"sendtArbeidsgiver": "${LocalDateTime.now()}"""",
+                        """"fravar": []"""
+                    )
             )
         )
         Assertions.assertEquals(1, antallMeldinger())
@@ -75,12 +78,16 @@ internal class PersonStøttesIkkeTest : AbstractRiverTest() {
         assertSendteEvents("inntektsmelding")
     }
 
-    override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
+    override fun createRiver(
+        rapidsConnection: RapidsConnection,
+        meldingtjeneste: Meldingtjeneste
+    ) {
         val speedClient = mockSpeed(støttes = false)
-        val ekspederingMediator = EkspederingMediator(
-            dao = EkspederingDao(::dataSource),
-            rapidsConnection = rapidsConnection,
-        )
+        val ekspederingMediator =
+            EkspederingMediator(
+                dao = EkspederingDao(::dataSource),
+                rapidsConnection = rapidsConnection
+            )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         LogWrapper(testRapid, meldingMediator).apply {
             LpsOgAltinnInntektsmeldinger(this, meldingMediator)

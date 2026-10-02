@@ -8,12 +8,16 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 internal class AvbrutteSøknaderTest : AbstractRiverTest() {
-    override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
+    override fun createRiver(
+        rapidsConnection: RapidsConnection,
+        meldingtjeneste: Meldingtjeneste
+    ) {
         val speedClient = mockSpeed()
-        val ekspederingMediator = EkspederingMediator(
-            dao = EkspederingDao(::dataSource),
-            rapidsConnection = rapidsConnection,
-        )
+        val ekspederingMediator =
+            EkspederingMediator(
+                dao = EkspederingDao(::dataSource),
+                rapidsConnection = rapidsConnection
+            )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         AvbrutteSøknader(
             rapidsConnection = rapidsConnection,
@@ -202,7 +206,4 @@ internal class AvbrutteSøknaderTest : AbstractRiverTest() {
             "tom": "2020-01-01"
         }"""
     }
-
-
 }
-

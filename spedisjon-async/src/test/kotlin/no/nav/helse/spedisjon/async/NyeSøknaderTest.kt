@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 internal class NyeSøknaderTest : AbstractRiverTest() {
-
     @Test
     fun `leser nye søknader`() {
-        testRapid.sendTestMessage("""
+        testRapid.sendTestMessage(
+            """
 {
     "id": "${UUID.randomUUID()}",
     "fnr": "$FØDSELSNUMMER",
@@ -23,17 +23,22 @@ internal class NyeSøknaderTest : AbstractRiverTest() {
     "sykmeldingId": "${UUID.randomUUID()}",
     "fom": "2020-01-01",
     "tom": "2020-01-01"
-}""")
+}"""
+        )
         Assertions.assertEquals(1, antallMeldinger())
         assertSendteEvents("ny_søknad")
     }
 
-    override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
+    override fun createRiver(
+        rapidsConnection: RapidsConnection,
+        meldingtjeneste: Meldingtjeneste
+    ) {
         val speedClient = mockSpeed()
-        val ekspederingMediator = EkspederingMediator(
-            dao = EkspederingDao(::dataSource),
-            rapidsConnection = rapidsConnection,
-        )
+        val ekspederingMediator =
+            EkspederingMediator(
+                dao = EkspederingDao(::dataSource),
+                rapidsConnection = rapidsConnection
+            )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         NyeSøknader(
             rapidsConnection = rapidsConnection,

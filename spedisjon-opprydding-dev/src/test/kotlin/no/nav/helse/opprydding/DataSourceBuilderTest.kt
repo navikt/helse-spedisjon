@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach
 
 val databaseContainer = DatabaseContainers.container("spedisjon-opprydding", CleanupStrategy.tables("inntektsmelding,berikelse,melding"))
 
-
 internal abstract class DataSourceBuilderTest {
     protected lateinit var testDataSource: TestDataSource
 

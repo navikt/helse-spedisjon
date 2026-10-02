@@ -5,15 +5,18 @@ import no.nav.helse.spedisjon.api.MeldingDao
 import no.nav.helse.spedisjon.api.MeldingDto
 import no.nav.helse.spedisjon.api.NyMeldingDto
 
-internal class ApiMeldingtjeneste(private val dao: MeldingDao) {
+internal class ApiMeldingtjeneste(
+    private val dao: MeldingDao
+) {
     fun lagreNyMelding(request: NyMeldingRequest): NyMeldingResponse {
-        val dto = NyMeldingDto(
-            type = request.type,
-            fnr = request.fnr,
-            eksternDokumentId = request.eksternDokumentId,
-            duplikatkontroll = request.duplikatkontroll,
-            jsonBody = request.jsonBody
-        )
+        val dto =
+            NyMeldingDto(
+                type = request.type,
+                fnr = request.fnr,
+                eksternDokumentId = request.eksternDokumentId,
+                duplikatkontroll = request.duplikatkontroll,
+                jsonBody = request.jsonBody
+            )
         val result = dao.leggInn(dto)
         return NyMeldingResponse(
             internDokumentId = result.internId,
@@ -21,14 +24,16 @@ internal class ApiMeldingtjeneste(private val dao: MeldingDao) {
         )
     }
 
-    fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse {
-        return HentMeldingerResponse(
+    fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse =
+        HentMeldingerResponse(
             meldinger = dao.hentMeldinger(interneDokumentIder)
         )
-    }
 }
 
-data class NyMeldingResponse(val internDokumentId: UUID, val bleLagtInnNå: Boolean)
+data class NyMeldingResponse(
+    val internDokumentId: UUID,
+    val bleLagtInnNå: Boolean
+)
 
 data class NyMeldingRequest(
     val type: String,

@@ -7,8 +7,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-internal class FremtidigSøknaderTest: AbstractRiverTest() {
-
+internal class FremtidigSøknaderTest : AbstractRiverTest() {
     @Test
     fun `tar inn fremtidig søknad`() {
         testRapid.sendTestMessage(søknad())
@@ -26,12 +25,16 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         assertSendteEvents("ny_søknad")
     }
 
-    override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
+    override fun createRiver(
+        rapidsConnection: RapidsConnection,
+        meldingtjeneste: Meldingtjeneste
+    ) {
         val speedClient = mockSpeed()
-        val ekspederingMediator = EkspederingMediator(
-            dao = EkspederingDao(::dataSource),
-            rapidsConnection = rapidsConnection,
-        )
+        val ekspederingMediator =
+            EkspederingMediator(
+                dao = EkspederingDao(::dataSource),
+                rapidsConnection = rapidsConnection
+            )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         FremtidigSøknaderRiver(
             rapidsConnection = rapidsConnection,
@@ -43,7 +46,10 @@ internal class FremtidigSøknaderTest: AbstractRiverTest() {
         )
     }
 
-    private fun søknad(status: String = "FREMTIDIG", type: String = "ARBEIDSTAKERE") = """
+    private fun søknad(
+        status: String = "FREMTIDIG",
+        type: String = "ARBEIDSTAKERE"
+    ) = """
         {
             "id": "afbb6489-f3f5-4b7d-8689-af1d7b53087a",
             "fnr": "$FØDSELSNUMMER",

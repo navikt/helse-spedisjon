@@ -15,27 +15,36 @@ class FremtidigSøknaderRiver internal constructor(
     rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator
 ) : River.PacketListener {
-
     init {
-        River(rapidsConnection).apply {
-            precondition {
-                it.forbid("@event_name")
-                it.requireValue("status", "FREMTIDIG")
-                it.requireValue("type", "ARBEIDSTAKERE")
-            }
-            validate {
-                it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
-                it.require("opprettet", JsonNode::asLocalDateTime)
-                it.requireKey("id", "sykmeldingId", "fom", "tom")
-            }
-        }.register(this)
+        River(rapidsConnection)
+            .apply {
+                precondition {
+                    it.forbid("@event_name")
+                    it.requireValue("status", "FREMTIDIG")
+                    it.requireValue("type", "ARBEIDSTAKERE")
+                }
+                validate {
+                    it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
+                    it.require("opprettet", JsonNode::asLocalDateTime)
+                    it.requireKey("id", "sykmeldingId", "fom", "tom")
+                }
+            }.register(this)
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+        metadata: MessageMetadata
+    ) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne Fremtidig søknad:\n$problems")
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+        metadata: MessageMetadata,
+        meterRegistry: MeterRegistry
+    ) {
         loggInfo("Behandler fremtidig søknad", "søknad" to packet.toJson())
 
         // Innad i domenet vårt skiller vi ikke mellom fremtidige og nye søknader,
@@ -47,5 +56,4 @@ class FremtidigSøknaderRiver internal constructor(
         val internId = meldingMediator.leggInnMelding(detaljer)
         meldingMediator.onMelding(Melding.NySøknad(internId, detaljer))
     }
-
 }

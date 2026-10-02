@@ -15,33 +15,42 @@ internal class SendteSøknaderNav(
     rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator
 ) : River.PacketListener {
-
     init {
-        River(rapidsConnection).apply {
-            precondition {
-                it.forbid("@event_name")
-                it.requireValue("status", "SENDT")
-                it.requireValue("type", "ARBEIDSTAKERE")
-                it.requireKey("sendtNav")
-            }
-            validate {
-                it.requireKey("arbeidsgiver.orgnummer", "soknadsperioder")
-                it.require("opprettet", JsonNode::asLocalDateTime)
-                it.requireKey("id", "sykmeldingId", "fnr", "fom", "tom", "fravar")
-                it.require("sendtNav", JsonNode::asLocalDateTime)
-                it.interestedIn("utenlandskSykmelding", "sendTilGosys")
-            }
-        }.register(this)
+        River(rapidsConnection)
+            .apply {
+                precondition {
+                    it.forbid("@event_name")
+                    it.requireValue("status", "SENDT")
+                    it.requireValue("type", "ARBEIDSTAKERE")
+                    it.requireKey("sendtNav")
+                }
+                validate {
+                    it.requireKey("arbeidsgiver.orgnummer", "soknadsperioder")
+                    it.require("opprettet", JsonNode::asLocalDateTime)
+                    it.requireKey("id", "sykmeldingId", "fnr", "fom", "tom", "fravar")
+                    it.require("sendtNav", JsonNode::asLocalDateTime)
+                    it.interestedIn("utenlandskSykmelding", "sendTilGosys")
+                }
+            }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+        metadata: MessageMetadata,
+        meterRegistry: MeterRegistry
+    ) {
         val detaljer = Meldingsdetaljer.sendtSøknadNav(packet)
         meldingMediator.leggInnMelding(detaljer)?.also { internId ->
             meldingMediator.onMelding(Melding.SendtSøknad(internId, packet["sykmeldingId"].asText().toUUID(), detaljer))
         }
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+        metadata: MessageMetadata
+    ) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne Sendt søknad Nav:\n$problems")
     }
 }

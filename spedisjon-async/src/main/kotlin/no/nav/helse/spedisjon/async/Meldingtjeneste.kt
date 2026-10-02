@@ -23,6 +23,7 @@ import no.nav.sykepenger.libs.logging.loggWarn
 
 interface Meldingtjeneste {
     fun nyMelding(request: NyMeldingRequest): NyMeldingResponse
+
     fun hentMeldinger(interneDokumentIder: List<UUID>): HentMeldingerResponse
 }
 
@@ -55,9 +56,10 @@ internal class HttpMeldingtjeneste(
                 request("POST", "/api/melding", jsonInputString, callId)
                     .map { response ->
                         when (response.statusCode()) {
-                            200, 201 -> convertResponseBody<NyMeldingOkResponse>(response).map {
-                                NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
-                            }
+                            200, 201 ->
+                                convertResponseBody<NyMeldingOkResponse>(response).map {
+                                    NyMeldingResponse(internDokumentId = it.internDokumentId).ok()
+                                }
 
                             429, in 502..504 -> throw RetryableSpedisjonException(
                                 "Midlertidig feil fra APIet (status=${response.statusCode()})"
@@ -65,8 +67,7 @@ internal class HttpMeldingtjeneste(
 
                             else -> feilFraSpedisjon(response)
                         }
-                    }
-                    .getOrThrow()
+                    }.getOrThrow()
             }
         }
     }
@@ -77,20 +78,22 @@ internal class HttpMeldingtjeneste(
         return request("GET", "/api/meldinger", jsonInputString, callId)
             .map { response ->
                 when (response.statusCode()) {
-                    200 -> convertResponseBody<HentMeldingerOkResponse>(response).map {
-                        HentMeldingerResponse(
-                            meldinger = it.meldinger.map { dto ->
-                                MeldingDto(
-                                    type = dto.type,
-                                    fnr = dto.fnr,
-                                    internDokumentId = dto.internDokumentId,
-                                    eksternDokumentId = dto.eksternDokumentId,
-                                    duplikatkontroll = dto.duplikatkontroll,
-                                    jsonBody = dto.jsonBody
-                                )
-                            }
-                        ).ok()
-                    }
+                    200 ->
+                        convertResponseBody<HentMeldingerOkResponse>(response).map {
+                            HentMeldingerResponse(
+                                meldinger =
+                                    it.meldinger.map { dto ->
+                                        MeldingDto(
+                                            type = dto.type,
+                                            fnr = dto.fnr,
+                                            internDokumentId = dto.internDokumentId,
+                                            eksternDokumentId = dto.eksternDokumentId,
+                                            duplikatkontroll = dto.duplikatkontroll,
+                                            jsonBody = dto.jsonBody
+                                        )
+                                    }
+                            ).ok()
+                        }
 
                     else -> feilFraSpedisjon(response)
                 }
@@ -102,21 +105,23 @@ internal class HttpMeldingtjeneste(
         action: String,
         jsonInputString: String,
         callId: String
-    ): Result<HttpResponse<String>> {
-        return tokenProvider.bearerToken(scope).map { token ->
+    ): Result<HttpResponse<String>> =
+        tokenProvider.bearerToken(scope).map { token ->
             try {
-                val request = HttpRequest.newBuilder()
-                    .uri(URI("$baseUrl$action"))
-                    .timeout(Duration.ofSeconds(60))
-                    .header("Accept", "application/json")
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer ${token.token}")
-                    .header("callId", callId)
-                    .method(method, HttpRequest.BodyPublishers.ofString(jsonInputString))
-                    .build()
+                val request =
+                    HttpRequest
+                        .newBuilder()
+                        .uri(URI("$baseUrl$action"))
+                        .timeout(Duration.ofSeconds(60))
+                        .header("Accept", "application/json")
+                        .header("Content-Type", "application/json")
+                        .header("Authorization", "Bearer ${token.token}")
+                        .header("callId", callId)
+                        .method(method, HttpRequest.BodyPublishers.ofString(jsonInputString))
+                        .build()
 
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString()).ok()
-            // Midlertidige nettverksfeil kan oppstå uten HTTP-svar og må derfor prøves på nytt.
+                // Midlertidige nettverksfeil kan oppstå uten HTTP-svar og må derfor prøves på nytt.
             } catch (err: IOException) {
                 throw RetryableSpedisjonException(
                     "Midlertidig feil ved sending av request til Spedisjon",
@@ -126,25 +131,26 @@ internal class HttpMeldingtjeneste(
                 "Feil ved sending av request: ${err.message}".error(err)
             }
         }
-    }
 
     // Selv om spedisjon sin StatusPages-håndtering svarer med Feilresponse-JSON ved app-feil,
     // kan infrastruktur foran spedisjon (f.eks. service mesh) svare med ren tekst, for eksempel
     // ved tidsavbrudd eller at tilkoblingen ikke lenger fungerer.
     private fun <T> feilFraSpedisjon(response: HttpResponse<String>): Result<T> {
-        val body = response.body().takeIf { it.isNotBlank() }
-            ?: run {
-                loggWarn("Feilrespons uten innhold fra Spedisjon", "http_status" to response.statusCode().toString())
-                return Result.Error("Feil fra Spedisjon (status=${response.statusCode()}, response body er tom)")
-            }
+        val body =
+            response.body().takeIf { it.isNotBlank() }
+                ?: run {
+                    loggWarn("Feilrespons uten innhold fra Spedisjon", "http_status" to response.statusCode().toString())
+                    return Result.Error("Feil fra Spedisjon (status=${response.statusCode()}, response body er tom)")
+                }
 
         return try {
             objectMapper.readValue<SpedisjonFeilresponse>(body).let { feilresponse ->
-                val problemType = when (feilresponse.type.toString()) {
-                    "urn:error:bad_request", "urn:error:temporary", "urn:error:internal_error" ->
-                        feilresponse.type.toString()
-                    else -> "annet"
-                }
+                val problemType =
+                    when (feilresponse.type.toString()) {
+                        "urn:error:bad_request", "urn:error:temporary", "urn:error:internal_error" ->
+                            feilresponse.type.toString()
+                        else -> "annet"
+                    }
                 loggWarn(
                     "Feilsvar fra Spedisjon i problemformat",
                     "http_status" to response.statusCode().toString(),
@@ -172,9 +178,18 @@ internal class HttpMeldingtjeneste(
         }
     }
 
-    private data class HentMeldingerRequest(val internDokumentIder: List<UUID>)
-    private data class NyMeldingOkResponse(val internDokumentId: UUID)
-    private data class HentMeldingerOkResponse(val meldinger: List<MeldingResponse>)
+    private data class HentMeldingerRequest(
+        val internDokumentIder: List<UUID>
+    )
+
+    private data class NyMeldingOkResponse(
+        val internDokumentId: UUID
+    )
+
+    private data class HentMeldingerOkResponse(
+        val meldinger: List<MeldingResponse>
+    )
+
     private data class MeldingResponse(
         val type: String,
         val fnr: String,
@@ -193,11 +208,15 @@ internal class HttpMeldingtjeneste(
         val callId: String? = null
     )
 
-    private class RetryableSpedisjonException(message: String, cause: Throwable? = null) :
-        RuntimeException(message, cause)
+    private class RetryableSpedisjonException(
+        message: String,
+        cause: Throwable? = null
+    ) : RuntimeException(message, cause)
 }
 
-data class NyMeldingResponse(val internDokumentId: UUID)
+data class NyMeldingResponse(
+    val internDokumentId: UUID
+)
 
 data class NyMeldingRequest(
     val type: String,

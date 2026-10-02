@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 internal class SendteFrilansSøknaderTest : AbstractRiverTest() {
-
     @Test
     fun `leser sendte søknader`() {
         testRapid.sendTestMessage(SØKNAD)
@@ -58,13 +57,16 @@ internal class SendteFrilansSøknaderTest : AbstractRiverTest() {
         assertSendteEvents("sendt_søknad_frilans")
     }
 
-
-    override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
+    override fun createRiver(
+        rapidsConnection: RapidsConnection,
+        meldingtjeneste: Meldingtjeneste
+    ) {
         val speedClient = mockSpeed()
-        val ekspederingMediator = EkspederingMediator(
-            dao = EkspederingDao(::dataSource),
-            rapidsConnection = rapidsConnection,
-        )
+        val ekspederingMediator =
+            EkspederingMediator(
+                dao = EkspederingDao(::dataSource),
+                rapidsConnection = rapidsConnection
+            )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         SendteFrilansSøknader(
             rapidsConnection = rapidsConnection,

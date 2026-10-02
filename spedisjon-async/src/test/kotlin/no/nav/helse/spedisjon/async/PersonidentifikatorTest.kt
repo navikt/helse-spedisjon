@@ -1,12 +1,11 @@
 package no.nav.helse.spedisjon.async
 
+import java.time.LocalDate
 import no.nav.helse.spedisjon.async.Personidentifikator.Companion.fødselsdatoOrNull
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import java.time.LocalDate
 
 internal class PersonidentifikatorTest {
-
     @Test
     fun `kan hente ut fødselsdato fra fødselsnummer`() {
         assertEquals(LocalDate.parse("1990-09-29"), "29099012345".fødselsdatoOrNull())

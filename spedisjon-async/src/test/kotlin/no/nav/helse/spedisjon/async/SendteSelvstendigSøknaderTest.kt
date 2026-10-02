@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
-
     @Test
     fun `leser ikke inn selvstendige søknader der ventetid er null`() {
         testRapid.sendTestMessage(søknad(arbeidssituasjon = "SELVSTENDIG_NARINGSDRIVENDE", ventetid = null))
@@ -30,13 +29,16 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
         assertSendteEvents("sendt_søknad_selvstendig")
     }
 
-
-    override fun createRiver(rapidsConnection: RapidsConnection, meldingtjeneste: Meldingtjeneste) {
+    override fun createRiver(
+        rapidsConnection: RapidsConnection,
+        meldingtjeneste: Meldingtjeneste
+    ) {
         val speedClient = mockSpeed()
-        val ekspederingMediator = EkspederingMediator(
-            dao = EkspederingDao(::dataSource),
-            rapidsConnection = rapidsConnection,
-        )
+        val ekspederingMediator =
+            EkspederingMediator(
+                dao = EkspederingDao(::dataSource),
+                rapidsConnection = rapidsConnection
+            )
         val meldingMediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
         SendteSelvstendigSøknader(
             rapidsConnection = rapidsConnection,
@@ -46,7 +48,11 @@ internal class SendteSelvstendigSøknaderTest : AbstractRiverTest() {
 
     private companion object {
         @Language("JSON")
-        private fun søknad(arbeidssituasjon: String, fnr: String = FØDSELSNUMMER, ventetid: String? = """{"fom" : "2020-01-01","tom" : "2020-01-16"}""") = """
+        private fun søknad(
+            arbeidssituasjon: String,
+            fnr: String = FØDSELSNUMMER,
+            ventetid: String? = """{"fom" : "2020-01-01","tom" : "2020-01-16"}"""
+        ) = """
         {
             "id": "${UUID.randomUUID()}",
             "fnr": "$fnr",

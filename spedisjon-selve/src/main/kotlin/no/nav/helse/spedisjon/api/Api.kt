@@ -22,53 +22,59 @@ internal fun Route.api(meldingtjeneste: ApiMeldingtjeneste) {
          */
         post {
             val request = call.receive<NyMeldingRequest>()
-            val dto = no.nav.helse.spedisjon.api.tjeneste.NyMeldingRequest(
-                type = request.type,
-                fnr = request.fnr,
-                eksternDokumentId = request.eksternDokumentId,
-                duplikatkontroll = request.duplikatkontroll,
-                jsonBody = request.jsonBody
-            )
-            val (responseStatus, internDokumentId) = meldingtjeneste.lagreNyMelding(dto).run {
-                (if (bleLagtInnNå) HttpStatusCode.Created else HttpStatusCode.OK) to internDokumentId
-            }
+            val dto =
+                no.nav.helse.spedisjon.api.tjeneste.NyMeldingRequest(
+                    type = request.type,
+                    fnr = request.fnr,
+                    eksternDokumentId = request.eksternDokumentId,
+                    duplikatkontroll = request.duplikatkontroll,
+                    jsonBody = request.jsonBody
+                )
+            val (responseStatus, internDokumentId) =
+                meldingtjeneste.lagreNyMelding(dto).run {
+                    (if (bleLagtInnNå) HttpStatusCode.Created else HttpStatusCode.OK) to internDokumentId
+                }
 
             call.application.log.info("Prøver å sende svar på POST /api/melding med status {}", responseStatus.value)
             call.respond(responseStatus, NyMeldingResponse(internDokumentId = internDokumentId))
         }
 
-        /* hente melding */
+        // hente melding
         get("/{internDokumentId}") {
             val internDokumentId = UUID.fromString(call.parameters.getOrFail("internDokumentId"))
             val response = meldingtjeneste.hentMeldinger(listOf(internDokumentId))
 
             if (response.meldinger.size != 1) throw NotFoundException()
             val melding = response.meldinger.single()
-            call.respond(HttpStatusCode.OK, MeldingResponse(
-                type = melding.type,
-                fnr = melding.fnr,
-                internDokumentId = melding.internDokumentId,
-                eksternDokumentId = melding.eksternDokumentId,
-                duplikatkontroll = melding.duplikatkontroll,
-                jsonBody = melding.jsonBody
-            ))
+            call.respond(
+                HttpStatusCode.OK,
+                MeldingResponse(
+                    type = melding.type,
+                    fnr = melding.fnr,
+                    internDokumentId = melding.internDokumentId,
+                    eksternDokumentId = melding.eksternDokumentId,
+                    duplikatkontroll = melding.duplikatkontroll,
+                    jsonBody = melding.jsonBody
+                )
+            )
         }
     }
-    /* hente meldinger (flertall) */
+    // hente meldinger (flertall)
     get("/api/meldinger") {
         val request = call.receive<HentMeldingerRequest>()
         val response = meldingtjeneste.hentMeldinger(request.internDokumentIder)
 
-        val meldinger = response.meldinger.map { melding ->
-            MeldingResponse(
-                type = melding.type,
-                fnr = melding.fnr,
-                internDokumentId = melding.internDokumentId,
-                eksternDokumentId = melding.eksternDokumentId,
-                duplikatkontroll = melding.duplikatkontroll,
-                jsonBody = melding.jsonBody
-            )
-        }
+        val meldinger =
+            response.meldinger.map { melding ->
+                MeldingResponse(
+                    type = melding.type,
+                    fnr = melding.fnr,
+                    internDokumentId = melding.internDokumentId,
+                    eksternDokumentId = melding.eksternDokumentId,
+                    duplikatkontroll = melding.duplikatkontroll,
+                    jsonBody = melding.jsonBody
+                )
+            }
         call.respond(HttpStatusCode.OK, HentMeldingerResponse(meldinger = meldinger))
     }
 }

@@ -12,9 +12,10 @@ import no.nav.sykepenger.libs.logging.loggInfo
 
 sealed interface Arbeidsgiveropplysninger {
     val videresendingstype: String
+
     fun precondition(packet: JsonMessage)
 
-    data object Forespurte: Arbeidsgiveropplysninger {
+    data object Forespurte : Arbeidsgiveropplysninger {
         override val videresendingstype = "arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
@@ -23,7 +24,7 @@ sealed interface Arbeidsgiveropplysninger {
         }
     }
 
-    data object Selvbestemte: Arbeidsgiveropplysninger {
+    data object Selvbestemte : Arbeidsgiveropplysninger {
         override val videresendingstype = "selvbestemte_arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
@@ -31,7 +32,7 @@ sealed interface Arbeidsgiveropplysninger {
         }
     }
 
-    data object Korrigerte: Arbeidsgiveropplysninger {
+    data object Korrigerte : Arbeidsgiveropplysninger {
         override val videresendingstype = "korrigerte_arbeidsgiveropplysninger"
 
         override fun precondition(packet: JsonMessage) {
@@ -47,16 +48,17 @@ internal class ArbeidsgiveropplysningerRiver(
     private val arbeidsgiveropplysning: Arbeidsgiveropplysninger
 ) : River.PacketListener {
     init {
-        River(rapidsConnection).apply {
-            precondition {
-                it.forbid("@event_name")
-                it.requireValue("format", "Arbeidsgiveropplysninger")
-                arbeidsgiveropplysning.precondition(it)
-            }
-            validate {
-                it.requireKey("virksomhetsnummer", "vedtaksperiodeId", "arkivreferanse", "arbeidstakerFnr", "inntektsmeldingId")
-            }
-        }.register(this)
+        River(rapidsConnection)
+            .apply {
+                precondition {
+                    it.forbid("@event_name")
+                    it.requireValue("format", "Arbeidsgiveropplysninger")
+                    arbeidsgiveropplysning.precondition(it)
+                }
+                validate {
+                    it.requireKey("virksomhetsnummer", "vedtaksperiodeId", "arkivreferanse", "arbeidstakerFnr", "inntektsmeldingId")
+                }
+            }.register(this)
     }
 
     override fun onPacket(
@@ -65,25 +67,31 @@ internal class ArbeidsgiveropplysningerRiver(
         metadata: MessageMetadata,
         meterRegistry: MeterRegistry
     ) {
-        val detaljer = Meldingsdetaljer(
-            type = arbeidsgiveropplysning.videresendingstype,
-            fnr = packet["arbeidstakerFnr"].asText(),
-            eksternDokumentId = packet["inntektsmeldingId"].asText().toUUID(),
-            duplikatnøkkel = listOf(packet["arkivreferanse"].asText()),
-            jsonBody = packet.toJson()
-        )
+        val detaljer =
+            Meldingsdetaljer(
+                type = arbeidsgiveropplysning.videresendingstype,
+                fnr = packet["arbeidstakerFnr"].asText(),
+                eksternDokumentId = packet["inntektsmeldingId"].asText().toUUID(),
+                duplikatnøkkel = listOf(packet["arkivreferanse"].asText()),
+                jsonBody = packet.toJson()
+            )
         loggInfo("håndterer ${arbeidsgiveropplysning::class.simpleName} arbeidsgiveropplysninger", "detaljer" to detaljer.toString())
 
         meldingMediator.leggInnMelding(detaljer).also { internId ->
-            val inntektsmelding = Melding.Arbeidsgiveropplysninger(
-                internId = internId,
-                meldingsdetaljer = detaljer
-            )
+            val inntektsmelding =
+                Melding.Arbeidsgiveropplysninger(
+                    internId = internId,
+                    meldingsdetaljer = detaljer
+                )
             meldingMediator.onMelding(inntektsmelding)
         }
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+        metadata: MessageMetadata
+    ) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne ${arbeidsgiveropplysning::class.simpleName} arbeidsgiveropplysninger:\n\t$problems")
     }
 }

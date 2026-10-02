@@ -25,25 +25,29 @@ import org.slf4j.LoggerFactory
 internal class LogWrapperTest {
     private val rapid = TestRapid()
 
-    private val appender = ListAppender<ILoggingEvent>().apply {
-        start()
-    }.also {
-        (LoggerFactory.getLogger(MeldingMediator::class.java) as Logger).apply {
-            level = Level.INFO
-            addAppender(it)
-        }
-    }
+    private val appender =
+        ListAppender<ILoggingEvent>()
+            .apply {
+                start()
+            }.also {
+                (LoggerFactory.getLogger(MeldingMediator::class.java) as Logger).apply {
+                    level = Level.INFO
+                    addAppender(it)
+                }
+            }
 
     private val meldingtjeneste = mockk<Meldingtjeneste>()
-    private val speedClient = mockk<SpeedClient> {
-        every { hentPersoninfo(any(), any()) } returns Result.Ok(mockk(relaxed = true))
-        every { hentHistoriskeFødselsnumre(any(), any()) } returns Result.Ok(mockk(relaxed = true))
-        every { hentFødselsnummerOgAktørId(any(), any()) } returns Result.Ok(mockk(relaxed = true))
-    }
-    private val ekspederingMediator = EkspederingMediator(
-        dao = mockk { every { meldingEkspedert(any()) } returns true },
-        rapidsConnection = TestRapid()
-    )
+    private val speedClient =
+        mockk<SpeedClient> {
+            every { hentPersoninfo(any(), any()) } returns Result.Ok(mockk(relaxed = true))
+            every { hentHistoriskeFødselsnumre(any(), any()) } returns Result.Ok(mockk(relaxed = true))
+            every { hentFødselsnummerOgAktørId(any(), any()) } returns Result.Ok(mockk(relaxed = true))
+        }
+    private val ekspederingMediator =
+        EkspederingMediator(
+            dao = mockk { every { meldingEkspedert(any()) } returns true },
+            rapidsConnection = TestRapid()
+        )
     private val mediator = MeldingMediator(meldingtjeneste, speedClient, ekspederingMediator)
 
     @BeforeEach
@@ -81,24 +85,34 @@ internal class LogWrapperTest {
         rapidsConnection: RapidsConnection,
         private val mediator: MeldingMediator,
         validation: River.() -> Unit = {}
-    ) :
-        River.PacketListener {
+    ) : River.PacketListener {
         init {
             River(rapidsConnection).apply(validation).register(this)
         }
 
-        override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
-            mediator.leggInnMelding(Meldingsdetaljer(
-                type = "ny_søknad",
-                fnr = "fnr",
-                eksternDokumentId = UUID.randomUUID(),
-                duplikatnøkkel = listOf("en_nøkkel"),
-                jsonBody = packet.toJson()
-            ))
+        override fun onPacket(
+            packet: JsonMessage,
+            context: MessageContext,
+            metadata: MessageMetadata,
+            meterRegistry: MeterRegistry
+        ) {
+            mediator.leggInnMelding(
+                Meldingsdetaljer(
+                    type = "ny_søknad",
+                    fnr = "fnr",
+                    eksternDokumentId = UUID.randomUUID(),
+                    duplikatnøkkel = listOf("en_nøkkel"),
+                    jsonBody = packet.toJson()
+                )
+            )
         }
-        override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
+
+        override fun onError(
+            problems: MessageProblems,
+            context: MessageContext,
+            metadata: MessageMetadata
+        ) {
             mediator.onRiverError("Ukjent melding:\n$problems")
         }
     }
-
 }

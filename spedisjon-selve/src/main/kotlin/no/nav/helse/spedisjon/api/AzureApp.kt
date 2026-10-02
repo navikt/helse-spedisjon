@@ -7,7 +7,7 @@ import io.ktor.server.auth.jwt.*
 class AzureApp(
     private val jwkProvider: JwkProvider,
     private val issuer: String,
-    private val clientId: String,
+    private val clientId: String
 ) {
     fun konfigurerJwtAuth(config: AuthenticationConfig) {
         config.jwt {

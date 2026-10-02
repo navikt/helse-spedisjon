@@ -11,34 +11,40 @@ import io.micrometer.core.instrument.MeterRegistry
 import no.nav.sykepenger.libs.logging.loggInfo
 
 internal class AndreSøknaderRiver(
-    rapidsConnection: RapidsConnection,
+    rapidsConnection: RapidsConnection
 ) : River.PacketListener {
-
     init {
-        River(rapidsConnection).apply {
-            precondition {
-                it.forbid("@event_name", "inntektsmeldingId")
-                it.forbidValue("type", "ARBEIDSTAKERE")
-                it.forbidValue("type", "ARBEIDSLEDIG")
-                it.forbidValue("type", "SELVSTENDIGE_OG_FRILANSERE")
-            }
-            validate {
-                it.requireKey("id", "fnr", "status")
-                it.interestedIn("arbeidssituasjon", "arbeidsgiver.orgnummer")
-            }
-        }.register(this)
-}
+        River(rapidsConnection)
+            .apply {
+                precondition {
+                    it.forbid("@event_name", "inntektsmeldingId")
+                    it.forbidValue("type", "ARBEIDSTAKERE")
+                    it.forbidValue("type", "ARBEIDSLEDIG")
+                    it.forbidValue("type", "SELVSTENDIGE_OG_FRILANSERE")
+                }
+                validate {
+                    it.requireKey("id", "fnr", "status")
+                    it.interestedIn("arbeidssituasjon", "arbeidsgiver.orgnummer")
+                }
+            }.register(this)
+    }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+        metadata: MessageMetadata,
+        meterRegistry: MeterRegistry
+    ) {
         try {
-            loggInfo("Mottok søknad vi _ikke_ behandler",
+            loggInfo(
+                "Mottok søknad vi _ikke_ behandler",
                 "søknadstype" to packet["type"].asText(),
                 "søknadsstatus" to packet["status"].asText(),
                 "arbeidssituasjon" to packet["arbeidssituasjon"].asText("IKKE_SATT"),
                 "søknadId" to packet["id"].asText(),
                 "fødselsnummer" to packet["fnr"].asText(),
                 "orgnummer" to packet["arbeidsgiver.orgnummer"].asText("IKKE_SATT"),
-                "søknad" to packet.toJson().utenStøy.toString(),
+                "søknad" to packet.toJson().utenStøy.toString()
             )
         } catch (ex: Exception) {
             loggInfo("Feil ved logging av søknad vi ikke behandler", ex)

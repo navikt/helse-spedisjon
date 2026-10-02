@@ -30,7 +30,8 @@ internal class MeldingMediator(
     }
 
     fun leggInnMelding(meldingsdetaljer: Meldingsdetaljer): UUID {
-        Counter.builder("melding_totals")
+        Counter
+            .builder("melding_totals")
             .description("Antall meldinger mottatt")
             .tag("type", meldingsdetaljer.type)
             .register(registry)
@@ -39,13 +40,14 @@ internal class MeldingMediator(
         messageRecognized = true
 
         return withMDC("ekstern_dokument_id" to "${meldingsdetaljer.eksternDokumentId}") {
-            val request = NyMeldingRequest(
-                type = meldingsdetaljer.type,
-                fnr = meldingsdetaljer.fnr,
-                eksternDokumentId = meldingsdetaljer.eksternDokumentId,
-                duplikatkontroll = meldingsdetaljer.duplikatkontroll,
-                jsonBody = meldingsdetaljer.jsonBody
-            )
+            val request =
+                NyMeldingRequest(
+                    type = meldingsdetaljer.type,
+                    fnr = meldingsdetaljer.fnr,
+                    eksternDokumentId = meldingsdetaljer.eksternDokumentId,
+                    duplikatkontroll = meldingsdetaljer.duplikatkontroll,
+                    jsonBody = meldingsdetaljer.jsonBody
+                )
             meldingtjeneste.nyMelding(request).internDokumentId
         }
     }
@@ -68,13 +70,15 @@ internal class MeldingMediator(
             }
         }
 
-        Counter.builder("melding_unik_totals")
+        Counter
+            .builder("melding_unik_totals")
             .description("Antall unike meldinger mottatt")
             .tag("type", melding.meldingsdetaljer.type)
             .register(registry)
             .increment()
 
-        Counter.builder("melding_sendt_totals")
+        Counter
+            .builder("melding_sendt_totals")
             .description("Antall meldinger sendt")
             .tag("type", melding.meldingsdetaljer.type)
             .register(registry)
@@ -83,8 +87,10 @@ internal class MeldingMediator(
 
     fun afterMessage(message: String) {
         if (messageRecognized || riverErrors.isEmpty()) return
-        loggWarn("kunne ikke gjenkjenne melding",
+        loggWarn(
+            "kunne ikke gjenkjenne melding",
             "melding" to message,
-            "problemer" to riverErrors.joinToString(separator = "\n"))
+            "problemer" to riverErrors.joinToString(separator = "\n")
+        )
     }
 }

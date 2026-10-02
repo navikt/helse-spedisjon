@@ -7,11 +7,8 @@ import kotliquery.sessionOf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.util.UUID
 
-internal class AppTest: DataSourceBuilderTest() {
+internal class AppTest : DataSourceBuilderTest() {
     private lateinit var testRapid: TestRapid
     private lateinit var personRepository: PersonRepository
 
@@ -61,37 +58,34 @@ internal class AppTest: DataSourceBuilderTest() {
         assertEquals(1, finnBerikelser(fødselsnummer))
         assertEquals(1, finnInntektsmeldinger(fødselsnummer))
     }
-    private fun finnMeldinger(fødselsnummer: String): Int {
-        return sessionOf(testDataSource.ds).use { session ->
+
+    private fun finnMeldinger(fødselsnummer: String): Int =
+        sessionOf(testDataSource.ds).use { session ->
             session.run(queryOf("SELECT COUNT(1) FROM melding WHERE fnr = ?", fødselsnummer).map { it.int(1) }.asSingle)
         } ?: 0
-    }
 
-    private fun finnBerikelser(fødselsnummer: String): Int {
-        return sessionOf(testDataSource.ds).use { session ->
+    private fun finnBerikelser(fødselsnummer: String): Int =
+        sessionOf(testDataSource.ds).use { session ->
             session.run(queryOf("SELECT COUNT(1) FROM berikelse WHERE fnr = ?", fødselsnummer).map { it.int(1) }.asSingle)
         } ?: 0
-    }
 
-
-    private fun finnInntektsmeldinger(fødselsnummer: String): Int {
-        return sessionOf(testDataSource.ds).use { session ->
+    private fun finnInntektsmeldinger(fødselsnummer: String): Int =
+        sessionOf(testDataSource.ds).use { session ->
             session.run(queryOf("SELECT COUNT(1) FROM inntektsmelding WHERE fnr = ?", fødselsnummer).map { it.int(1) }.asSingle)
         } ?: 0
-    }
 
     private fun opprettMelding(fødselsnummer: String) {
         val query = """INSERT INTO melding (fnr) VALUES (?)"""
-        sessionOf(testDataSource.ds).use { it.run(queryOf(query, fødselsnummer).asUpdate)}
+        sessionOf(testDataSource.ds).use { it.run(queryOf(query, fødselsnummer).asUpdate) }
     }
 
     private fun opprettBerikelse(fødselsnummer: String) {
         val query = "INSERT INTO berikelse (fnr) VALUES (?)"
-        sessionOf(testDataSource.ds).use { it.run(queryOf(query, fødselsnummer).asUpdate)}
+        sessionOf(testDataSource.ds).use { it.run(queryOf(query, fødselsnummer).asUpdate) }
     }
 
     private fun opprettInntektsmelding(fødselsnummer: String) {
         val query = """INSERT INTO inntektsmelding (fnr) VALUES (?)"""
-        sessionOf(testDataSource.ds).use { it.run(queryOf(query, fødselsnummer).asUpdate)}
+        sessionOf(testDataSource.ds).use { it.run(queryOf(query, fødselsnummer).asUpdate) }
     }
 }

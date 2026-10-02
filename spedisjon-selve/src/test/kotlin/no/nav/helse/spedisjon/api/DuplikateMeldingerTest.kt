@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class DuplikateMeldingerTest {
-
     private lateinit var meldingDao: MeldingDao
     private lateinit var testDataSource: TestDataSource
 
@@ -26,20 +25,22 @@ internal class DuplikateMeldingerTest {
     @Test
     fun `duplikat inntektsmelding slipper ikke igjennom`() {
         val duplikatnøkkel = "unik nøkkel"
-        val im1 = NyMeldingDto(
-            type = "inntektsmelding",
-            fnr = "123",
-            eksternDokumentId = UUID.randomUUID(),
-            duplikatkontroll = duplikatnøkkel,
-            jsonBody = "{}"
-        )
-        val im2 = NyMeldingDto(
-            type = "inntektsmelding",
-            fnr = "567",
-            eksternDokumentId = UUID.randomUUID(),
-            duplikatkontroll = duplikatnøkkel,
-            jsonBody = "{}"
-        )
+        val im1 =
+            NyMeldingDto(
+                type = "inntektsmelding",
+                fnr = "123",
+                eksternDokumentId = UUID.randomUUID(),
+                duplikatkontroll = duplikatnøkkel,
+                jsonBody = "{}"
+            )
+        val im2 =
+            NyMeldingDto(
+                type = "inntektsmelding",
+                fnr = "567",
+                eksternDokumentId = UUID.randomUUID(),
+                duplikatkontroll = duplikatnøkkel,
+                jsonBody = "{}"
+            )
         assertEquals(MeldingDao.Resultat.Utfall.BLE_LAGRET_NÅ, meldingDao.leggInn(im1).utfall)
         assertEquals(MeldingDao.Resultat.Utfall.HENTET_EKSISTERENDE, meldingDao.leggInn(im2).utfall)
     }

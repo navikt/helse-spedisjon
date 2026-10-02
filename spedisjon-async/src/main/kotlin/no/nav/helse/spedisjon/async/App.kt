@@ -25,12 +25,12 @@ fun main() {
     val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
     val speedClient = SpeedClient(HttpClient.newHttpClient(), objectMapper, azure)
 
-    val httpMeldingtjeneste = HttpMeldingtjeneste(
-        httpClient = HttpClient.newHttpClient(),
-        tokenProvider = azure,
-        objectMapper = objectMapper
-    )
-
+    val httpMeldingtjeneste =
+        HttpMeldingtjeneste(
+            httpClient = HttpClient.newHttpClient(),
+            tokenProvider = azure,
+            objectMapper = objectMapper
+        )
 
     val factory = ConsumerProducerFactory(AivenConfig.default)
     val rapidsConnection = RapidApplication.create(env, factory)
@@ -39,54 +39,61 @@ fun main() {
     val ekspederingMediator = EkspederingMediator(EkspederingDao(dataSourceBuilder::dataSource), rapidsConnection)
     val meldingMediator = MeldingMediator(httpMeldingtjeneste, speedClient, ekspederingMediator)
 
-    LogWrapper(rapidsConnection, meldingMediator).apply {
-        NyeSøknader(this, meldingMediator)
-        NyeFrilansSøknader(this, meldingMediator)
-        NyeSelvstendigSøknader(this, meldingMediator)
-        NyeArbeidsledigSøknader(this, meldingMediator)
-        FremtidigSøknaderRiver(this, meldingMediator)
-        FremtidigFrilansSøknaderRiver(this, meldingMediator)
-        FremtidigSelvstendigSøknaderRiver(this, meldingMediator)
-        FremtidigArbeidsledigSøknaderRiver(this, meldingMediator)
-        SendteSøknaderArbeidsgiver(this, meldingMediator)
-        SendteSøknaderNav(this, meldingMediator)
-        SendteFrilansSøknader(this, meldingMediator)
-        SendteSelvstendigSøknader(this, meldingMediator)
-        SendteArbeidsledigSøknader(this, meldingMediator)
-        AndreSøknaderRiver(this)
-        ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Forespurte)
-        ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Korrigerte)
-        ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Selvbestemte)
-        LpsOgAltinnInntektsmeldinger(this, meldingMediator)
-        AvbrutteSøknader(this, meldingMediator)
-    }.apply {
-        register(object : StatusListener {
-            override fun onStartup(rapidsConnection: RapidsConnection) {
-                dataSourceBuilder.migrate()
-            }
-        })
-    }.start()
+    LogWrapper(rapidsConnection, meldingMediator)
+        .apply {
+            NyeSøknader(this, meldingMediator)
+            NyeFrilansSøknader(this, meldingMediator)
+            NyeSelvstendigSøknader(this, meldingMediator)
+            NyeArbeidsledigSøknader(this, meldingMediator)
+            FremtidigSøknaderRiver(this, meldingMediator)
+            FremtidigFrilansSøknaderRiver(this, meldingMediator)
+            FremtidigSelvstendigSøknaderRiver(this, meldingMediator)
+            FremtidigArbeidsledigSøknaderRiver(this, meldingMediator)
+            SendteSøknaderArbeidsgiver(this, meldingMediator)
+            SendteSøknaderNav(this, meldingMediator)
+            SendteFrilansSøknader(this, meldingMediator)
+            SendteSelvstendigSøknader(this, meldingMediator)
+            SendteArbeidsledigSøknader(this, meldingMediator)
+            AndreSøknaderRiver(this)
+            ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Forespurte)
+            ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Korrigerte)
+            ArbeidsgiveropplysningerRiver(this, meldingMediator, Arbeidsgiveropplysninger.Selvbestemte)
+            LpsOgAltinnInntektsmeldinger(this, meldingMediator)
+            AvbrutteSøknader(this, meldingMediator)
+        }.apply {
+            register(
+                object : StatusListener {
+                    override fun onStartup(rapidsConnection: RapidsConnection) {
+                        dataSourceBuilder.migrate()
+                    }
+                }
+            )
+        }.start()
 }
 
 internal class LogWrapper(
     private val rapidsConnection: RapidsConnection,
-    private val meldingMediator: MeldingMediator,
-) : RapidsConnection(), MessageListener, StatusListener {
-
+    private val meldingMediator: MeldingMediator
+) : RapidsConnection(),
+    MessageListener,
+    StatusListener {
     init {
         rapidsConnection.register(this as MessageListener)
         rapidsConnection.register(this as StatusListener)
     }
 
-    override fun onMessage(message: String, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
+    override fun onMessage(
+        message: String,
+        context: MessageContext,
+        metadata: MessageMetadata,
+        meterRegistry: MeterRegistry
+    ) {
         meldingMediator.beforeMessage()
         notifyMessage(message, this, metadata, meterRegistry)
         meldingMediator.afterMessage(message)
     }
 
-    override fun publish(message: String) {
-        throw IllegalStateException("Krever key for å sikre at vi publiserer meldinger med fnr som key")
-    }
+    override fun publish(message: String): Unit = throw IllegalStateException("Krever key for å sikre at vi publiserer meldinger med fnr som key")
 
     override fun publish(messages: List<OutgoingMessage>): Pair<List<SentMessage>, List<FailedMessage>> {
         messages.forEach {
@@ -97,7 +104,10 @@ internal class LogWrapper(
         return rapidsConnection.publish(messages)
     }
 
-    override fun publish(key: String, message: String) {
+    override fun publish(
+        key: String,
+        message: String
+    ) {
         rapidsConnection.publish(key, message)
     }
 

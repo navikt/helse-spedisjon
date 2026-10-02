@@ -19,47 +19,63 @@ import no.nav.sykepenger.libs.logging.loggInfo
 internal class AvbrutteSøknader(
     rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator
-) :
-    River.PacketListener {
-
+) : River.PacketListener {
     init {
-        River(rapidsConnection).apply {
-            precondition {
-                it.forbid("@event_name")
-                it.requireAny("status", listOf("AVBRUTT", "UTGATT", "SLETTET"))
-            }
-            validate {
-                it.require("opprettet", JsonNode::asLocalDateTime)
-                it.requireKey("id", "fnr", "fom", "tom")
-                it.interestedIn("arbeidsgiver.orgnummer")
-                it.requireAny("arbeidssituasjon", listOf(
-                    "SELVSTENDIG_NARINGSDRIVENDE", "BARNEPASSER", "FRILANSER",
-                    "ARBEIDSTAKER", "ARBEIDSLEDIG",
-                    "FISKER", "JORDBRUKER", "ANNET",
-                ))
-            }
-        }.register(this)
+        River(rapidsConnection)
+            .apply {
+                precondition {
+                    it.forbid("@event_name")
+                    it.requireAny("status", listOf("AVBRUTT", "UTGATT", "SLETTET"))
+                }
+                validate {
+                    it.require("opprettet", JsonNode::asLocalDateTime)
+                    it.requireKey("id", "fnr", "fom", "tom")
+                    it.interestedIn("arbeidsgiver.orgnummer")
+                    it.requireAny(
+                        "arbeidssituasjon",
+                        listOf(
+                            "SELVSTENDIG_NARINGSDRIVENDE",
+                            "BARNEPASSER",
+                            "FRILANSER",
+                            "ARBEIDSTAKER",
+                            "ARBEIDSLEDIG",
+                            "FISKER",
+                            "JORDBRUKER",
+                            "ANNET"
+                        )
+                    )
+                }
+            }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
-        val detaljer = when (packet["arbeidssituasjon"].asText()) {
-            "SELVSTENDIG_NARINGSDRIVENDE" -> Meldingsdetaljer.avbruttSøknadSelvstendig(packet)
-            "BARNEPASSER" -> Meldingsdetaljer.avbruttSøknadBarnepasser(packet)
-            "FRILANSER" -> Meldingsdetaljer.avbruttSøknadFrilanser(packet)
-            "ARBEIDSTAKER" -> Meldingsdetaljer.avbruttSøknad(packet)
-            "ARBEIDSLEDIG" -> Meldingsdetaljer.avbruttSøknadArbeidsledig(packet)
-            "FISKER" -> Meldingsdetaljer.avbruttSøknadFisker(packet)
-            "JORDBRUKER" -> Meldingsdetaljer.avbruttSøknadJordbruker(packet)
-            "ANNET" -> Meldingsdetaljer.avbruttSøknadAnnet(packet)
-            else -> error("Forventer ikke arbeidssituasjon ${packet["arbeidssituasjon"].asText()} her")
-        }
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+        metadata: MessageMetadata,
+        meterRegistry: MeterRegistry
+    ) {
+        val detaljer =
+            when (packet["arbeidssituasjon"].asText()) {
+                "SELVSTENDIG_NARINGSDRIVENDE" -> Meldingsdetaljer.avbruttSøknadSelvstendig(packet)
+                "BARNEPASSER" -> Meldingsdetaljer.avbruttSøknadBarnepasser(packet)
+                "FRILANSER" -> Meldingsdetaljer.avbruttSøknadFrilanser(packet)
+                "ARBEIDSTAKER" -> Meldingsdetaljer.avbruttSøknad(packet)
+                "ARBEIDSLEDIG" -> Meldingsdetaljer.avbruttSøknadArbeidsledig(packet)
+                "FISKER" -> Meldingsdetaljer.avbruttSøknadFisker(packet)
+                "JORDBRUKER" -> Meldingsdetaljer.avbruttSøknadJordbruker(packet)
+                "ANNET" -> Meldingsdetaljer.avbruttSøknadAnnet(packet)
+                else -> error("Forventer ikke arbeidssituasjon ${packet["arbeidssituasjon"].asText()} her")
+            }
         val internId = meldingMediator.leggInnMelding(detaljer)
         meldingMediator.onMelding(Melding.AvbruttSøknad(internId, detaljer))
         loggInfo("Mottatt avbrutt søknad", "detaljer" to detaljer.toString())
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+        metadata: MessageMetadata
+    ) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne Avbrutt søknad:\n$problems")
     }
-
 }

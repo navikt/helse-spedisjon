@@ -21,19 +21,20 @@ import io.micrometer.core.instrument.Clock
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.prometheus.metrics.model.registry.PrometheusRegistry
-import no.nav.helse.spedisjon.api.tjeneste.ApiMeldingtjeneste
-import no.nav.sykepenger.libs.logging.navngittLogger
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.URI
 import kotlinx.coroutines.CancellationException
+import no.nav.helse.spedisjon.api.tjeneste.ApiMeldingtjeneste
+import no.nav.sykepenger.libs.logging.navngittLogger
+import org.slf4j.LoggerFactory
 
 private val logg = LoggerFactory.getLogger(::main.javaClass)
 private val logger = navngittLogger("no.nav.helse.spedisjon.api.App")
-private val objectMapper = jacksonObjectMapper()
-    .registerModule(JavaTimeModule())
-    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-    .enable(SerializationFeature.INDENT_OUTPUT)
+private val objectMapper =
+    jacksonObjectMapper()
+        .registerModule(JavaTimeModule())
+        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .enable(SerializationFeature.INDENT_OUTPUT)
 
 fun main() {
     Thread.currentThread().setUncaughtExceptionHandler { _, e ->
@@ -43,78 +44,85 @@ fun main() {
 }
 
 private fun launchApp(env: Map<String, String>) {
-    val azureApp = AzureApp(
-        jwkProvider = JwkProviderBuilder(URI(env.getValue("AZURE_OPENID_CONFIG_JWKS_URI")).toURL()).build(),
-        issuer = env.getValue("AZURE_OPENID_CONFIG_ISSUER"),
-        clientId = env.getValue("AZURE_APP_CLIENT_ID"),
-    )
+    val azureApp =
+        AzureApp(
+            jwkProvider = JwkProviderBuilder(URI(env.getValue("AZURE_OPENID_CONFIG_JWKS_URI")).toURL()).build(),
+            issuer = env.getValue("AZURE_OPENID_CONFIG_ISSUER"),
+            clientId = env.getValue("AZURE_APP_CLIENT_ID")
+        )
 
     val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
 
     val dataSourceBuilder = DataSourceBuilder(meterRegistry)
     val apiMeldingtjeneste = ApiMeldingtjeneste(MeldingDao(dataSourceBuilder.dataSource))
 
-    val app = naisApp(
-        meterRegistry = meterRegistry,
-        objectMapper = objectMapper,
-        applicationLogger = logg,
-        callLogger = LoggerFactory.getLogger("no.nav.helse.spedisjon.api.CallLogging"),
-        timersConfig = { call, _ ->
-            this
-                .tag("azp_name", call.principal<JWTPrincipal>()?.get("azp_name") ?: "n/a")
-                .tag("konsument", call.request.header("L5d-Client-Id") ?: "n/a")
-        },
-        mdcEntries = mapOf(
-            "azp_name" to { call: ApplicationCall -> call.principal<JWTPrincipal>()?.get("azp_name") },
-            "konsument" to { call: ApplicationCall -> call.request.header("L5d-Client-Id") }
-        ),
-        statusPagesConfig = { spedisjonStatusPages() }
-    ) {
-        monitor.subscribe(ApplicationStarted) {
-            dataSourceBuilder.migrate()
-        }
-        authentication { azureApp.konfigurerJwtAuth(this) }
-        routing {
-            authenticate {
-                api(apiMeldingtjeneste)
+    val app =
+        naisApp(
+            meterRegistry = meterRegistry,
+            objectMapper = objectMapper,
+            applicationLogger = logg,
+            callLogger = LoggerFactory.getLogger("no.nav.helse.spedisjon.api.CallLogging"),
+            timersConfig = { call, _ ->
+                this
+                    .tag("azp_name", call.principal<JWTPrincipal>()?.get("azp_name") ?: "n/a")
+                    .tag("konsument", call.request.header("L5d-Client-Id") ?: "n/a")
+            },
+            mdcEntries =
+                mapOf(
+                    "azp_name" to { call: ApplicationCall -> call.principal<JWTPrincipal>()?.get("azp_name") },
+                    "konsument" to { call: ApplicationCall -> call.request.header("L5d-Client-Id") }
+                ),
+            statusPagesConfig = { spedisjonStatusPages() }
+        ) {
+            monitor.subscribe(ApplicationStarted) {
+                dataSourceBuilder.migrate()
+            }
+            authentication { azureApp.konfigurerJwtAuth(this) }
+            routing {
+                authenticate {
+                    api(apiMeldingtjeneste)
+                }
             }
         }
-    }
     app.start(wait = true)
 }
 
 internal fun StatusPagesConfig.spedisjonStatusPages() {
     defaultStatusPagesConfig()
     exception<BadRequestException> { call, cause ->
-        val status = if (cause.skyldesAvbruttKanal()) {
-            logger.warn("Midlertidig feil ved lesing av request body", cause)
-            HttpStatusCode.ServiceUnavailable
-        } else {
-            logger.warn("Bad request", cause)
-            HttpStatusCode.BadRequest
-        }
+        val status =
+            if (cause.skyldesAvbruttKanal()) {
+                logger.warn("Midlertidig feil ved lesing av request body", cause)
+                HttpStatusCode.ServiceUnavailable
+            } else {
+                logger.warn("Bad request", cause)
+                HttpStatusCode.BadRequest
+            }
         logger.info(
             "Prøver å sende feilrespons etter BadRequestException",
             "status" to status.value.toString(),
-            "årsakstyper" to generateSequence<Throwable>(cause) { it.cause }
-                .joinToString(" -> ") { it.javaClass.name }
+            "årsakstyper" to
+                generateSequence<Throwable>(cause) { it.cause }
+                    .joinToString(" -> ") { it.javaClass.name }
         )
         call.response.header(HttpHeaders.ContentType, ContentType.Application.ProblemJson.toString())
         call.respond(
             status,
             SpedisjonFeilresponse(
-                type = if (status == HttpStatusCode.ServiceUnavailable) {
-                    "urn:error:temporary"
-                } else {
-                    "urn:error:bad_request"
-                },
+                type =
+                    if (status == HttpStatusCode.ServiceUnavailable) {
+                        "urn:error:temporary"
+                    } else {
+                        "urn:error:bad_request"
+                    },
                 title = status.description,
                 status = status.value,
-                detail = if (status == HttpStatusCode.ServiceUnavailable) {
-                    "Spedisjon-API er utilgjengelig: ${cause.message}"
-                } else {
-                    cause.message
-                },
+                detail =
+                    if (status == HttpStatusCode.ServiceUnavailable) {
+                        "Spedisjon-API er utilgjengelig: ${cause.message}"
+                    } else {
+                        cause.message
+                    },
                 instance = call.request.uri,
                 callId = call.callId
             )
@@ -122,8 +130,7 @@ internal fun StatusPagesConfig.spedisjonStatusPages() {
     }
 }
 
-internal fun Throwable.skyldesAvbruttKanal(): Boolean {
-    return generateSequence(this) { it.cause }.any {
+internal fun Throwable.skyldesAvbruttKanal(): Boolean =
+    generateSequence(this) { it.cause }.any {
         it is CancellationException || (it is IOException && it !is JsonProcessingException)
     }
-}

@@ -7,8 +7,9 @@ import kotliquery.sessionOf
 import no.nav.sykepenger.libs.logging.loggInfo
 import org.intellij.lang.annotations.Language
 
-internal class MeldingDao(private val dataSource: DataSource) {
-
+internal class MeldingDao(
+    private val dataSource: DataSource
+) {
     fun hentMeldinger(internDokumentIder: List<UUID>): List<MeldingDto> {
         if (internDokumentIder.isEmpty()) return emptyList()
         return sessionOf(dataSource).use { session ->
@@ -25,28 +26,35 @@ internal class MeldingDao(private val dataSource: DataSource) {
             ;"""
             // gjentar listen to ganger
             val dokumentIder = (internDokumentIder + internDokumentIder)
-            session.run(queryOf(stmt, *dokumentIder.toTypedArray()).map { row ->
-                MeldingDto(
-                    type = row.string("type"),
-                    fnr = row.string("fnr"),
-                    internDokumentId = row.uuid("intern_dokument_id"),
-                    eksternDokumentId = row.uuid("ekstern_dokument_id"),
-                    duplikatkontroll = row.string("duplikatkontroll"),
-                    jsonBody = row.string("data")
-                )
-            }.asList)
+            session.run(
+                queryOf(stmt, *dokumentIder.toTypedArray())
+                    .map { row ->
+                        MeldingDto(
+                            type = row.string("type"),
+                            fnr = row.string("fnr"),
+                            internDokumentId = row.uuid("intern_dokument_id"),
+                            eksternDokumentId = row.uuid("ekstern_dokument_id"),
+                            duplikatkontroll = row.string("duplikatkontroll"),
+                            jsonBody = row.string("data")
+                        )
+                    }.asList
+            )
         }
     }
 
     fun leggInn(meldingsdetaljer: NyMeldingDto): Resultat {
-        loggInfo("legger inn melding",
+        loggInfo(
+            "legger inn melding",
             "duplikatkontroll" to meldingsdetaljer.duplikatkontroll,
-            "jsonBody" to meldingsdetaljer.jsonBody)
+            "jsonBody" to meldingsdetaljer.jsonBody
+        )
         return insertDokument(meldingsdetaljer).also { resultat ->
             if (resultat.utfall == Resultat.Utfall.HENTET_EKSISTERENDE) {
-                loggInfo("Meldingen er lagret fra før",
+                loggInfo(
+                    "Meldingen er lagret fra før",
                     "duplikatkontroll" to meldingsdetaljer.duplikatkontroll,
-                    "melding" to meldingsdetaljer.jsonBody)
+                    "melding" to meldingsdetaljer.jsonBody
+                )
             }
         }
     }
@@ -54,15 +62,16 @@ internal class MeldingDao(private val dataSource: DataSource) {
     /** inserter, eller henter, et dokument og returnerer intern ID i én atomisk operasjon **/
     data class Resultat(
         val utfall: Utfall,
-        val internId: UUID,
+        val internId: UUID
     ) {
         enum class Utfall {
             BLE_LAGRET_NÅ,
             HENTET_EKSISTERENDE
         }
     }
-    private fun insertDokument(meldingsdetaljer: NyMeldingDto): Resultat {
-        return sessionOf(dataSource).use { session ->
+
+    private fun insertDokument(meldingsdetaljer: NyMeldingDto): Resultat =
+        sessionOf(dataSource).use { session ->
             @Language("PostgreSQL")
             val insertStmt = """
             with verdier (fnr,type,ekstern_dokument_id,duplikatkontroll,data) as (
@@ -81,20 +90,25 @@ internal class MeldingDao(private val dataSource: DataSource) {
             where m.duplikatkontroll = :duplikatkontroll
             and not exists (select 1 from inserted);
         """
-            session.run(queryOf(insertStmt, mapOf(
-                "fnr" to meldingsdetaljer.fnr,
-                "type" to meldingsdetaljer.type,
-                "eksternDokumentId" to meldingsdetaljer.eksternDokumentId,
-                "duplikatkontroll" to meldingsdetaljer.duplikatkontroll,
-                "data" to meldingsdetaljer.jsonBody,
-            )).map { row ->
-                Resultat(
-                    utfall = if (row.boolean("ble_lagret_nå")) Resultat.Utfall.BLE_LAGRET_NÅ else Resultat.Utfall.HENTET_EKSISTERENDE,
-                    internId = row.uuid("intern_dokument_id")
-                )
-            }.asList).single()
+            session
+                .run(
+                    queryOf(
+                        insertStmt,
+                        mapOf(
+                            "fnr" to meldingsdetaljer.fnr,
+                            "type" to meldingsdetaljer.type,
+                            "eksternDokumentId" to meldingsdetaljer.eksternDokumentId,
+                            "duplikatkontroll" to meldingsdetaljer.duplikatkontroll,
+                            "data" to meldingsdetaljer.jsonBody
+                        )
+                    ).map { row ->
+                        Resultat(
+                            utfall = if (row.boolean("ble_lagret_nå")) Resultat.Utfall.BLE_LAGRET_NÅ else Resultat.Utfall.HENTET_EKSISTERENDE,
+                            internId = row.uuid("intern_dokument_id")
+                        )
+                    }.asList
+                ).single()
         }
-    }
 }
 
 data class NyMeldingDto(

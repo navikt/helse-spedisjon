@@ -8,30 +8,35 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
 
-internal class DataSourceBuilder(private val meterRegistry: PrometheusMeterRegistry) {
+internal class DataSourceBuilder(
+    private val meterRegistry: PrometheusMeterRegistry
+) {
+    private val baseConnectionConfig =
+        HikariConfig().apply {
+            jdbcUrl = defaultJdbcUrl(ConnectionConfigFactory.Env(envVarPrefix = "DATABASE"))
+            metricRegistry = meterRegistry
+        }
 
-    private val baseConnectionConfig = HikariConfig().apply {
-        jdbcUrl = defaultJdbcUrl(ConnectionConfigFactory.Env(envVarPrefix = "DATABASE"))
-        metricRegistry = meterRegistry
-    }
-
-    private val migrationConfig = HikariConfig().apply {
-        baseConnectionConfig.copyStateTo(this)
-        poolName = "flyway"
-        maximumPoolSize = 2
-    }
-    private val appConfig = HikariConfig().apply {
-        baseConnectionConfig.copyStateTo(this)
-        poolName = "app"
-        maximumPoolSize = 2
-    }
+    private val migrationConfig =
+        HikariConfig().apply {
+            baseConnectionConfig.copyStateTo(this)
+            poolName = "flyway"
+            maximumPoolSize = 2
+        }
+    private val appConfig =
+        HikariConfig().apply {
+            baseConnectionConfig.copyStateTo(this)
+            poolName = "app"
+            maximumPoolSize = 2
+        }
 
     val dataSource by lazy { HikariDataSource(appConfig) }
 
     internal fun migrate() {
         logger.info("Migrerer database")
         HikariDataSource(migrationConfig).use {
-            Flyway.configure()
+            Flyway
+                .configure()
                 .dataSource(it)
                 .lockRetryCount(-1)
                 .load()

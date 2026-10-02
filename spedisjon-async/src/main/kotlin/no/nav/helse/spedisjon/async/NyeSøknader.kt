@@ -14,29 +14,38 @@ internal class NyeSøknader(
     rapidsConnection: RapidsConnection,
     private val meldingMediator: MeldingMediator
 ) : River.PacketListener {
-
     init {
-        River(rapidsConnection).apply {
-            precondition {
-                it.forbid("@event_name")
-                it.requireValue("status", "NY")
-                it.requireValue("type", "ARBEIDSTAKERE")
-            }
-            validate {
-                it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
-                it.require("opprettet", JsonNode::asLocalDateTime)
-                it.requireKey("id", "sykmeldingId", "fom", "tom")
-            }
-        }.register(this)
+        River(rapidsConnection)
+            .apply {
+                precondition {
+                    it.forbid("@event_name")
+                    it.requireValue("status", "NY")
+                    it.requireValue("type", "ARBEIDSTAKERE")
+                }
+                validate {
+                    it.requireKey("fnr", "arbeidsgiver.orgnummer", "soknadsperioder")
+                    it.require("opprettet", JsonNode::asLocalDateTime)
+                    it.requireKey("id", "sykmeldingId", "fom", "tom")
+                }
+            }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+        metadata: MessageMetadata,
+        meterRegistry: MeterRegistry
+    ) {
         val detaljer = Meldingsdetaljer.nySøknad(packet)
         val internId = meldingMediator.leggInnMelding(detaljer)
         meldingMediator.onMelding(Melding.NySøknad(internId, detaljer))
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+        metadata: MessageMetadata
+    ) {
         meldingMediator.onRiverError("kunne ikke gjenkjenne Ny søknad:\n$problems")
     }
 }
