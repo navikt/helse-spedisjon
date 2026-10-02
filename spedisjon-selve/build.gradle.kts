@@ -1,49 +1,28 @@
-val flywayCoreVersion = "11.5.0"
-val hikariCPVersion = "6.3.0"
-val postgresqlVersion = "42.7.7"
-val kotliqueryVersion = "1.9.0"
-val mockkVersion = "1.13.17"
-val sykepengeloggingVersion = "20260829.1737"
-val ktorVersion = "3.2.3" // bør være samme som i <com.github.navikt.tbd-libs:naisful-app>
-val jacksonVerison = "2.20.0"
-val tbdLibsVersion: String by project
-
-dependencies {
-    api("com.github.navikt.tbd-libs:naisful-app:$tbdLibsVersion")
-    api("com.github.navikt.tbd-libs:naisful-postgres:$tbdLibsVersion")
-
-    api("io.ktor:ktor-server-auth:$ktorVersion")
-    api("io.ktor:ktor-server-auth-jwt:$ktorVersion")
-
-    api("org.flywaydb:flyway-database-postgresql:$flywayCoreVersion")
-    implementation("no.nav.sykepenger.libs:logging:$sykepengeloggingVersion")
-    implementation("com.zaxxer:HikariCP:$hikariCPVersion")
-    implementation("org.postgresql:postgresql:$postgresqlVersion")
-    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
-
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVerison")
-
-    testImplementation("com.github.navikt.tbd-libs:naisful-test-app:$tbdLibsVersion")
-    testImplementation("io.mockk:mockk:$mockkVersion")
+plugins {
+    id("no.nav.sykepenger.deployable")
 }
 
-tasks {
-    named<Jar>("jar") {
-        archiveBaseName.set("app")
+sykepengerDeployable {
+    mainClass = "no.nav.helse.spedisjon.api.AppKt"
+    imageName = "${rootProject.name}-selve"
+}
 
-        manifest {
-            attributes["Main-Class"] = "no.nav.helse.spedisjon.api.AppKt"
-            attributes["Class-Path"] = configurations.runtimeClasspath.get().joinToString(separator = " ") {
-                it.name
-            }
-        }
+dependencies {
+    api(libs.tbd.libs.naisful.app)
+    api(libs.tbd.libs.naisful.postgres)
 
-        doLast {
-            configurations.runtimeClasspath.get().forEach {
-                val file = File("${layout.buildDirectory.get()}/libs/${it.name}")
-                if (!file.exists())
-                    it.copyTo(file)
-            }
-        }
-    }
+    api(libs.ktor.server.auth)
+    api(libs.ktor.server.auth.jwt)
+
+    api(libs.flyway.database.postgresql)
+    implementation(libs.sykepengerLibs.logging)
+    implementation(libs.hikaricp)
+    implementation(libs.postgresql)
+    implementation(libs.kotliquery)
+
+    implementation(libs.jackson.datatype.jsr310)
+
+    testImplementation(libs.tbd.libs.postgres.testdatabaser)
+    testImplementation(libs.tbd.libs.naisful.test.app)
+    testImplementation(libs.mockk)
 }

@@ -6,37 +6,20 @@ metadata:
   labels:
     team: tbd
 spec:
-  image: {{image}}
   port: 8080
   strategy:
     type: Recreate
   liveness:
     path: isalive
-    initialDelay: 5
   readiness:
     path: isready
     initialDelay: 5
-  preStopHook:
-    http:
-      path: /stop
   resources:
-    limits:
-      memory: 1024Mi
     requests:
-      cpu: 50m
       memory: 64Mi
-  replicas:
-    min: 2
-    max: 3
-    scalingStrategy:
-      kafka:
-        topic: flex.sykepengesoknad
-        consumerGroup: tbd-spedisjon-v1
-        threshold: 200
   azure:
     application:
       enabled: true
-      tenant: nav.no
   accessPolicy:
     outbound:
       rules:
@@ -44,29 +27,9 @@ spec:
           namespace: nais-system
         - application: spedisjon
         - application: speed-api
-  kafka:
-    pool: nav-prod
   prometheus:
     enabled: true
     path: /metrics
-  gcp:
-    sqlInstances:
-      - type: POSTGRES_17
-        diskAutoresize: true
-        tier: db-custom-1-3840
-        name: spedisjon-async
-        databases:
-          - name: spedisjon-async
-            envVarPrefix: DATABASE
-        flags:
-          - name: cloudsql.enable_pgaudit
-            value: "on"
-          - name: pgaudit.log
-            value: "write,ddl,role"
-          - name: pgaudit.log_parameter
-            value: "on"
-          - name: pgaudit.log_relation
-            value: "on"
   env:
     - name: KAFKA_CONSUMER_GROUP_ID
       value: tbd-spedisjon-v1

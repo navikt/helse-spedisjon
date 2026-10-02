@@ -1,46 +1,25 @@
-val flywayCoreVersion = "11.5.0"
-val hikariCPVersion = "6.3.0"
-val postgresqlVersion = "42.7.7"
-val kotliqueryVersion = "1.9.0"
-val mockkVersion = "1.13.17"
-val sykepengeloggingVersion = "20260829.1737"
-
-val rapidsAndRiversVersion: String by project
-val tbdLibsVersion: String by project
-
-dependencies {
-    implementation("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
-    api("org.flywaydb:flyway-database-postgresql:$flywayCoreVersion")
-    implementation("com.zaxxer:HikariCP:$hikariCPVersion")
-    implementation("org.postgresql:postgresql:$postgresqlVersion")
-    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
-    implementation("no.nav.sykepenger.libs:logging:${sykepengeloggingVersion}")
-
-    api("com.github.navikt.tbd-libs:azure-token-client-default:$tbdLibsVersion")
-    api("com.github.navikt.tbd-libs:retry:$tbdLibsVersion")
-    api("com.github.navikt.tbd-libs:speed-client:$tbdLibsVersion")
-
-    testImplementation("com.github.navikt.tbd-libs:rapids-and-rivers-test:$tbdLibsVersion")
-    testImplementation("io.mockk:mockk:$mockkVersion")
+plugins {
+    id("no.nav.sykepenger.deployable")
 }
 
-tasks {
-    named<Jar>("jar") {
-        archiveBaseName.set("app")
+sykepengerDeployable {
+    mainClass = "no.nav.helse.spedisjon.async.AppKt"
+    imageName = "${rootProject.name}-async"
+}
 
-        manifest {
-            attributes["Main-Class"] = "no.nav.helse.spedisjon.async.AppKt"
-            attributes["Class-Path"] = configurations.runtimeClasspath.get().joinToString(separator = " ") {
-                it.name
-            }
-        }
+dependencies {
+    implementation(libs.rapids.and.rivers)
+    api(libs.flyway.database.postgresql)
+    implementation(libs.hikaricp)
+    implementation(libs.postgresql)
+    implementation(libs.kotliquery)
+    implementation(libs.sykepengerLibs.logging)
 
-        doLast {
-            configurations.runtimeClasspath.get().forEach {
-                val file = File("${layout.buildDirectory.get()}/libs/${it.name}")
-                if (!file.exists())
-                    it.copyTo(file)
-            }
-        }
-    }
+    api(libs.tbd.libs.azure.token.client.default)
+    api(libs.tbd.libs.retry)
+    api(libs.tbd.libs.speed.client)
+
+    testImplementation(libs.tbd.libs.postgres.testdatabaser)
+    testImplementation(libs.tbd.libs.rapids.and.rivers.test)
+    testImplementation(libs.mockk)
 }

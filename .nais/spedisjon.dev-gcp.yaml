@@ -1,0 +1,21 @@
+spec:
+  resources:
+    limits:
+      memory: 512Mi
+  replicas:
+    max: 2
+  azure:
+    application:
+      tenant: trygdeetaten.no
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_17
+        diskAutoresize: true
+        tier: db-f1-micro
+        pointInTimeRecovery: true
+        name: spedisjon
+        databases:
+          - name: spedisjon
+            envVarPrefix: DATABASE
+            users:
+              - name: spedisjon-opprydding-dev

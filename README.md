@@ -1,5 +1,5 @@
 # Spedisjon
-![Bygg og deploy](https://github.com/navikt/helse-spedisjon/workflows/Bygg%20og%20deploy/badge.svg)
+![Bygg og deploy](https://github.com/navikt/helse-spedisjon/actions/workflows/main-spedisjon-selve.yml/badge.svg)
 
 ## Beskrivelse
 Leser inn fra sykepengesøknader og inntektsmeldinger og ekspederer disse for videre behandling

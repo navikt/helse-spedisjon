@@ -6,7 +6,6 @@ metadata:
   labels:
     team: tbd
 spec:
-  image: {{image}}
   port: 8080
   strategy:
     type: RollingUpdate
@@ -17,22 +16,15 @@ spec:
     path: isready
     initialDelay: 5
     periodSeconds: 1
-  preStopHook:
-    http:
-      path: /stop
   resources:
-    limits:
-      memory: 1024Mi
     requests:
       cpu: 50m
       memory: 64Mi
   replicas:
     min: 2
-    max: 3
   azure:
     application:
       enabled: true
-      tenant: nav.no
   accessPolicy:
     inbound:
       rules:
@@ -47,27 +39,6 @@ spec:
   prometheus:
     enabled: true
     path: /metrics
-  gcp:
-    sqlInstances:
-      - type: POSTGRES_17
-        diskAutoresize: true
-        diskSize: 150
-        tier: db-custom-1-3840
-        name: spedisjon2
-        databases:
-          - name: spedisjon
-            envVarPrefix: DATABASE
-            users:
-              - name: bigquery-connection-user
-        flags:
-          - name: cloudsql.enable_pgaudit
-            value: "on"
-          - name: pgaudit.log
-            value: "write,ddl,role"
-          - name: pgaudit.log_parameter
-            value: "on"
-          - name: pgaudit.log_relation
-            value: "on"
   observability:
     autoInstrumentation:
       enabled: true

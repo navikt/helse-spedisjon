@@ -1,0 +1,29 @@
+[versions]
+sykepengerGradlePlugins = "20261001.1657"
+tbd-libs = "2026.01.22-09.16-1d3f6039"
+
+[libraries]
+cloud-sql-postgres-socket-factory = "com.google.cloud.sql:postgres-socket-factory:1.21.0"
+flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:11.5.0"
+hikaricp = "com.zaxxer:HikariCP:6.3.0"
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" }
+kotliquery = "com.github.seratch:kotliquery:1.9.0"
+ktor-server-auth = { module = "io.ktor:ktor-server-auth" }
+ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt" }
+postgresql = "org.postgresql:postgresql:42.7.7"
+rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026011411051768385145.e8ebad1177b4"
+sykepengerLibs-logging = "no.nav.sykepenger.libs:logging:20260829.1737"
+tbd-libs-azure-token-client-default = { module = "com.github.navikt.tbd-libs:azure-token-client-default", version.ref = "tbd-libs" }
+tbd-libs-naisful-app = { module = "com.github.navikt.tbd-libs:naisful-app", version.ref = "tbd-libs" }
+tbd-libs-naisful-postgres = { module = "com.github.navikt.tbd-libs:naisful-postgres", version.ref = "tbd-libs" }
+tbd-libs-retry = { module = "com.github.navikt.tbd-libs:retry", version.ref = "tbd-libs" }
+tbd-libs-speed-client = { module = "com.github.navikt.tbd-libs:speed-client", version.ref = "tbd-libs" }
+
+mockk = "io.mockk:mockk:1.14.11"
+tbd-libs-naisful-test-app = { module = "com.github.navikt.tbd-libs:naisful-test-app", version.ref = "tbd-libs" }
+tbd-libs-postgres-testdatabaser = { module = "com.github.navikt.tbd-libs:postgres-testdatabaser", version.ref = "tbd-libs" }
+tbd-libs-rapids-and-rivers-test = { module = "com.github.navikt.tbd-libs:rapids-and-rivers-test", version.ref = "tbd-libs" }
+
+[plugins]
+sykepenger-deployable = { id = "no.nav.sykepenger.deployable", version.ref = "sykepengerGradlePlugins" }
+sykepenger-root = { id = "no.nav.sykepenger.root", version.ref = "sykepengerGradlePlugins" }

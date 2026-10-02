@@ -1,0 +1,27 @@
+spec:
+  liveness:
+    initialDelay: 1
+    periodSeconds: 1
+    failureThreshold: 60
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 150m
+  replicas:
+    min: 1
+    max: 2
+  azure:
+    application:
+      tenant: trygdeetaten.no
+  kafka:
+    pool: nav-dev
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_17
+        diskAutoresize: true
+        tier: db-f1-micro
+        name: spedisjon-async
+        databases:
+          - name: spedisjon-async
+            envVarPrefix: DATABASE

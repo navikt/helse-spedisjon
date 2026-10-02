@@ -1,0 +1,33 @@
+spec:
+  preStopHook:
+    http:
+      path: /stop
+  resources:
+    limits:
+      memory: 1024Mi
+  replicas:
+    max: 3
+  azure:
+    application:
+      tenant: nav.no
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_17
+        diskAutoresize: true
+        diskSize: 150
+        tier: db-custom-1-3840
+        name: spedisjon2
+        databases:
+          - name: spedisjon
+            envVarPrefix: DATABASE
+            users:
+              - name: bigquery-connection-user
+        flags:
+          - name: cloudsql.enable_pgaudit
+            value: "on"
+          - name: pgaudit.log
+            value: "write,ddl,role"
+          - name: pgaudit.log_parameter
+            value: "on"
+          - name: pgaudit.log_relation
+            value: "on"

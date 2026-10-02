@@ -1,0 +1,42 @@
+spec:
+  liveness:
+    initialDelay: 5
+  preStopHook:
+    http:
+      path: /stop
+  resources:
+    limits:
+      memory: 1024Mi
+    requests:
+      cpu: 50m
+  replicas:
+    min: 2
+    max: 3
+    scalingStrategy:
+      kafka:
+        topic: flex.sykepengesoknad
+        consumerGroup: tbd-spedisjon-v1
+        threshold: 200
+  azure:
+    application:
+      tenant: nav.no
+  kafka:
+    pool: nav-prod
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_17
+        diskAutoresize: true
+        tier: db-custom-1-3840
+        name: spedisjon-async
+        databases:
+          - name: spedisjon-async
+            envVarPrefix: DATABASE
+        flags:
+          - name: cloudsql.enable_pgaudit
+            value: "on"
+          - name: pgaudit.log
+            value: "write,ddl,role"
+          - name: pgaudit.log_parameter
+            value: "on"
+          - name: pgaudit.log_relation
+            value: "on"
