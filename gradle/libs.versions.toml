@@ -3,11 +3,11 @@ sykepengerGradlePlugins = "20261001.1830"
 tbd-libs = "20261002.1227"
 
 [libraries]
-cloud-sql-postgres-socket-factory = "com.google.cloud.sql:postgres-socket-factory:1.21.0"
+cloud-sql-postgres-socket-factory = "com.google.cloud.sql:postgres-socket-factory:1.30.0"
 flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:13.8.0"
-hikaricp = "com.zaxxer:HikariCP:6.3.0"
+hikaricp = "com.zaxxer:HikariCP:7.1.0"
 jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
-kotliquery = "com.github.seratch:kotliquery:1.9.0"
+kotliquery = "com.github.seratch:kotliquery:1.9.1"
 ktor-server-auth = { module = "io.ktor:ktor-server-auth" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt" }
 postgresql = "org.postgresql:postgresql:42.7.13"
