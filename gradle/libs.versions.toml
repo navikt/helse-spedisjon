@@ -1,6 +1,6 @@
 [versions]
 sykepengerGradlePlugins = "20261001.1830"
-tbd-libs = "20261002.1227"
+tbd-libs = "20261005.1432"
 
 [libraries]
 cloud-sql-postgres-socket-factory = "com.google.cloud.sql:postgres-socket-factory:1.30.0"
