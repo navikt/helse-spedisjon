@@ -4,7 +4,7 @@ tbd-libs = "20261005.1432"
 
 [libraries]
 cloud-sql-postgres-socket-factory = "com.google.cloud.sql:postgres-socket-factory:1.30.0"
-flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:13.8.1"
+flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:13.9.0"
 hikaricp = "com.zaxxer:HikariCP:7.1.0"
 jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
 kotliquery = "com.github.seratch:kotliquery:1.9.1"
