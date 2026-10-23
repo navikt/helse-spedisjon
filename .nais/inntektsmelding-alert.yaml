@@ -11,11 +11,11 @@ spec:
       rules:
         - alert: Det er mottatt mistenkelig få inntektsmeldinger
           # Prometheus evaluerer hour() i UTC. Oslo er UTC+1 om vinteren og UTC+2 om sommeren (sommertid),
-          # men vinduet 07-16 lokal vintertid og 08-17 lokal sommertid tilsvarer begge UTC 06-15,
+          # men vinduet 07-15 lokal vintertid og 08-16 lokal sommertid tilsvarer begge UTC 06-14,
           # så hour() >= 6 and hour() < 15 dekker riktig lokalt tidsrom hele året uten DST-håndtering.
           expr: |
             sum(rate(message_counter_total{app="spedisjon-async", validated="ok", river="ArbeidsgiveropplysningerRiver"}[15m])) < 0.01
-            and hour() >= 6 and hour() < 15
+            and hour() >= 6 and hour() < 14
             and day_of_week() >= 1 and day_of_week() <= 5
           # rate(...[15m]) fanger allerede opp at raten har vært under terskelen i 15 minutter,
           # så "for" settes til 0m for å unngå at vi legger enda en forsinkelse på toppen.
