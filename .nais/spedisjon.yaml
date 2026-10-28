@@ -32,6 +32,7 @@ spec:
         - application: sporbar
         - application: sparkel-arbeidsgiver
         - application: spaghet
+        - application: sp-rettighetskategori
     outbound:
       rules:
         - application: logging
