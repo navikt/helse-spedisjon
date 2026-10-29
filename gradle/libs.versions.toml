@@ -1,6 +1,6 @@
 [versions]
-sykepengerGradlePlugins = "20261028.1441"
-tbd-libs = "20261013.1613"
+sykepengerGradlePlugins = "20261029.1945"
+tbd-libs = "20261029.1843"
 
 [libraries]
 cloud-sql-postgres-socket-factory = "com.google.cloud.sql:postgres-socket-factory:1.30.1"
@@ -12,7 +12,7 @@ ktor-server-auth = { module = "io.ktor:ktor-server-auth" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt" }
 postgresql = "org.postgresql:postgresql:42.7.14"
 rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026091610031789545782"
-sykepengerLibs-logging = "no.nav.sykepenger.libs:logging:20261013.1719"
+sykepengerLibs-logging = "no.nav.sykepenger.libs:logging:20261029.1851"
 tbd-libs-azure-token-client-default = { module = "com.github.navikt.tbd-libs:azure-token-client-default", version.ref = "tbd-libs" }
 tbd-libs-naisful-app = { module = "com.github.navikt.tbd-libs:naisful-app", version.ref = "tbd-libs" }
 tbd-libs-naisful-postgres = { module = "com.github.navikt.tbd-libs:naisful-postgres", version.ref = "tbd-libs" }
