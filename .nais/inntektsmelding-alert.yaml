@@ -9,13 +9,15 @@ spec:
   groups:
     - name: inntektmelding-alert
       rules:
-        - alert: Det er mottatt mistenkelig få inntektsmeldinger
+        - alert: Det er mottatt mistenkelig få inntektsmeldinger de siste 15 minuttene
           # Prometheus evaluerer hour() i UTC. Oslo er UTC+1 om vinteren og UTC+2 om sommeren (sommertid),
-          # men vinduet 07-15 lokal vintertid og 08-16 lokal sommertid tilsvarer begge UTC 06-14,
-          # så hour() >= 6 and hour() < 15 dekker riktig lokalt tidsrom hele året uten DST-håndtering.
+          # men vinduet 08-15 lokal vintertid og 09-16 lokal sommertid tilsvarer begge UTC 07-14,
+          # så hour() >= 7 and hour() < 14 dekker riktig lokalt tidsrom hele året uten DST-håndtering.
+          # Starter en time senere enn sendt-soknad-alert fordi inntektsmeldinger har for lavt volum
+          # i timen 06-07 UTC (5-persentil ~0.006/s mot terskel 0.01/s) og ga falske positiver.
           expr: |
             sum(rate(message_counter_total{app="spedisjon-async", validated="ok", river="ArbeidsgiveropplysningerRiver"}[15m])) < 0.01
-            and hour() >= 6 and hour() < 14
+            and hour() >= 7 and hour() < 14
             and day_of_week() >= 1 and day_of_week() <= 5
           # rate(...[15m]) fanger allerede opp at raten har vært under terskelen i 15 minutter,
           # så "for" settes til 0m for å unngå at vi legger enda en forsinkelse på toppen.
