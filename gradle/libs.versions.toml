@@ -11,7 +11,7 @@ kotliquery = "com.github.seratch:kotliquery:1.9.1"
 ktor-server-auth = { module = "io.ktor:ktor-server-auth" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt" }
 postgresql = "org.postgresql:postgresql:42.7.14"
-rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026091610031789545782"
+rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026110308421793691732"
 sykepengerLibs-logging = "no.nav.sykepenger.libs:logging:20261106.1049"
 tbd-libs-azure-token-client-default = { module = "com.github.navikt.tbd-libs:azure-token-client-default", version.ref = "tbd-libs" }
 tbd-libs-naisful-app = { module = "com.github.navikt.tbd-libs:naisful-app", version.ref = "tbd-libs" }
