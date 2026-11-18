@@ -33,6 +33,7 @@ spec:
         - application: sparkel-arbeidsgiver
         - application: spaghet
         - application: sp-rettighetskategori
+        - application: sp-sykepengegrunnlag
     outbound:
       rules:
         - application: logging
