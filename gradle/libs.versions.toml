@@ -12,7 +12,7 @@ ktor-server-auth = { module = "io.ktor:ktor-server-auth" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt" }
 postgresql = "org.postgresql:postgresql:42.7.14"
 rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026110308421793691732"
-sykepengerLibs-logging = "no.nav.sykepenger.libs:logging:20261116.0849"
+sykepengerLibs-logging = "no.nav.sykepenger.libs:logging:20261120.1340"
 tbd-libs-azure-token-client-default = { module = "com.github.navikt.tbd-libs:azure-token-client-default", version.ref = "tbd-libs" }
 tbd-libs-naisful-app = { module = "com.github.navikt.tbd-libs:naisful-app", version.ref = "tbd-libs" }
 tbd-libs-naisful-postgres = { module = "com.github.navikt.tbd-libs:naisful-postgres", version.ref = "tbd-libs" }
