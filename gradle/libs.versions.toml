@@ -4,14 +4,14 @@ tbd-libs = "20261125.1015"
 
 [libraries]
 cloud-sql-postgres-socket-factory = "com.google.cloud.sql:postgres-socket-factory:1.31.0"
-flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:13.12.2"
+flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:13.13.0"
 hikaricp = "com.zaxxer:HikariCP:7.1.0"
 jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
 kotliquery = "com.github.seratch:kotliquery:1.9.1"
 ktor-server-auth = { module = "io.ktor:ktor-server-auth" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt" }
 postgresql = "org.postgresql:postgresql:42.7.14"
-rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026110308421793691732"
+rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026111908531795074794"
 sykepengerLibs-logging = "no.nav.sykepenger.libs:logging:20261120.1340"
 tbd-libs-azure-token-client-default = { module = "com.github.navikt.tbd-libs:azure-token-client-default", version.ref = "tbd-libs" }
 tbd-libs-naisful-app = { module = "com.github.navikt.tbd-libs:naisful-app", version.ref = "tbd-libs" }
